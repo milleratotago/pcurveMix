@@ -27,7 +27,7 @@ pdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
 
 # Compute PDF of 2-sided p value under H1 for random-effects model.
 f_uncond_2t_h1 <- function(p, mu, sigma) {
-  z <- stats::qnorm(p / 2)
+  z <- stats::qnorm(p/2)
   s2 <- sigma^2
   pref <- 1 / (2 * sqrt(1 + s2))
   base <- (s2 * z^2 - mu^2) / (2 * (1 + s2))
@@ -41,7 +41,7 @@ f_uncond_2t_mix  <- function(p, mu, sigma, pi) (1 - pi) + pi * f_uncond_2t_h1(p,
 
 # Compute PDF of 1-sided p value under H1 for random-effects model.
 f_uncond_1t_h1 <- function(p, mu, sigma) {
-  z <- stats::qnorm(p / 2)
+  z <- stats::qnorm(p)
   s2 <- sigma^2
   pref <- 1 / sqrt(1 + s2)
   base <- (s2 * z^2 - mu^2) / (2 * (1 + s2))
