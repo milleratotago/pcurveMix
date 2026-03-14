@@ -1,0 +1,87 @@
+---
+title: "demo_p_curves"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{demo_p_curves}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pcurveMix)
+```
+
+This vignette demonstrates how to compute and plot the PDFs and CDFs of $p$ values for given model parameters:
+
+```{r}
+p_vec <- seq(0.001,0.999,0.001)
+pi <- c(0.2, 0.8)
+mu <- 2
+sigma <- 1
+pdfs1 <- pcurveMix::pdf(p_vec, mu, sigma, pi = pi[1])
+pdfs2 <- pcurveMix::pdf(p_vec, mu, sigma, pi = pi[2])
+cdfs1 <- pcurveMix::cdf(p_vec, mu, sigma, pi = pi[1])
+cdfs2 <- pcurveMix::cdf(p_vec, mu, sigma, pi = pi[2])
+df <- data.frame(p = p_vec, pdf1 = pdfs1, pdf2 = pdfs2, cdf1 = cdfs1, cdf2 = cdfs2)
+fig_pdfs <- ggplot2::ggplot() +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = pdf1, colour = "blue"),
+                     linewidth = 1) +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = pdf2, colour = "red"),
+                     linewidth = 1) + # + ggplot2::labs(title = title)
+  ggplot2::coord_cartesian(ylim = c(0, 10))
+print(fig_pdfs)
+
+fig_cdfs <- ggplot2::ggplot() +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = cdf1, colour = "blue"),
+                     linewidth = 1) +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = cdf2, colour = "red"),
+                     linewidth = 1) + # + ggplot2::labs(title = title)
+  ggplot2::coord_cartesian(ylim = c(0, 1))
+print(fig_cdfs)
+```
+
+Conditional on alpha < 0.05:
+
+```{r}
+p_vec <- seq(0.001,0.999,0.001)
+pi <- c(0.2, 0.8)
+mu <- 2
+sigma <- 1
+pdfs1 <- pcurveMix::pdf(p_vec, mu, sigma, pi = pi[1], alpha = 0.05)
+pdfs2 <- pcurveMix::pdf(p_vec, mu, sigma, pi = pi[2], alpha = 0.05)
+cdfs1 <- pcurveMix::cdf(p_vec, mu, sigma, pi = pi[1], alpha = 0.05)
+cdfs2 <- pcurveMix::cdf(p_vec, mu, sigma, pi = pi[2], alpha = 0.05)
+df <- data.frame(p = p_vec, pdf1 = pdfs1, pdf2 = pdfs2, cdf1 = cdfs1, cdf2 = cdfs2)
+fig_pdfs <- ggplot2::ggplot() +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = pdf1, colour = "blue"),
+                     linewidth = 1) +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = pdf2, colour = "red"),
+                     linewidth = 1) + # + ggplot2::labs(title = title)
+  ggplot2::coord_cartesian(xlim = c(0,0.05), ylim = c(0, 100))
+print(fig_pdfs)
+
+fig_cdfs <- ggplot2::ggplot() +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = cdf1, colour = "blue"),
+                     linewidth = 1) +
+  ggplot2::geom_line(data = df,
+                     mapping = ggplot2::aes(x = p, y = cdf2, colour = "red"),
+                     linewidth = 1) + # + ggplot2::labs(title = title)
+  ggplot2::coord_cartesian(xlim = c(0,0.05), ylim = c(0, 1))
+print(fig_cdfs)
+```
+
+

@@ -1,0 +1,56 @@
+---
+title: "demo_tbl"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{demo_tbl}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pcurveMix)
+```
+
+This demo produces a table with *lots* of numerical examples of PDFs and CDFs.
+
+```{r Computations}
+mu <- c(2, 3)
+sigma <- c(0, 0.2, 1)
+pi <- c(0.2, 0.8, 1)
+alpha <- c(0.05, 1)
+tails <- 1:2
+df_parms <- expand.grid(mu, sigma, pi, alpha, tails)
+rownames(df_parms) <- NULL
+names(df_parms) <- c("mu", "sigma", "pi", "alpha", "tails")
+
+# Use p's that are the following proportions of alpha:
+props <- c(0.01, 0.2, 0.5, 0.8, 0.99)
+nps <- length(props)
+
+df <- data.frame()
+
+for (irow in 1:nrow(df_parms)) {
+  p <- round( props * df_parms$alpha[irow], 5)
+  pdfs <- pdf(p, mu = df_parms$mu[irow], sigma = df_parms$sigma[irow], pi = df_parms$pi[irow],
+              alpha = df_parms$alpha[irow], tails = df_parms$tails[irow])
+  cdfs <- cdf(p, mu = df_parms$mu[irow], sigma = df_parms$sigma[irow], pi = df_parms$pi[irow],
+              alpha = df_parms$alpha[irow], tails = df_parms$tails[irow])
+  df_row <- df_parms[rep(irow,nps),]
+  df_row$p <- p
+  df_row$pdf <- pdfs
+  df_row$cdf <- cdfs
+  df <- rbind(df, df_row)
+}
+df$pdf <- round(df$pdf, 4)
+df$cdf <- round(df$cdf, 4)
+rownames(df) <- NULL
+print(df)
+```
+
