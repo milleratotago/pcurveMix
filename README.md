@@ -9,7 +9,7 @@ normally with mean $\mu$ and standard deviation $\sigma$.
 
 This package fits the model by maximum likelihood to a set of observed *p* values, which can come
 either from a complete set of studies (i.e., 0<*p*<1) or from a set of studies
-selected to have significant results (i.e., *p*<$\alpha$).
+selected to have significant results (i.e., $p<\alpha$).
 The fitting results include estimates of the model's parameters and standard errors of those estimates.
 
 Functions are also provided to compute the model's predicted PDFs of *p*, CDFs of *p*, quantiles, and random *p* values
