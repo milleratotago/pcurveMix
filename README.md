@@ -3,7 +3,7 @@
 This is an R package for computations with *p*-curves under the Ulrich &amp; Miller (2026) mixture model.
 According to the model, an observed set of *p* values comes from a population of studies within which
 the proportion $\pi$ test for effects that are actually present (i.e., H1 is true)
-and the proportion 1-$\pi$ test for effects that are actually absent (i.e., H0 is true).
+and the proportion $1-\pi$ test for effects that are actually absent (i.e., H0 is true).
 Among studies testing for effects that are present, the noncentrality parameters vary
 normally with mean $\mu$ and standard deviation $\sigma$.
 
