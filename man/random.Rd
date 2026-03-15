@@ -4,7 +4,16 @@
 \alias{random}
 \title{Generate random p values from random-effects model.}
 \usage{
-random(n, mu, sigma, pi = 1, alpha = 1, tails = 2)
+random(
+  n,
+  mu,
+  sigma,
+  pi = 1,
+  alpha = 1,
+  tails = 2,
+  cond_method = c("rejection", "inversion"),
+  tol = 1e-08
+)
 }
 \arguments{
 \item{n}{Number of random values to be generated.}
@@ -18,6 +27,11 @@ random(n, mu, sigma, pi = 1, alpha = 1, tails = 2)
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1).}
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2).}
+
+\item{cond_method}{String "rejection" (default) or "inversion" to generate random
+p's from conditional distribution via rejection or quantile method.}
+
+\item{tol}{Real tolerance when generating p's via quantiles (default = 1e-8).}
 }
 \value{
 Real vector of n random p values.

@@ -1,11 +1,4 @@
-# library(pcurveMix)
-#
-# f <- function(p, mu, sigma, target_cdf) {
-#   pcurveMix::cdf(p, mu, sigma) - target_cdf
-# }
-#
-# result <- uniroot(f, interval = c(0,1), tol = 0.00001, mu = 2, sigma = 1, target_cdf = 0.5)
-# print(result)
+# quantile.R
 
 #' Get quantile(s) of p-curves corresponding to requested target_cdfs.
 #' @inheritParams pdf
@@ -14,7 +7,7 @@
 #' @export
 quantile <- function(target_cdfs, mu, sigma, pi = 1, alpha = 1, tails = 2, tol = 1e-8) {
   f <- function(p, mu, sigma, pi, alpha, tails, target_cdf) {
-    pcurveMix::cdf(p, mu, sigma) - target_cdf
+    pcurveMix::cdf(p, mu, sigma, pi = pi, alpha = alpha, tails = tails) - target_cdf
   }
   nps <- length(target_cdfs)
   quantiles <- numeric(nps)
@@ -26,6 +19,3 @@ quantile <- function(target_cdfs, mu, sigma, pi = 1, alpha = 1, tails = 2, tol =
   return(quantiles)
 }
 
-# ps <- seq(0.1,0.9,0.1)
-# qs <- quantile(ps, 2, 1)
-# print(qs)
