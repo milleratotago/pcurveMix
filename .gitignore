@@ -13,7 +13,7 @@
 *-Ex.R
 
 # Output files from R CMD build
-/*.tar.gz
+#  /*.tar.gz  NEWJEFF: ALLOW FOR ROLF WHILE PRIVATE
 
 # Output files from R CMD check
 /*.Rcheck/
