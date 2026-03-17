@@ -28,8 +28,10 @@ random(
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2).}
 
-\item{cond_method}{String "rejection" (default) or "inversion" to generate random
-p's from conditional distribution via rejection or quantile method.}
+\item{cond_method}{Set to string "rejection" (default) or "inversion" to generate random
+p's from conditional distribution via rejection or quantile method. Rejection generates
+values 0-1 but only keeps those less than alpha. Inversion uses numerical search of the p
+distribution with the quantile function, which is usually slower except for really small alpha.}
 
 \item{tol}{Real tolerance when generating p's via quantiles (default = 1e-8).}
 }

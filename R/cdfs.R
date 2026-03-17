@@ -55,6 +55,10 @@ F_cond_1t_h1 <- function(p, mu, sigma, alpha) {
   F_uncond_1t_h1(p, mu, sigma) / Cnorm
 }
 
-F_cond_1t_mix  <- function(p, mu, sigma, pi, alpha) (1 - pi) * p + pi * F_cond_1t_h1(p, mu, sigma, alpha)
+F_cond_1t_mix  <- function(p, mu, sigma, pi, alpha) {
+  Cnorm <- (1 - pi) * alpha + pi * F_uncond_1t_h1(alpha, mu, sigma)
+  F_uncond_1t_mix(p, mu, sigma, pi) / Cnorm
+}
+
 
 
