@@ -1,0 +1,89 @@
+---
+title: "CheckSomeFunctions"
+author: "Rolf"
+format: html
+editor: visual
+---
+
+## Some function checks
+
+```{r}
+
+## Beschreibung
+packageDescription("pcurveMix")$Description
+
+
+##  Fitting
+set.seed(1)
+
+# p-values simulieren
+pvals <- random(
+  n     = 1500,
+  mu    = 2,
+  sigma = 1,
+  pi    = 0.5,
+  alpha = 0.05,
+  tails = 2
+)
+
+# fitten
+fit <- fit_p_curve(p=pvals)
+
+# Ergebnis ansehen
+fit
+
+
+
+## pdf plot
+p_grid <- seq(0.001, 1, length.out = 500)
+
+dens1 <- pdf(p_grid, mu = 2, sigma = 0.0, pi = 0.6, alpha = 0.05, tails = 2)
+dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = 0.05, tails = 2)
+dens3 <- pdf(p_grid, mu = 2, sigma = 1.0, pi = 0.6, alpha = 0.05, tails = 2)
+
+plot(
+  p_grid, dens1, type = "l", lwd = 2,
+  xlab = "p-value",
+  ylab = "Density",
+   ylim = c(0,30),
+  main = "Effect of sigma on the p-curve PDF"
+)
+
+lines(p_grid, dens2, lwd = 2, lty = 2)
+lines(p_grid, dens3, lwd = 2, lty = 3)
+
+legend(
+  "topright",
+  legend = c("sigma = 0", "sigma = 0.5", "sigma = 1"),
+  lwd = 2,
+  lty = c(1, 2, 3)
+)
+
+
+
+
+p_grid <- seq(0.001, 1, length.out = 500)
+
+dens1 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.2, alpha = 0.05, tails = 2)
+dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = 0.05, tails = 2)
+dens3 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 1.0, alpha = 0.05, tails = 2)
+
+plot(
+  p_grid, dens1, type = "l", lwd = 2,
+  xlab = "p-value",
+  ylab = "Density",
+  ylim = c(0,30),
+  main = "Effect of pi on the p-curve PDF"
+)
+
+lines(p_grid, dens2, lwd = 2, lty = 2)
+lines(p_grid, dens3, lwd = 2, lty = 3)
+
+legend(
+  "topright",
+  legend = c("pi = 0.2", "pi = 0.6", "pi = 1.0"),
+  lwd = 2,
+  lty = c(1, 2, 3)
+)
+
+```
