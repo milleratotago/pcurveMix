@@ -56,10 +56,37 @@ fit_p_curve <- function(p, alpha = 1, tails = 2,
       ci["sigma",] <- pmax(ci["sigma",], 1e-6)
     }
   }
-  list(pi = est[1], mu = est[2], sigma = est[3],
+  fit <- list(pi = est[1], mu = est[2], sigma = est[3],
        se = se, ci95 = ci,
        logLik = -opt$value, converged = (opt$convergence == 0),
        n = length(p))
+  fit$power_hat <- cdf(alpha, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
+  cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = 1, tails = tails)
+  fit$ks <- ks_with_cdf(p, cdf_fit)
+  return(fit)
 } # fit_p_curve
 
+# ---------- Helper: KS with tiny jitter to avoid ties warnings ----------
+ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
+  p2 <- if (any(duplicated(p))) p + stats::runif(length(p), -jitter_scale, jitter_scale) else p
+  suppressWarnings(stats::ks.test(p2, cdf_fun))
+}
 
+#' Convert the output list from fit_p_curve
+#'   into a nice data frame.
+#' @param fit Output list from fit_p_curve
+#' @returns A data frame
+#' @importFrom rlang .data
+#' @export
+fit_to_estimates_tbl <- function(fit) {
+  mle_tbl <- data.frame(
+    parameter = c("pi","mu","sigma","power"),
+    estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power_hat),
+    Wald_SE   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
+    Wald_lwr  = c(if (!is.null(fit$ci95)) fit$ci95[, "lwr95"] else c(NA,NA,NA), NA),
+    Wald_upr  = c(if (!is.null(fit$ci95)) fit$ci95[, "upr95"] else c(NA,NA,NA), NA),
+    row.names = NULL
+  )
+  mle_tbl <- mle_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
+  return(mle_tbl)
+}

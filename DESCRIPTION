@@ -1,6 +1,6 @@
 Type: Package
 Package: pcurveMix
-Title: Computations and Fitting for a P-Curve Mixture Model
+Title: Computations and Fitting for the P-Curve Mixture Model
 Version: 0.1.0
 Authors@R: c(
     person("Rolf", "Ulrich", , "ulrich@uni-tuebingen.de", role = "aut"),
@@ -16,9 +16,12 @@ Description: Package for computations and fitting with the p-curve mixture
     PDF and CDF values of specific p's given particular values of \pi,
     \mu, and \sigma, and they estimate the underlying \pi, \mu, and \sigma
     values from a set of observed p values.
+Depends: R (>= 4.1.0)
 License: GPL (>= 3) + file LICENSE
 Imports:
-    stats
+    dplyr,
+    stats,
+    rlang
 Encoding: UTF-8
 RoxygenNote: 7.3.3
 Suggests: 

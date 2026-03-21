@@ -10,18 +10,20 @@
 #' @returns Real PDF value or vector of PDF values.
 #' @export
 pdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
-  p <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )
+  p2 <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )
   pdfs <- switch(
     case_id(alpha, tails, pi),
-    "uncond_2t_h1"  = f_uncond_2t_h1  (p, mu, sigma),
-    "uncond_2t_mix" = f_uncond_2t_mix (p, mu, sigma, pi),
-    "uncond_1t_h1"  = f_uncond_1t_h1  (p, mu, sigma),
-    "uncond_1t_mix" = f_uncond_1t_mix (p, mu, sigma, pi),
-    "cond_2t_h1"    =   f_cond_2t_h1  (p, mu, sigma, alpha),
-    "cond_2t_mix"   =   f_cond_2t_mix (p, mu, sigma, pi, alpha),
-    "cond_1t_h1"    =   f_cond_1t_h1  (p, mu, sigma, alpha),
-    "cond_1t_mix"   =   f_cond_1t_mix (p, mu, sigma, pi, alpha)
+    "uncond_2t_h1"  = f_uncond_2t_h1  (p2, mu, sigma),
+    "uncond_2t_mix" = f_uncond_2t_mix (p2, mu, sigma, pi),
+    "uncond_1t_h1"  = f_uncond_1t_h1  (p2, mu, sigma),
+    "uncond_1t_mix" = f_uncond_1t_mix (p2, mu, sigma, pi),
+    "cond_2t_h1"    =   f_cond_2t_h1  (p2, mu, sigma, alpha),
+    "cond_2t_mix"   =   f_cond_2t_mix (p2, mu, sigma, pi, alpha),
+    "cond_1t_h1"    =   f_cond_1t_h1  (p2, mu, sigma, alpha),
+    "cond_1t_mix"   =   f_cond_1t_mix (p2, mu, sigma, pi, alpha)
   )
+  out_of_range <- (p < 0) | (p > alpha) | is.nan(pdfs)
+  pdfs[out_of_range] <- 0
   return(pdfs)
 }
 

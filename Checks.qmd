@@ -9,12 +9,19 @@ editor: visual
 
 ```{r}
 
+library(pcurveMix)
+
 ## Beschreibung
-packageDescription("pcurveMix")$Description
+cat(as.character(packageDescription("pcurveMix")$Description))
 
 
 ##  Fitting
 set.seed(1)
+
+# NEWROLF: This value must be used consistently
+# in a number of places, so I made a variable for it.
+# Search for this variable to see where it must be used.
+alpha_cutoff <- 0.05
 
 # p-values simulieren
 pvals <- random(
@@ -22,24 +29,33 @@ pvals <- random(
   mu    = 2,
   sigma = 1,
   pi    = 0.5,
-  alpha = 0.05,
+  alpha = alpha_cutoff,
   tails = 2
 )
 
 # fitten
-fit <- fit_p_curve(p=pvals)
+# NEWROLF: 
+# The default alpha selection is 1 so the following command of yours
+# assumed that the pvals were unconditional. Since they were all
+# significant, the best fit has a very high pi value.
+# The fit is closer to the true values if we specify
+# that the pvals were selected to be alpha<0.05.
+# fit <- fit_p_curve(p=pvals)
+fit <- fit_p_curve(p=pvals, alpha = alpha_cutoff)
 
 # Ergebnis ansehen
 fit
 
+mle_tbl <- fit_to_tbl(fit)
+mle_tbl
 
 
 ## pdf plot
 p_grid <- seq(0.001, 1, length.out = 500)
 
-dens1 <- pdf(p_grid, mu = 2, sigma = 0.0, pi = 0.6, alpha = 0.05, tails = 2)
-dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = 0.05, tails = 2)
-dens3 <- pdf(p_grid, mu = 2, sigma = 1.0, pi = 0.6, alpha = 0.05, tails = 2)
+dens1 <- pdf(p_grid, mu = 2, sigma = 0.0, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+dens3 <- pdf(p_grid, mu = 2, sigma = 1.0, pi = 0.6, alpha = alpha_cutoff, tails = 2)
 
 plot(
   p_grid, dens1, type = "l", lwd = 2,
@@ -64,9 +80,9 @@ legend(
 
 p_grid <- seq(0.001, 1, length.out = 500)
 
-dens1 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.2, alpha = 0.05, tails = 2)
-dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = 0.05, tails = 2)
-dens3 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 1.0, alpha = 0.05, tails = 2)
+dens1 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.2, alpha = alpha_cutoff, tails = 2)
+dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+dens3 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 1.0, alpha = alpha_cutoff, tails = 2)
 
 plot(
   p_grid, dens1, type = "l", lwd = 2,
@@ -87,3 +103,29 @@ legend(
 )
 
 ```
+
+NEWROLF: It's good that you found this bug with the `pdf` function.
+The problem was with this line:
+
+`  p <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )`
+
+When computing the curve for the full 0-1 range of $p$ values,
+this replaced all $p>0.05$ with $p=0.05$ and this produced the
+flat density curve above zero for all $p$ values above 0.05.
+It is fixed now.
+
+# Parametric bootstrapping
+
+NEWROLF: Bootstrapping has now been added to the package.
+
+```{r}
+n_ps <- length(pvals)
+n_boot_samples <- 200
+boot_df <- bootstrap(n_ps, fit, n_boot_samples, alpha = alpha_cutoff, tails = 2)
+boot_tbl <- bootstrap_summary(boot_df)
+boot_tbl
+
+combined_tbl <- merge_tables(mle_tbl, boot_tbl)
+combined_tbl
+```
+

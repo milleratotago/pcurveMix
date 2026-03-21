@@ -16,7 +16,7 @@ random(
 )
 }
 \arguments{
-\item{n}{Number of random values to be generated.}
+\item{n}{Number of random p values to be generated.}
 
 \item{mu}{Mean of noncentrality parameters when H1 is true.}
 

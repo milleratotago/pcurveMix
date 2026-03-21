@@ -13,6 +13,9 @@ test_that("Check that integrals of PDFs equal differences of CDFs", {
         dif4 = round(cdf(p_hi,  mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails) -
                      cdf(p_low, mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails), 4)
         expect_equal(int4, dif4)
+        # Check that full-range integral of pdf = 1 (to 4 decimal places)
+        full_integral <- integrate(pdf, lower = 0, upper = alpha, mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails)
+        expect_equal(round(full_integral$value,4),1)
       } # for tails
     } # for alpha
   } # for pi

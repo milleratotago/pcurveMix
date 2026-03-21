@@ -1,0 +1,88 @@
+---
+title: "demo_fit_and_report"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{demo_fit_and_report}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(pcurveMix)
+set.seed(1234)  # for reproducability
+```
+
+This vignette illustrates fitting the model to some observed $p$ values, performing parametric bootstrapping, and getting a complete report of the results.
+
+First, generate some (arbitrary) random $p$ values to serve as the dataset that is to be fit.
+These $p$ values are generated in accordance with the assumptions of the model.
+
+```{r generate}
+alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significance
+tails <- 2
+true_mu <- 2
+true_sigma <- 0.2
+true_pi <- 0.3
+n_ps <- 5000
+sample_ps <- pcurveMix::random(n_ps, mu = true_mu, sigma = true_sigma, pi = true_pi, alpha = alpha_cutoff, tails = tails)
+```
+
+Fit the mixture model to these $p$'s and print the results as a list:
+
+```{r}
+fit_results_list <- fit_p_curve(sample_ps, alpha = alpha_cutoff, tails = tails)
+print(fit_results_list)
+```
+
+Now print a nice table of parameter estimates:
+
+```{r}
+fit_tbl <- fit_to_estimates_tbl(fit_results_list)
+print(fit_tbl)
+```
+
+**NEWJEFF: I still need nice reports of logLik, converged, n, ks**
+
+Perform parametric bootstrapping using the fitted parameters:
+
+```{r}
+n_boot_samples <- 20
+df <- bootstrap(n_ps, fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
+boot_tbl <- bootstrap_summary(df)
+print(boot_tbl)
+```
+
+Produce a wide table with the combined fitting and bootstrap results:
+
+```{r}
+combined_tbl <- merge_tables(fit_tbl, boot_tbl)
+print(combined_tbl)
+```
+
+Plot histogram of the $p$ values with an overlaid line showing the predicted pdf from the fitted model.
+
+```{r, fig.width=6}
+hist(sample_ps, freq = FALSE, xlim = c(0, alpha_cutoff) )
+p <- seq(0.001,0.999,0.002)
+pred_pdfs <- pdf(p, mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi,
+                 alpha = alpha_cutoff, tails = tails)
+lines(p, pred_pdfs, col = "red")
+```
+
+Plot a cumulative histogram of the $p$ values with an overlaid line showing the predicted cdf from the fitted model.
+
+```{r, fig.width=6}
+empirical <- ecdf(sample_ps)
+plot(empirical, main = "Observed vs Predicted CDF", xlab = "p value", ylab = "CDF(p)")
+pred_cdfs <- cdf(p, mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi,
+                 alpha = alpha_cutoff, tails = tails)
+lines(p, pred_cdfs, col = "red")
+```
+

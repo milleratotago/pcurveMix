@@ -23,36 +23,37 @@ This vignette illustrates fitting the model to some observed $p$ values.
 
 First, generate some (arbitrary) random $p$ values to serve as the dataset that is to be fit:
 
-```{r}
+```{r generate}
 ps_h0 <- runif(500)
 ps_h1 <- runif(500)^4
 ps <- c(ps_h0, ps_h1)
 hist(ps)
 ```
 
-Fit the mixture model to these ps:
+Fit the mixture model to these $p$'s:
 
 ```{r}
-fit_results_2tailed <- fit_p_curve(ps)
+fit_results_2tailed <- fit_p_curve(ps) # assumes 2-tailed p's in 0-1 range
 print(fit_results_2tailed)
 ```
-Alternatively, fit the same ps assuming 1-tailed that they come from 1-tailed tests:
+
+Alternatively, fit the same $p$'s assuming that they come from 1-tailed tests:
 
 ```{r}
 fit_results_1tailed <- fit_p_curve(ps, tails = 1)
 print(fit_results_1tailed)
 ```
-Select out the significant p's and refit the model using just those:
+
+Select out the significant $p$'s and refit the model using just those:
 
 ```{r}
 alpha <- 0.05
 ps_sig <- ps[ps < alpha]
 
-fit_sig_results_2tailed <- fit_p_curve(ps_sig, alpha = alpha)
+fit_sig_results_2tailed <- fit_p_curve(ps_sig, alpha = alpha) # assumes 2-tailed p's in 0-alpha range
 print(fit_sig_results_2tailed)
 
-fit_sig_results_1tailed <- fit_p_curve(ps_sig, alpha = alpha, tails = 1)
+fit_sig_results_1tailed <- fit_p_curve(ps_sig, alpha = alpha, tails = 1) # or assuming 1-tailed
 print(fit_sig_results_1tailed)
-
 ```
 
