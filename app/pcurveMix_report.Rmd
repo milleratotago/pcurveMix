@@ -1,0 +1,44 @@
+---
+title: "PcurveMix Fit Report"
+date: "`r format(Sys.time(), '%Y_%m_%d_%H_%M_%S')`"
+output:
+  word_document: default
+  pdf_document: 
+  html_document:
+    df_print: paged
+params:
+  descriptor_tbl: NA
+  estimates_tbl: NA
+  pdf_plot: NA
+  cdf_plot: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 6, fig.height = 4)
+```
+
+## Fitting parameters and summary results
+
+```{r print_fitting_parameters, echo=FALSE, results='asis'}
+print(knitr::kable(params$descriptor_tbl))
+```
+
+## Estimated model parameters
+
+```{r print_parameter_estimates, echo=FALSE, results='asis'}
+print(knitr::kable(params$estimates_tbl))
+```
+
+## Estimated versus predicted PDFs of $p$'s
+
+```{r plot pdf, echo=FALSE}
+# plot(params$pdf_plot) NEWJEFF NOT YET ggplot
+```
+
+
+## Estimated versus predicted CDFs of $p$'s
+
+```{r plot cdf, echo=FALSE}
+plot(params$cdf_plot)
+```
+

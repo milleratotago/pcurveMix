@@ -18,23 +18,24 @@ cat(as.character(packageDescription("pcurveMix")$Description))
 ##  Fitting
 set.seed(1)
 
-# NEWROLF: This value must be used consistently
+# ROLF: This value must be used consistently
 # in a number of places, so I made a variable for it.
 # Search for this variable to see where it must be used.
 alpha_cutoff <- 0.05
 
+#NEWJEFF: See demo_fit_and_Report.Rmd for a comment that also applies here.
 # p-values simulieren
 pvals <- random(
   n     = 1500,
   mu    = 2,
   sigma = 1,
-  pi    = 0.5,
+  pi    = 0.2,
   alpha = alpha_cutoff,
   tails = 2
 )
 
 # fitten
-# NEWROLF: 
+# ROLF: 
 # The default alpha selection is 1 so the following command of yours
 # assumed that the pvals were unconditional. Since they were all
 # significant, the best fit has a very high pi value.
@@ -46,6 +47,8 @@ fit <- fit_p_curve(p=pvals, alpha = alpha_cutoff)
 # Ergebnis ansehen
 fit
 
+# NEWJEFF: I got the following error message: 
+# Fehler in fit_to_tbl(fit) : konnte Funktion "fit_to_tbl" nicht finden
 mle_tbl <- fit_to_tbl(fit)
 mle_tbl
 
@@ -104,19 +107,15 @@ legend(
 
 ```
 
-NEWROLF: It's good that you found this bug with the `pdf` function.
-The problem was with this line:
+ROLF: It's good that you found this bug with the `pdf` function. The problem was with this line:
 
-`  p <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )`
+`p <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )`
 
-When computing the curve for the full 0-1 range of $p$ values,
-this replaced all $p>0.05$ with $p=0.05$ and this produced the
-flat density curve above zero for all $p$ values above 0.05.
-It is fixed now.
+When computing the curve for the full 0-1 range of $p$ values, this replaced all $p>0.05$ with $p=0.05$ and this produced the flat density curve above zero for all $p$ values above 0.05. It is fixed now.
 
 # Parametric bootstrapping
 
-NEWROLF: Bootstrapping has now been added to the package.
+ROLF: Bootstrapping has now been added to the package.
 
 ```{r}
 n_ps <- length(pvals)
@@ -125,7 +124,7 @@ boot_df <- bootstrap(n_ps, fit, n_boot_samples, alpha = alpha_cutoff, tails = 2)
 boot_tbl <- bootstrap_summary(boot_df)
 boot_tbl
 
+#NEWJEFF: Here the program seems to stop, I get a red line on the left side.
 combined_tbl <- merge_tables(mle_tbl, boot_tbl)
 combined_tbl
 ```
-

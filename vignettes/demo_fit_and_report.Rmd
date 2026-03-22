@@ -14,6 +14,9 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+
+
 This vignette illustrates fitting the model to some observed $p$ values, performing parametric bootstrapping, and getting a complete report of the results. Typically, users would have their own datasets of $p$ values to which the model should be fit.
 
 ```{r setup, message=FALSE, warning=FALSE}
@@ -31,9 +34,13 @@ These $p$ values are generated in accordance with the assumptions of the model.
 alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significance
 tails <- 2
 true_mu <- 2
-true_sigma <- 0.2
-true_pi <- 0.3
+true_sigma <- 2
+true_pi <- 0.2
 n_ps <- 2000
+#NEWJEFF: R complains about the next line. It says that "random" ist kein exportiertes Objekt aus 'namespace:pcurveMix
+# AI says I should run this and then it worked....?  
+#  devtools::document()
+#  devtools::load_all()
 sample_ps <- pcurveMix::random(n_ps, mu = true_mu, sigma = true_sigma, pi = true_pi, alpha = alpha_cutoff, tails = tails)
 ```
 
@@ -49,6 +56,8 @@ fit_results_list <- fit_p_curve(sample_ps, alpha = alpha_cutoff, tails = tails)
 
 ### Print a table summarizing the fitting parameters and results:
 
+
+NEWJEFF: It says below n_ps=1999 but above I asked for n_ps=2000?
 ```{r}
 descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list)
 print(descriptor_tbl)
