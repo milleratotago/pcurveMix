@@ -26,3 +26,8 @@ To install the package from inside RStudio:
 
 You should then be able to see the vignettes with `> browseVignettes(package = "pcurveMix")`
 
+NEWJEFF: TO DO
+
+- Eliminate out-of-bound p's and report that
+- Report min/max p's
+- alpha is currently used in 2 different ways: (1) in the sense of alpha_cutoff for indicating how studies were selected, and (2) as the significance criterion when assessing power

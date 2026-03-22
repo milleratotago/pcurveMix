@@ -2,8 +2,7 @@
 % Please edit documentation in R/fitting.R
 \name{fit_to_estimates_tbl}
 \alias{fit_to_estimates_tbl}
-\title{Convert the output list from fit_p_curve
-  into a nice data frame.}
+\title{Convert the fit_p_curve parameter estimates into a nice data frame.}
 \usage{
 fit_to_estimates_tbl(fit)
 }
@@ -14,6 +13,5 @@ fit_to_estimates_tbl(fit)
 A data frame
 }
 \description{
-Convert the output list from fit_p_curve
-  into a nice data frame.
+Convert the fit_p_curve parameter estimates into a nice data frame.
 }

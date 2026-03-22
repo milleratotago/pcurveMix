@@ -65,16 +65,9 @@ bootstrap_summary <- function(boot_df) {
 #' @export
 merge_tables <- function(mle_tbl, boot_tbl) {
   combined <- dplyr::inner_join(mle_tbl, boot_tbl, by = "parameter")
-  # combined <- merge(
-  #   within(mle_tbl, {
-  #     estimate <- round(estimate, 6); Wald_SE <- round(Wald_SE, 6)
-  #     Wald_lwr <- round(Wald_lwr, 6); Wald_upr <- round(Wald_upr, 6)
-  #   }),
-  #   boot_tbl, by = "parameter", all = TRUE, suffixes = c("_MLE", "_Boot")
-  # )
-  names(combined) <- c("parameter",
-                       "MLE_estimate", "Wald_SE", "Wald_CI_lwr", "Wald_CI_upr",
+  names(combined) <- c("Param",
+                       "MLE_est", "Wald_SE", "Wald_CI_lwr", "Wald_CI_upr",
                        "Boot_SE", "Boot_CI_lwr", "Boot_CI_upr")
-  combined <- combined |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
+  combined <- combined |> dplyr::arrange(factor(.data$Param, levels = c("mu", "sigma", "pi", "power")))
   return(combined)
 }
