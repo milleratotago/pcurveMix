@@ -32,9 +32,8 @@ print(knitr::kable(params$estimates_tbl))
 ## Estimated versus predicted PDFs of $p$'s
 
 ```{r plot pdf, echo=FALSE}
-# plot(params$pdf_plot) NEWJEFF NOT YET ggplot
+plot(params$pdf_plot)
 ```
-
 
 ## Estimated versus predicted CDFs of $p$'s
 

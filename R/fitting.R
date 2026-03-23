@@ -24,7 +24,7 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' Fit estimates of model pi, mu, sigma to a vector of p values.
 #' @param p Vector of p values in 0--1
 #' @inheritParams pdf
-#' @param alpha_sig Significance cutoff for power computation
+#' @param alpha_sig Significance cutoff for power computation (default = 0.05).
 #' @param start List of starting parameter values for optim search
 #'  (defaults:  pi = 0.5, mu = 2, sigma = 2).
 #' @param lower Vector of lower bounds for pi, mu, and sigma
@@ -34,12 +34,11 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @returns List with estimated parameter values, their standard errors
 #'  and 95% confidence limits, etc.
 #' @export
-fit_p_curve <- function(p, alpha = 1, tails = 2,
-                        alpha_sig = 0.05,
+fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                         start = list(pi = 0.5, mu = 2, sigma = 2),
                         lower = c(1e-6,      0, 1e-6),
                         upper = c(1 - 1e-6, 15, 10)) {
-  p <- as.numeric(p); p <- p[p > 0 & p < 1]
+  p <- as.numeric(p); p <- p[p >= 0 & p <= alpha]
   if (!length(p)) stop("No valid p-values in (0,1).")
 
   opt <- stats::optim(par = unlist(start), fn = nll_optim, p = p, alpha = alpha, tails = tails,
@@ -61,7 +60,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2,
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = est[1], mu = est[2], sigma = est[3],
               se = se, ci95 = ci, logLik = -opt$value,
-              converged = (opt$convergence == 0), n = length(p))
+              converged = (opt$convergence == 0), n = length(p), min_p = min(p), max_p = max(p) )
   fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
   cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = 1, tails = tails)
   fit$ks <- ks_with_cdf(p, cdf_fit)
@@ -99,6 +98,8 @@ fit_to_estimates_tbl <- function(fit) {
 fit_to_descriptor_tbl <- function(fit) {
   descriptor_tbl <- data.frame()
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_ps", as.character(round(fit$n,0))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", as.character(round(fit$min_p,6))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("max(p)", as.character(round(fit$max_p,6))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_cutoff",as.character(round(fit$alpha,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))

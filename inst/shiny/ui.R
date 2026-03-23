@@ -1,27 +1,14 @@
 
+
+if (!require(shiny)) install.packages('shiny')
+if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
+
 # Helper function for ui
 inline_numericInput=function(ni){
   tags$div( class="form-inline",ni)
 }
 
 button_width <- "250px"
-
-tags$head(tags$style(
-  "#side_panel{padding-left:10px;}
-  .form-group {margin-bottom: 5px;}
-  .form-inline .form-control {width: 100%}
-  .shiny-notification
-  {
-    color:#ffffff;
-    background-color:#112446;
-    font-size: 150%;
-    width: 200%;
-    position: fixed;
-    top: 90%;
-    left: 50%;
-  }
-  hr{border-top: 2px solid #aaaaaa;}"
-))
 
 
 #=========================================================================
@@ -33,6 +20,24 @@ ui <- tagList(
   shinyFeedback::useShinyFeedback(),
 
   fluidPage(
+
+    tags$head(tags$style(
+      "#side_panel{padding-left:10px;}
+      .form-group {margin-bottom: 5px;}
+      .form-inline .form-control {width: 100%}
+      .shiny-notification
+      {
+      color:#ffffff;
+      background-color:#112446;
+      font-size: 120%;
+      width: 200%;
+      position: fixed;
+      top: 90%;
+      left: 20%;
+      }
+      hr{border-top: 2px solid #050505;}"
+      )),
+
     fluidRow(
       column(12, titlePanel("Fit Ulrich & Miller (2026) p-curve mixture model"))
     ),
@@ -53,20 +58,24 @@ ui <- tagList(
                      )
                    ),
                    fluidRow(
-                     column(12, textInput("custom_cutoff","Upper p cutoff:", value = "0.1")
+                     column(12, textInput("custom_cutoff","Upper p cutoff for inclusion in file:", value = "0.1")
                      ),
                    ),
                    fluidRow(
-                     column(12, textInput("n_boot_samples","N bootstrap samples:", value = "200")
+                     column(12, textInput("alpha_sig","Alpha level for power computations:", value = "0.05")
+                     ),
+                   ),
+                   fluidRow(
+                     column(12, textInput("n_boot_samples","N bootstrap samples for analysis:", value = "200")
                      ),
                    ),
                    hr(),
                    fluidRow(
-                     column(12, actionButton("btnFit","Fit model"))
+                     column(12, actionButton("btnFit","Fit the model"))
                    ),
                    h4(),
                    fluidRow(
-                     column(12, downloadButton("btnReport","Save results"))
+                     column(12, downloadButton("btnReport","Download fit results"))
                    )
       ), # end sidebar panel
       mainPanel(width = 8,
