@@ -8,7 +8,9 @@ editor: visual
 ## Some function checks
 
 ```{r}
+#NEWJEFF: This seems not to work properly on my machine. I don't see estimates?! I guess I don't understand the tools. Can you make a little script that simulates p-values in the 0-1 range and then estimated pi, mu and sigma?
 
+devtools::load_all()
 library(pcurveMix)
 
 ## Beschreibung
@@ -16,7 +18,7 @@ cat(as.character(packageDescription("pcurveMix")$Description))
 
 
 ##  Fitting
-set.seed(1)
+set.seed(122)
 
 # ROLF: This value must be used consistently
 # in a number of places, so I made a variable for it.
@@ -28,8 +30,8 @@ alpha_cutoff <- 0.05
 pvals <- random(
   n     = 1500,
   mu    = 2,
-  sigma = 1,
-  pi    = 0.2,
+  sigma = 2,
+  pi    = 0.3,
   alpha = alpha_cutoff,
   tails = 2
 )

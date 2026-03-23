@@ -37,11 +37,11 @@ true_mu <- 2
 true_sigma <- 2
 true_pi <- 0.2
 n_ps <- 2000
-#NEWJEFF: R complains about the next line. It says that "random" ist kein exportiertes Objekt aus 'namespace:pcurveMix
+#JEFF: R complains about the next line. It says that "random" ist kein exportiertes Objekt aus 'namespace:pcurveMix
 # AI says I should run this and then it worked....?  
 #  devtools::document()
 #  devtools::load_all()
-#NEWROLF:
+#ROLF:
 # This indicates that the above command "library(pcurveMix)"
 # is not loading the latest version of the library. There was no
 # function "random" in a previous version. I think it may be
@@ -53,6 +53,7 @@ n_ps <- 2000
 # You might also remove some of the packages that give you the "erstellt"
 # message about old versions.  Then RStudio will automatically install
 # the latest versions.
+# NEWEJFF: I have done it and then knitted this Rmd. There were no estimates?! NA NA NA 
 sample_ps <- pcurveMix::random(n_ps, mu = true_mu, sigma = true_sigma, pi = true_pi, alpha = alpha_cutoff, tails = tails)
 ```
 
