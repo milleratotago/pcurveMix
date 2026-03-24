@@ -40,6 +40,7 @@ Check that the installation has been successful.
 > # p-curves from a random-effects model
 > ps <- pcurveMix::random(n = 20, mu = 2, sigma = 1)
 > print(ps)
+> # This should give 20 random p values.
 ```
 
 ```r

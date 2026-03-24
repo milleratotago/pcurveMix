@@ -10,7 +10,6 @@ editor: visual
 ```{r}
 #NEWJEFF: This seems not to work properly on my machine. I don't see estimates?! I guess I don't understand the tools. Can you make a little script that simulates p-values in the 0-1 range and then estimated pi, mu and sigma?
 
-devtools::load_all()
 library(pcurveMix)
 
 ## Beschreibung
@@ -25,9 +24,10 @@ set.seed(122)
 # Search for this variable to see where it must be used.
 alpha_cutoff <- 0.05
 
-#NEWJEFF: See demo_fit_and_Report.Rmd for a comment that also applies here.
+#JEFF: See demo_fit_and_Report.Rmd for a comment that also applies here.
+#NEWROLF: See that comment. I hope it is fixed now.
 # p-values simulieren
-pvals <- random(
+pvals <- pcurveMix::random(
   n     = 1500,
   mu    = 2,
   sigma = 2,
@@ -49,10 +49,16 @@ fit <- fit_p_curve(p=pvals, alpha = alpha_cutoff)
 # Ergebnis ansehen
 fit
 
-# NEWJEFF: I got the following error message: 
+# JEFF: I got the following error message: 
 # Fehler in fit_to_tbl(fit) : konnte Funktion "fit_to_tbl" nicht finden
-mle_tbl <- fit_to_tbl(fit)
-mle_tbl
+# mle_tbl <- fit_to_tbl(fit)
+# mle_tbl
+# NEWROLF: Sorry, I changed the function name in the package
+# but not in Checks.qmd. It should work now.
+descriptor_tbl <- fit_to_descriptor_tbl(fit)
+print(descriptor_tbl)
+estimates_tbl <- fit_to_estimates_tbl(fit)
+print(estimates_tbl)
 
 
 ## pdf plot
@@ -79,8 +85,6 @@ legend(
   lwd = 2,
   lty = c(1, 2, 3)
 )
-
-
 
 
 p_grid <- seq(0.001, 1, length.out = 500)
@@ -126,7 +130,10 @@ boot_df <- bootstrap(n_ps, fit, n_boot_samples, alpha = alpha_cutoff, tails = 2)
 boot_tbl <- bootstrap_summary(boot_df)
 boot_tbl
 
-#NEWJEFF: Here the program seems to stop, I get a red line on the left side.
-combined_tbl <- merge_tables(mle_tbl, boot_tbl)
+#JEFF: Here the program seems to stop, I get a red line on the left side.
+#combined_tbl <- merge_tables(mle_tbl, boot_tbl)
+#NEWROLF: I am not sure about this one. Maybe because of the earlier
+# problem with mle_tbl?  I hope it works now...
+combined_tbl <- merge_tables(estimates_tbl, boot_tbl)
 combined_tbl
 ```
