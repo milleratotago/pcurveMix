@@ -1,4 +1,4 @@
-# pcurveMix CHANGED
+# pcurveMix
 
 This is an R package for computations with *p*-curves under the Ulrich &amp; Miller (2026) mixture model.
 According to the model, an observed set of *p* values comes from a population of studies within which
@@ -12,20 +12,74 @@ either from a complete set of studies (i.e., 0<*p*<1) or from a set of studies
 selected to have significant results (i.e., $p<\alpha$).
 The fitting results include estimates of the model's parameters and standard errors of those estimates.
 
-Functions are also provided to compute the model's predicted PDFs of *p*, CDFs of *p*, quantiles, and random *p* values
+Functions are also provided to compute the model's predicted PDFs of *p*, CDFs of *p*, and quantiles, as well as to generate random *p* values
 under any specified set of parameter values.
 
 Both one- and two-tailed *p* values are supported.
 
-## ONCE THE PACKAGE IS PUBLIC:
+## Installation
 
-To install the package from inside RStudio:
-- `> install.packages("remotes")`  # if you don't already have this package.
-- `> remotes::install_github("milleratotag/pcurveMix", build_vignettes = TRUE)`
-- `> library(pcurveMix)
+Install package **pcurveMix** directly from source via GitHub using the command in RStudio: 
 
-You should then be able to see the vignettes with `> browseVignettes(package = "pcurveMix")`
+```r
+> remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)
+```
 
-NEWJEFF: TO DO
+The package files are installed into R's standard package directory, wherever that is on your computer, just as if you were installing from CRAN.
+
+The previous command requires the package `remotes` to be installed on your machine.
+If package `remotes` is not already installed, first run the command `install.packages("remotes")`.
+(This command only needs to be executed once per machine.)
+
+## Confirm Install
+
+Check that the installation has been successful.
+
+```r
+> # Call a pcurveMix function with test values. This method generates random
+> # p-curves from a random-effects model
+> ps <- pcurveMix::random(n = 20, mu = 2, sigma = 1)
+> print(ps)
+```
+
+```r
+> # Make sure that RStudio can load the library successfully.
+> library(pcurveMix)
+```
+
+```r
+> # Display the source code of one of pcurveMix's functions
+> pcurveMix::bootstrap
+```
+
+## Demos
+
+After installation, you should be able to see the demonstration vignettes with
+
+```r
+> browseVignettes(package = "pcurveMix")
+```
+
+These vignettes illustrate different computations and model fitting scenarios.
+
+## Launch the Companion RShiny Application
+
+With this GUI tool, you can upload a csv file of p-values and quickly fit the model. 
+Here is how to do start the shiny app from inside RStudio:
+
+```r
+> # Find the path to the RShiny app.R file as installed on your machine
+> shiny_path <- system.file("shiny", "app.R", package = "pcurveMix")
+
+> # Launch the shiny application:
+> shiny::runApp(shiny_path)
+```
+
+A simple example input file is included with the package install. Its path can
+be found by running this statement in the RStudio console:
+
+`system.file("shiny", "sample_ps.csv", package = "pcurveMix")`
+
+## NEWJEFF: TO DO
 
 - Eliminate out-of-bound p's and report that
