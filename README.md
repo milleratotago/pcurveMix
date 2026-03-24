@@ -1,4 +1,4 @@
-# pcurveMix
+# pcurveMix CHANGED
 
 This is an R package for computations with *p*-curves under the Ulrich &amp; Miller (2026) mixture model.
 According to the model, an observed set of *p* values comes from a population of studies within which
