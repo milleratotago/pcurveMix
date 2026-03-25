@@ -4,7 +4,7 @@
 \alias{fit_to_descriptor_tbl}
 \title{Convert the fit_p_curve fit descriptors into a nice data frame.}
 \usage{
-fit_to_descriptor_tbl(fit)
+fit_to_descriptor_tbl(fit, file_name = NULL, check_ps_list = NULL)
 }
 \arguments{
 \item{fit}{Output list from fit_p_curve}

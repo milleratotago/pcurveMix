@@ -81,6 +81,3 @@ be found by running this statement in the RStudio console:
 
 `system.file("shiny", "sample_ps.csv", package = "pcurveMix")`
 
-## NEWJEFF: TO DO
-
-- Eliminate out-of-bound p's and report that

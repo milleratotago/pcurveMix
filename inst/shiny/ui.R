@@ -2,6 +2,7 @@
 
 if (!require(shiny)) install.packages('shiny')
 if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
+if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
 
 # Helper function for ui
 inline_numericInput=function(ni){

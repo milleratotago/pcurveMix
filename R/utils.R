@@ -31,3 +31,36 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 
     return(s)
 }
+
+# Check a vector of p values to see whether they are
+#  all between 0 and alpha_cutoff as expected.
+check_ps <- function(ps, alpha_cutoff) {
+  too_small <- ps < 0
+  too_large <- ps > alpha_cutoff
+  n_too_small <- sum(too_small)
+  n_too_large <- sum(too_large)
+  if (n_too_small + n_too_large == 0) {
+    l <- list(all_in_bounds = TRUE,
+              alpha_cutoff = alpha_cutoff)
+  } else {
+    l <- list(all_in_bounds = FALSE,
+              alpha_cutoff = alpha_cutoff,
+              n_too_small = n_too_small,
+              n_too_large = n_too_large,
+              ps_too_small = ps[too_small],
+              ps_too_large = ps[too_large],
+              ps_in_bounds = ps[ !(too_small | too_large) ]
+              )
+  }
+  return(l)
+}
+
+# Construct a string describing the problems found by check_ps
+bad_ps_report_string <- function(l) {
+  s <- "Check p's found and eliminated"
+  if (l$n_too_small > 0) s <- paste(s,l$n_too_small,"p's < 0")
+  if ( (l$n_too_small > 0) & (l$n_too_large > 0) ) s <- paste(s,"and")
+  if (l$n_too_large > 0) s <- paste(s,l$n_too_large,"p's >", l$alpha_cutoff,"cutoff")
+  if ( (l$n_too_small == 0) & (l$n_too_large == 0) ) s <- paste(s,"no out-of-range p's")
+  return(s)
+}
