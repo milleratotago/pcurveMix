@@ -2,11 +2,10 @@
 title: "PcurveMix Fit Report"
 date: "`r format(Sys.time(), '%Y_%m_%d_%H_%M_%S')`"
 output:
-  word_document: default
-  pdf_document: 
-  html_document:
-    df_print: paged
+  word_document:
+    reference_docx: pcurveMix_style.docx
 params:
+  p_filename: NA
   descriptor_tbl: NA
   estimates_tbl: NA
   pdf_plot: NA
@@ -17,7 +16,11 @@ params:
 knitr::opts_chunk$set(echo = FALSE, fig.width = 6, fig.height = 4)
 ```
 
+Fitting observed $p$ values with the mixture model of Ulrich & Miller (2026, submitted).
+
 ## Fitting parameters and summary results
+
+Fitting $p$ values from the file: `r params$p_filename`.
 
 ```{r print_fitting_parameters, echo=FALSE, results='asis'}
 print(knitr::kable(params$descriptor_tbl))

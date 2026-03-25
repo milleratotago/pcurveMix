@@ -1,16 +1,17 @@
 # server.R: Define server logic required to draw a histogram
 
 # Install pcurveMix from GitHub if necessary
-# if (!require(pcurveMix)) remotes::install_github("milleratotago/pcurveMix")  # NEWJEFF
-library(pcurveMix)
+if (!require("remotes")) install.packages("remotes")
+if (!require(pcurveMix)) remotes::install_github("milleratotago/pcurveMix")
+# remotes::install_github("milleratotago/pcurveMix")  # Reinstall if newer version but requires internet connection.
 if (!require(ggplot2)) install.packages('ggplot2')
-# library(ggplot2)
 if (!require(knitr)) install.packages('knitr')
-# library(knitr)
+if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
 
 server <- function(input, output) {
 
   v <- reactiveValues(fit_completed = FALSE,
+                      p_filename = NULL,
                       fit_results_list = NA,
                       p_seq = NA,
                       pred_pdfs = NA,
@@ -21,58 +22,65 @@ server <- function(input, output) {
                       cdf_plot = NA)
 
   observeEvent(input$btnFit, {
-    p_filename <- input$p_file$datapath
-    if (is.null(p_filename)) {
+    v$p_filename <- input$p_file$name
+    full_p_filename <- input$p_file$datapath
+    if (is.null(full_p_filename)) {
       showNotification("You must upload a file of p's before fitting the model.")
     } else {
-      df <- read.csv(p_filename)
-    n_ps <- nrow(df)
+      df <- read.csv(full_p_filename)
+      p_vec_to_fit <- df$p
 
-    tails <- get_tails()
-    alpha_cutoff <- as.numeric(input$custom_cutoff)
-    alpha_sig <- as.numeric(input$alpha_sig)
+      tails <- get_tails()
+      alpha_cutoff <- as.numeric(input$custom_cutoff)
+      alpha_sig <- as.numeric(input$alpha_sig)
+      l <- check_ps(p_vec_to_fit, alpha_cutoff = alpha_cutoff)
+      if (!l$all_in_bounds) {
+        problem_string <- bad_ps_report_string(l)
+        showNotification(problem_string, type = "warning", duration = 15)
+        p_vec_to_fit <- l$ps_in_bounds
+      }
+      n_ps <- length(p_vec_to_fit)
 
-    if (sum(df$p>alpha_cutoff) > 0) stop("Cannot fit data with p values greater than cutoff")
+      v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+      v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename, check_ps_list = l)
+      output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
+      v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
+      n_boot_samples <- as.numeric(input$n_boot_samples)
+      if (n_boot_samples > 0) {
+        boot_df <- bootstrap(n_ps, v$fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
+        boot_tbl <- bootstrap_summary(boot_df)
+        v$estimates_tbl <- merge_tables(v$estimates_tbl, boot_tbl)
+      }
+      v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
+      output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
 
-    v$fit_results_list <- pcurveMix::fit_p_curve(df$p, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
-    v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list)
-    output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
-    v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
-    n_boot_samples <- as.numeric(input$n_boot_samples)
-    if (n_boot_samples > 0) {
-      boot_df <- bootstrap(n_ps, v$fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
-      boot_tbl <- bootstrap_summary(boot_df)
-      v$estimates_tbl <- merge_tables(v$estimates_tbl, boot_tbl)
-    }
-    v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
-    output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
+      v$p_seq <- seq(0.001,alpha_cutoff,0.001)
+      v$pred_pdfs <- pdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
+                         alpha = alpha_cutoff, tails = tails)
+      v$pred_cdfs <- cdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
+                         alpha = alpha_cutoff, tails = tails)
 
-    v$p_seq <- seq(0.001,alpha_cutoff,0.001)
-    v$pred_pdfs <- pdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
-                       alpha = alpha_cutoff, tails = tails)
-    v$pred_cdfs <- cdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
-                       alpha = alpha_cutoff, tails = tails)
+      # pdf_plot <- ggplot() +
+      #   geom_histogram(aes(x = sample_ps, y = after_stat(density)), binwidth = 0.02) +
+      #   geom_line(aes(x = v$p_seq, y = pred_pdfs), color = "red")
 
-    # pdf_plot <- ggplot() +
-    #   geom_histogram(aes(x = sample_ps, y = after_stat(density)), binwidth = 0.02) +
-    #   geom_line(aes(x = v$p_seq, y = pred_pdfs), color = "red")
+      v$pdf_plot <- ggplot() +
+        geom_histogram(aes(x = p_vec_to_fit, y = after_stat(density)), binwidth = 0.02) +
+        geom_line(aes(x = v$p_seq, y = v$pred_pdfs), color = "red") +
+        labs(title = "Observed (black) vs predicted (red) PDFs",
+             x = "p value",
+             y = "density")
+      output$pdf_plot <- renderPlot(v$pdf_plot)
 
-    v$pdf_plot <- ggplot() +
-      geom_histogram(aes(x = df$p, y = after_stat(density)), binwidth = 0.02) +
-      geom_line(aes(x = v$p_seq, y = v$pred_pdfs), color = "red") +
-      labs(title = "Observed (black) vs predicted (red) PDFs",
-           x = "p value",
-           y = "density")
-    output$pdf_plot <- renderPlot(v$pdf_plot)
-
-    v$cdf_plot <- ggplot() +
-      stat_ecdf(data = df, aes(x = p), geom = "step") +
-      geom_line(aes(x = v$p_seq, y = v$pred_cdfs), color = "red") +
-      labs(title = "Observed (black) vs predicted (red) CDFs",
-           x = "p value",
-           y = "cumulative proportion")
-    output$cdf_plot <- renderPlot(v$cdf_plot)
-    v$fit_completed <- TRUE
+      df2 <- data.frame(p = p_vec_to_fit)
+      v$cdf_plot <- ggplot() +
+        stat_ecdf(data = df2, aes(x = p), geom = "step") +
+        geom_line(aes(x = v$p_seq, y = v$pred_cdfs), color = "red") +
+        labs(title = "Observed (black) vs predicted (red) CDFs",
+             x = "p value",
+             y = "cumulative proportion")
+      output$cdf_plot <- renderPlot(v$cdf_plot)
+      v$fit_completed <- TRUE
     } # end else (file name not null)
   }) # end observeEvent fit modelbutton
 
@@ -103,9 +111,9 @@ server <- function(input, output) {
         pred_pdf_cdf <- data.frame(p = v$p_seq, pdf = v$pred_pdfs, cdf = v$pred_cdfs)
         write.csv(pred_pdf_cdf, csv_outfile_name)
 
-         # Render the rmd into the directory as well
+        # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
-        params = list(
+        params = list(p_filename = v$p_filename,
           descriptor_tbl = v$descriptor_tbl, estimates_tbl = v$estimates_tbl,
           pdf_plot = v$pdf_plot, cdf_plot = v$cdf_plot)
         rmd_outfile_name <- paste0(output_directory_name, "/",

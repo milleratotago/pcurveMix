@@ -19,7 +19,8 @@ cdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
   )
   too_small <- p < 0
   too_large <- p > alpha
-  cdfs[too_small | too_large] <- 0
+  cdfs[too_small] <- 0
+  cdfs[too_large] <- 1
   return(cdfs)
 }
 
