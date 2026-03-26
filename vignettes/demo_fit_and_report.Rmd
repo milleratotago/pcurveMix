@@ -37,22 +37,6 @@ true_mu <- 2
 true_sigma <- 2
 true_pi <- 0.2
 n_ps <- 2000
-#JEFF: R complains about the next line. It says that "random" ist kein exportiertes Objekt aus 'namespace:pcurveMix
-# AI says I should run this and then it worked....?  
-#  devtools::document()
-#  devtools::load_all()
-#ROLF:
-# This indicates that the above command "library(pcurveMix)"
-# is not loading the latest version of the library. There was no
-# function "random" in a previous version. I think it may be
-# necessary to remove the old version of the library before
-# attaching the new one?  Try using the RStudio commands
-# > remove.packages("pcurveMix")
-# > install.packages("path/to/pkgname.tar.gz", repos = NULL, type = "source", build_vignettes = TRUE)
-# This should ensure that you have the latest version of the package.
-# You might also remove some of the packages that give you the "erstellt"
-# message about old versions.  Then RStudio will automatically install
-# the latest versions.
 sample_ps <- pcurveMix::random(n_ps, mu = true_mu, sigma = true_sigma, pi = true_pi, alpha = alpha_cutoff, tails = tails)
 ```
 

@@ -33,9 +33,9 @@ server <- function(input, output) {
       tails <- get_tails()
       alpha_cutoff <- as.numeric(input$custom_cutoff)
       alpha_sig <- as.numeric(input$alpha_sig)
-      l <- check_ps(p_vec_to_fit, alpha_cutoff = alpha_cutoff)
+      l <- pcurveMix::check_ps(p_vec_to_fit, alpha_cutoff = alpha_cutoff)
       if (!l$all_in_bounds) {
-        problem_string <- bad_ps_report_string(l)
+        problem_string <- pcurveMix::bad_ps_report_string(l)
         showNotification(problem_string, type = "warning", duration = 15)
         p_vec_to_fit <- l$ps_in_bounds
       }

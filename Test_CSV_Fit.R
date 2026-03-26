@@ -11,7 +11,7 @@ ps[ps <= 0 | ps >= 1] # check if values are outside 0-1
 ps_out <- format(ps, scientific = FALSE, trim = TRUE, decimal.mark = ".")
 
 write.table(data.frame(p = ps_out),
-            file = "C:/Users/siaul01/GitHub/pcurveMix/pvalues.csv",
+            file = "pvalues.csv",
             sep = ",",
             row.names = FALSE,
             col.names = TRUE,

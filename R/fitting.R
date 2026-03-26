@@ -38,7 +38,11 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                         start = list(pi = 0.5, mu = 2, sigma = 2),
                         lower = c(1e-6,      0, 1e-6),
                         upper = c(1 - 1e-6, 15, 10)) {
-  p <- as.numeric(p); p <- p[p >= 0 & p <= alpha]  # NEWJEFF: Check p's etc here
+  p <- as.numeric(p);
+  check_ps_list <- check_ps(p, alpha_cutoff = alpha)
+  if (!check_ps_list$all_in_bounds) {
+    p <- check_ps_list$ps_in_bounds
+  }
   if (!length(p)) stop("No valid p-values in (0,1).")
 
   opt <- stats::optim(par = unlist(start), fn = nll_optim, p = p, alpha = alpha, tails = tails,
@@ -60,7 +64,8 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = est[1], mu = est[2], sigma = est[3],
               se = se, ci95 = ci, logLik = -opt$value,
-              converged = (opt$convergence == 0), n = length(p), min_p = min(p), max_p = max(p) )
+              converged = (opt$convergence == 0), n = length(p), min_p = min(p), max_p = max(p),
+              check_ps_list = check_ps_list)
   fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
   cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = 1, tails = tails)
   fit$ks <- ks_with_cdf(p, cdf_fit)
@@ -99,11 +104,12 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL, check_ps_list = NULL) {
   descriptor_tbl <- data.frame()
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
   if (!is.null(check_ps_list) && !check_ps_list$all_in_bounds) {
-    if (check_ps_list$n_too_small > 0) rbind(descriptor_tbl, descriptor("n excluded ps < 0", as.character(round(check_ps_list$n_too_small,0))))
-    if (check_ps_list$n_too_large > 0) rbind(descriptor_tbl, descriptor("n excluded ps > alpha_cutoff", as.character(round(check_ps_list$n_too_large,0))))
+    if (check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's <= 0", as.character(round(check_ps_list$n_too_small,0))))
+    if (check_ps_list$n_equal_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n small p's set to 1e-12", as.character(round(check_ps_list$n_equal_zero,0))))
+    if (check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's > alpha_cutoff", as.character(round(check_ps_list$n_too_large,0))))
   }
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_ps", as.character(round(fit$n,0))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", as.character(round(fit$min_p,6))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit$n,0))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", as.character(fit$min_p)))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("max(p)", as.character(round(fit$max_p,6))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_cutoff",as.character(round(fit$alpha,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,3))))
