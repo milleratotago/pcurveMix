@@ -1,5 +1,13 @@
 #Test file 
 
+# Load latest package
+remove.packages("pcurveMix")` and then reinstall with
+remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)`
+packageVersion("pcurveMix")
+
+
+
+# Test fitting 
 set.seed(8888)
 
 ps <- pcurveMix::random(n = 10000, mu = 2, sigma = 2, pi = 0.5)
@@ -25,5 +33,5 @@ pcurveMix::fit_to_estimates_tbl(fit)
 
 sum(ps_out < alpha_cuff, na.rm=TRUE)
 
-packageVersion("pcurveMix")
+#NEWJEFF: How can I use pcurveMIX to compare plots of cdfs: data vs. predicted? 
 
