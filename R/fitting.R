@@ -98,15 +98,16 @@ fit_to_estimates_tbl <- function(fit) {
 
 #' Convert the fit_p_curve fit descriptors into a nice data frame.
 #' @param fit Output list from fit_p_curve
+#' @param file_name Optional string used to include p file name in table
 #' @returns A data frame
 #' @export
-fit_to_descriptor_tbl <- function(fit, file_name = NULL, check_ps_list = NULL) {
+fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- data.frame()
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
-  if (!is.null(check_ps_list) && !check_ps_list$all_in_bounds) {
-    if (check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's <= 0", as.character(round(check_ps_list$n_too_small,0))))
-    if (check_ps_list$n_equal_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n small p's set to 1e-12", as.character(round(check_ps_list$n_equal_zero,0))))
-    if (check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's > alpha_cutoff", as.character(round(check_ps_list$n_too_large,0))))
+  if (!fit$check_ps_list$all_in_bounds) {
+    if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's <= 0", as.character(round(fit$check_ps_list$n_too_small,0))))
+    if (fit$check_ps_list$n_equal_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n small p's set to 1e-12", as.character(round(fit$check_ps_list$n_equal_zero,0))))
+    if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's > alpha_cutoff", as.character(round(fit$check_ps_list$n_too_large,0))))
   }
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit$n,0))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", as.character(fit$min_p)))

@@ -4,7 +4,14 @@
 \alias{bootstrap}
 \title{Function for parametric bootstrapping of fitted model.}
 \usage{
-bootstrap(n, fit, n_boot_samples, alpha = 1, tails = 2)
+bootstrap(
+  n,
+  fit,
+  n_boot_samples,
+  alpha = 1,
+  tails = 2,
+  show_progress_bar = TRUE
+)
 }
 \arguments{
 \item{n}{Number of random p values to be generated.}
@@ -16,6 +23,8 @@ bootstrap(n, fit, n_boot_samples, alpha = 1, tails = 2)
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1).}
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2).}
+
+\item{show_progress_bar}{Boolean determining whether progress bar is used (default = TRUE)}
 }
 \value{
 Data frame with 1 row per bootstrap sample.

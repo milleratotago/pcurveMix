@@ -11,26 +11,61 @@
 #' @inheritParams random
 #' @param fit Fitted model returned by fit_p_curve.
 #' @param n_boot_samples Number of bootstrap samples to take
+#' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
 #' @returns Data frame with 1 row per bootstrap sample.
 #' @export
-bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2) {
+bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2,
+                      show_progress_bar = TRUE) {
+  if (show_progress_bar) shiny_running <- shiny::isRunning()
   boot <- matrix(NA_real_, nrow = n_boot_samples, ncol = 4)
   colnames(boot) <- c("pi", "mu", "sigma", "power")
-  # pb <- txtProgressBar(min = 0, max = n_boot_samples, style = 3)
-  for (b in seq_len(n_boot_samples)) {
+
+  # Nest function for one sample that is used with console progress bar,
+  # shiny progress bar, or no progress bar
+  one_boot_sample <- function() {
     rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
     fit_b <- fit_p_curve(rand_ps, alpha = alpha, tails = tails)
     if (isTRUE(fit_b$converged)) {
-      boot[b, 1:3] <- c(fit_b$pi, fit_b$mu, fit_b$sigma)
-      boot[b, 4]   <- cdf(alpha, mu = fit_b$mu, sigma = fit_b$sigma, pi = fit_b$pi, alpha = alpha, tails = tails)  # power for that draw
+      vec <- c(fit_b$pi, fit_b$mu, fit_b$sigma,
+               cdf(fit$alpha_sig, mu = fit_b$mu, sigma = fit_b$sigma, pi = 1, alpha = 1, tails = tails))  # power for that draw
+    } else {
+      vec <- rep(NA,4)
     }
-    # setTxtProgressBar(pb, b)
+    return(vec)
   }
-  # close(pb)
+
+  if (show_progress_bar) {
+    if (shiny_running) {
+      shiny::withProgress(message = 'Bootstrapping in progress', value = 0, {
+        for (b in seq_len(n_boot_samples)) {
+          boot[b,] <- one_boot_sample()
+          shiny::incProgress(1/n_boot_samples)
+        }
+      })
+    } else {
+      pb <- utils::txtProgressBar(min = 0, max = n_boot_samples, style = 3)
+      for (b in seq_len(n_boot_samples)) {
+        boot[b,] <- one_boot_sample()
+        utils::setTxtProgressBar(pb, b)
+      }
+      close(pb)
+    }
+  } else {    # No progress bar
+    for (b in seq_len(n_boot_samples)) {
+      boot[b,] <- one_boot_sample()
+    }
+  } # if show_progress bar
+  # for (b in seq_len(n_boot_samples)) {
+  #   rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
+  #   fit_b <- fit_p_curve(rand_ps, alpha = alpha, tails = tails)
+  #   if (isTRUE(fit_b$converged)) {
+  #     boot[b, 1:3] <- c(fit_b$pi, fit_b$mu, fit_b$sigma)
+  #     boot[b, 4]   <- cdf(fit$alpha_sig, mu = fit_b$mu, sigma = fit_b$sigma, pi = 1, alpha = 1, tails = tails)  # power for that draw
+  #   }
+  # } # for b
 
   boot_df <- as.data.frame(boot)
   return(boot_df)
-  #
 }
 
 #' Function to summarize the data frame produced by parametric bootstrapping of fitted model.

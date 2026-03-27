@@ -53,7 +53,6 @@ fit_results_list <- fit_p_curve(sample_ps, alpha = alpha_cutoff, tails = tails)
 ### Print a table summarizing the fitting parameters and results:
 
 
-NEWJEFF: It says below n_ps=1999 but above I asked for n_ps=2000?
 ```{r}
 descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list)
 print(descriptor_tbl)
@@ -69,7 +68,7 @@ print(estimates_tbl)
 ### Perform parametric bootstrapping using the fitted parameters:
 
 ```{r}
-n_boot_samples <- 100  # 200 recommended minimum
+n_boot_samples <- 200  # 200 recommended minimum; more is better
 df <- bootstrap(n_ps, fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
 boot_tbl <- bootstrap_summary(df)
 print(boot_tbl)
@@ -83,23 +82,13 @@ combined_tbl[,-1] <- round(combined_tbl[,-1],3) # Round numeric columns to avoid
 print(combined_tbl)
 ```
 
-### Observed/predicted PDF/CDF Computations for plots
-
-```{r}
-# empirical <- ecdf(sample_ps)
-p <- seq(0.001, alpha_cutoff, 0.002)
-pred_pdfs <- pdf(p, mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi,
-                 alpha = alpha_cutoff, tails = tails)
-pred_cdfs <- cdf(p, mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi,
-                 alpha = alpha_cutoff, tails = tails)
-```
-
 
 ### Plot histogram of the $p$ values and predicted density from fitted model:
 
 ```{r, fig.width=6}
-# hist(sample_ps, freq = FALSE, xlim = c(0, alpha_cutoff) )
-# lines(p, pred_pdfs, col = "red")
+p <- seq(0.001, alpha_cutoff, 0.002)
+pred_pdfs <- pdf(p, mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi,
+                 alpha = alpha_cutoff, tails = tails)  # compute predicted
 pdf_plot <- ggplot() + geom_histogram(aes(x = sample_ps, y = after_stat(density)), binwidth = 0.02) +
   geom_line(aes(x = p, y = pred_pdfs), color = "red")
 print(pdf_plot)
@@ -108,20 +97,13 @@ print(pdf_plot)
 ### Plot empirical and predicted CDFs of the $p$ values:
 
 ```{r, fig.width=6}
-# plot(empirical, main = "Observed vs Predicted CDF", xlab = "p value", ylab = "CDF(p)",
-#      xlim = c(0,1), ylim = c(0,1))
-# lines(p, pred_cdfs, col = "red", lty = 1)
-# legend(
-#   "bottomright",
-#   legend = c("observed", "predicted"),
-#   lwd = 2,
-#   lty = c(1, 1),
-#   col = c("black", "red")
-# )
+p <- seq(0.001, alpha_cutoff, 0.002)
+pred_cdfs <- cdf(p, mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi,
+                 alpha = alpha_cutoff, tails = tails)  # compute predicted
 cdf_df <- data.frame(x = sample_ps)
 cdf_plot <- ggplot() +
-  stat_ecdf(data = cdf_df, aes(x = x), geom = "step") +
-  geom_line(aes(x = p, y = pred_cdfs), color = "red") +
+  stat_ecdf(data = cdf_df, aes(x = x), geom = "step") +  # empirical cdf
+  geom_line(aes(x = p, y = pred_cdfs), color = "red") +  # predicted cdf
   labs(title = "Observed (black) vs predicted (red) CDFs",
        x = "p value",
        y = "cumulative proportion")
