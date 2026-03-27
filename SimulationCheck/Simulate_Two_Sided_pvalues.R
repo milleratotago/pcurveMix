@@ -42,9 +42,10 @@ p_values
 
 plot(ecdf(p_values), main = "New method")
 
-# NEWROLF: Unfortunately this ecdf does not match the predicted CDF from pcurveMix::cdf().
+# ROLF: Unfortunately this ecdf does not match the predicted CDF from pcurveMix::cdf().
 # The above code makes sense to me, but I cannot find an error, so I am not sure
 # why these lines don't match.
+# NEWJEFF: I think we compare two models. Please see 
 p_seq <- seq(0.0001,0.05,0.0002)
 pred_cdf <- pcurveMix::cdf(p_seq, mu = 2, sigma = 2, pi = 0.4, alpha = 0.05, tails = 2)
 lines(p_seq, pred_cdf, lty = "dashed")

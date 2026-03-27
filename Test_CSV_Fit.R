@@ -1,8 +1,9 @@
 #Test file 
 
 # Load latest package
-remove.packages("pcurveMix")` and then reinstall with
-remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)`
+remove.packages("pcurveMix") 
+
+remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)
 packageVersion("pcurveMix")
 
 
