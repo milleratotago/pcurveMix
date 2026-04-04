@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 library(pcurveMix)
 ```
 
-This demo produces a table with *lots* of numerical examples of PDFs and CDFs.
+This demo produces a table with *lots* of numerical examples of PDFs and CDFs, primarily as examples for checking numerical computations (e.g., when adapting the code).
 
 ```{r Computations}
 mu <- c(2, 3)

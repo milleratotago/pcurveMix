@@ -37,7 +37,7 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 #' @param ps Vector of p values
 #' @param alpha_cutoff Maximum p value allowed in file
 #' @returns A list all_in_bounds, n_too_small, etc
-#' @export
+# DO NOT export
 check_ps <- function(ps, alpha_cutoff) {
   too_small <- ps < 0
   equal_zero <- ps == 0
@@ -66,7 +66,7 @@ check_ps <- function(ps, alpha_cutoff) {
 #' Construct a string describing the problems found by check_ps
 #' @param l List produced by check_ps
 #' @returns String
-#' @export
+# DO NOT export
 bad_ps_report_string <- function(l) {
   s <- "Check p's; found and altered or eliminated"
   if (l$n_too_small > 0) s <- paste(s,l$n_too_small,"p's < 0")

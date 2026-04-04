@@ -39,18 +39,23 @@ ui <- tagList(
       hr{border-top: 2px solid #050505;}"
       )),
 
+    tags$style(HTML("#shiny_examples_path { font-style: italic; }")),
+
     fluidRow(
       column(12, titlePanel("Fit Ulrich & Miller (2026) p-curve mixture model"))
     ),
     sidebarLayout(
       sidebarPanel(width = 4, id = "pcm_sidebar",
+                   div(style="height: 70px;",fileInput("p_file",
+                                                       label = "Choose a CSV file with a column of p values:" ,
+                                                       multiple=FALSE,
+                                                       accept = c(".csv"),
+                                                       placeholder = "")),
+                   h5("You can test with example input CSV files in the folder:"),
                    fluidRow(
-                     column(12, fileInput("p_file",
-                                          label = "Choose a CSV file with a column of p values:" ,
-                                          multiple=FALSE,
-                                          accept = c("csv"),
-                                          placeholder = ""))
+                     column(12, textOutput("shiny_examples_path"))
                    ),
+                   h2(),
                    fluidRow(
                      column(12, radioButtons("tails",
                                              "File has 1- or 2-tailed p's?",
@@ -59,15 +64,15 @@ ui <- tagList(
                      )
                    ),
                    fluidRow(
-                     column(12, textInput("custom_cutoff","Upper p cutoff for inclusion in file:", value = "0.1")
+                     column(12, textInput("custom_cutoff","Upper p cutoff for inclusion in file ('alpha'):", value = "1")
                      ),
                    ),
                    fluidRow(
-                     column(12, textInput("alpha_sig","Alpha level for power computations:", value = "0.05")
+                     column(12, textInput("alpha_sig","Alpha level to use for power computations ('alpha_sig'):", value = "0.05")
                      ),
                    ),
                    fluidRow(
-                     column(12, textInput("n_boot_samples","N bootstrap samples for analysis:", value = "200")
+                     column(12, textInput("n_boot_samples","N samples for parametric bootstrap analysis:", value = "200")
                      ),
                    ),
                    hr(),
@@ -76,7 +81,7 @@ ui <- tagList(
                    ),
                    h4(),
                    fluidRow(
-                     column(12, downloadButton("btnReport","Download fit results"))
+                     column(12, downloadButton("btnReport","Download results"))
                    )
       ), # end sidebar panel
       mainPanel(width = 8,

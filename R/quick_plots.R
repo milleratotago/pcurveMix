@@ -18,7 +18,10 @@ quick_pdf_plot <- function(ps, fit, show_plot = TRUE) {
     ggplot2::labs(title = "Observed (black) vs predicted (red) PDFs",
          x = "p value",
          y = "density")
-  if (show_plot) print(pdf_plot)
+  # The plot is shown automatically if the function is made during
+  # knitting, so check whether knitting is in progress to avoid getting
+  # duplicate plots in that case.
+  if (show_plot && !isTRUE(getOption('knitr.in.progress'))) print(pdf_plot)
   return(pdf_plot)
 }
 
@@ -39,6 +42,6 @@ quick_cdf_plot <- function(ps, fit, show_plot = TRUE) {
     ggplot2::labs(title = "Observed (black) vs predicted (red) CDFs",
          x = "p value",
          y = "cumulative proportion")
-  if (show_plot) print(cdf_plot)
+  if (show_plot && !isTRUE(getOption('knitr.in.progress'))) print(cdf_plot)
   return(cdf_plot)
 }

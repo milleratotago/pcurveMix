@@ -13,5 +13,7 @@ utils::globalVariables(c("density"))
   s <- utils::packageVersion(pkgname)
   s <- paste("Package",pkgname,"version",s)
   packageStartupMessage(s)
+  packageStartupMessage("use `browseVignettes(",pkgname,")` to see vignettes.")
+  packageStartupMessage("Check the vignette `intro` for a basic introduction.")
 } # .onAttach
 

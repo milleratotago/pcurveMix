@@ -21,9 +21,10 @@ fit_p_curve(
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2).}
 
-\item{alpha_sig}{Significance cutoff for power computation (default = 0.05).}
+\item{alpha_sig}{Significance cutoff used in computing the estimated average
+power when H0 is false (default = 0.05).}
 
-\item{start}{List of starting parameter values for optim search
+\item{start}{List of starting parameter values for the optim search
 (defaults:  pi = 0.5, mu = 2, sigma = 2).}
 
 \item{lower}{Vector of lower bounds for pi, mu, and sigma
@@ -33,8 +34,9 @@ fit_p_curve(
 (defaults = c(1 - 1e-6, 15, 10))}
 }
 \value{
-List with estimated parameter values, their standard errors
- and 95% confidence limits, etc.
+List including estimated parameter values, their standard errors
+ and 95% confidence limits, an estimate of the average power to reject
+ H0 when it is false, and more.
 }
 \description{
 Fit estimates of model pi, mu, sigma to a vector of p values.

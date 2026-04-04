@@ -1,0 +1,139 @@
+---
+title: "CheckSomeFunctions"
+author: "Rolf"
+format: html
+editor: visual
+---
+
+## Some function checks
+
+```{r}
+#NEWJEFF: This seems not to work properly on my machine. I don't see estimates?! I guess I don't understand the tools. Can you make a little script that simulates p-values in the 0-1 range and then estimated pi, mu and sigma?
+
+library(pcurveMix)
+
+## Beschreibung
+cat(as.character(packageDescription("pcurveMix")$Description))
+
+
+##  Fitting
+set.seed(122)
+
+# ROLF: This value must be used consistently
+# in a number of places, so I made a variable for it.
+# Search for this variable to see where it must be used.
+alpha_cutoff <- 0.05
+
+#JEFF: See demo_fit_and_Report.Rmd for a comment that also applies here.
+#NEWROLF: See that comment. I hope it is fixed now.
+# p-values simulieren
+pvals <- pcurveMix::random(
+  n     = 1500,
+  mu    = 2,
+  sigma = 2,
+  pi    = 0.3,
+  alpha = alpha_cutoff,
+  tails = 2
+)
+
+# fitten
+# ROLF: 
+# The default alpha selection is 1 so the following command of yours
+# assumed that the pvals were unconditional. Since they were all
+# significant, the best fit has a very high pi value.
+# The fit is closer to the true values if we specify
+# that the pvals were selected to be alpha<0.05.
+# fit <- fit_p_curve(p=pvals)
+fit <- fit_p_curve(p=pvals, alpha = alpha_cutoff)
+
+# Ergebnis ansehen
+fit
+
+# JEFF: I got the following error message: 
+# Fehler in fit_to_tbl(fit) : konnte Funktion "fit_to_tbl" nicht finden
+# mle_tbl <- fit_to_tbl(fit)
+# mle_tbl
+# NEWROLF: Sorry, I changed the function name in the package
+# but not in Checks.qmd. It should work now.
+descriptor_tbl <- fit_to_descriptor_tbl(fit)
+print(descriptor_tbl)
+estimates_tbl <- fit_to_estimates_tbl(fit)
+print(estimates_tbl)
+
+
+## pdf plot
+p_grid <- seq(0.001, 1, length.out = 500)
+
+dens1 <- pdf(p_grid, mu = 2, sigma = 0.0, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+dens3 <- pdf(p_grid, mu = 2, sigma = 1.0, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+
+plot(
+  p_grid, dens1, type = "l", lwd = 2,
+  xlab = "p-value",
+  ylab = "Density",
+   ylim = c(0,30),
+  main = "Effect of sigma on the p-curve PDF"
+)
+
+lines(p_grid, dens2, lwd = 2, lty = 2)
+lines(p_grid, dens3, lwd = 2, lty = 3)
+
+legend(
+  "topright",
+  legend = c("sigma = 0", "sigma = 0.5", "sigma = 1"),
+  lwd = 2,
+  lty = c(1, 2, 3)
+)
+
+
+p_grid <- seq(0.001, 1, length.out = 500)
+
+dens1 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.2, alpha = alpha_cutoff, tails = 2)
+dens2 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 0.6, alpha = alpha_cutoff, tails = 2)
+dens3 <- pdf(p_grid, mu = 2, sigma = 0.5, pi = 1.0, alpha = alpha_cutoff, tails = 2)
+
+plot(
+  p_grid, dens1, type = "l", lwd = 2,
+  xlab = "p-value",
+  ylab = "Density",
+  ylim = c(0,30),
+  main = "Effect of pi on the p-curve PDF"
+)
+
+lines(p_grid, dens2, lwd = 2, lty = 2)
+lines(p_grid, dens3, lwd = 2, lty = 3)
+
+legend(
+  "topright",
+  legend = c("pi = 0.2", "pi = 0.6", "pi = 1.0"),
+  lwd = 2,
+  lty = c(1, 2, 3)
+)
+
+```
+
+ROLF: It's good that you found this bug with the `pdf` function. The problem was with this line:
+
+`p <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )`
+
+When computing the curve for the full 0-1 range of $p$ values, this replaced all $p>0.05$ with $p=0.05$ and this produced the flat density curve above zero for all $p$ values above 0.05. It is fixed now.
+
+# Parametric bootstrapping
+
+ROLF: Bootstrapping has now been added to the package.
+
+```{r}
+n_ps <- length(pvals)
+n_boot_samples <- 200
+boot_df <- bootstrap(n_ps, fit, n_boot_samples, alpha = alpha_cutoff, tails = 2)
+boot_tbl <- bootstrap_summary(boot_df)
+boot_tbl
+
+#JEFF: Here the program seems to stop, I get a red line on the left side.
+#combined_tbl <- merge_tables(mle_tbl, boot_tbl)
+#NEWROLF: I am not sure about this one. Maybe because of the earlier
+# problem with mle_tbl?  I hope it works now...
+combined_tbl <- merge_tables(estimates_tbl, boot_tbl)
+combined_tbl
+```

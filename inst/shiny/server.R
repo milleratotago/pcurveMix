@@ -21,6 +21,10 @@ server <- function(input, output) {
                       pdf_plot = NA,
                       cdf_plot = NA)
 
+  package_path <- system.file(package = "pcurveMix")
+  s <- paste0(package_path,"/extdata")
+  output$shiny_examples_path <- renderText(s)
+
   observeEvent(input$btnFit, {
     v$p_filename <- input$p_file$name
     full_p_filename <- input$p_file$datapath
@@ -54,7 +58,7 @@ server <- function(input, output) {
       v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
       output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
 
-      v$p_seq <- seq(0.001,alpha_cutoff,0.001)
+      v$p_seq <- seq(0.001,min(0.9999,alpha_cutoff),0.001)
       v$pred_pdfs <- pdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
                          alpha = alpha_cutoff, tails = tails)
       v$pred_cdfs <- cdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
@@ -109,7 +113,7 @@ server <- function(input, output) {
         csv_outfile_name <- paste0(output_directory_name, "/",
                                    "pred_pdf_cdf_", time_stamp, ".csv")
         pred_pdf_cdf <- data.frame(p = v$p_seq, pdf = v$pred_pdfs, cdf = v$pred_cdfs)
-        write.csv(pred_pdf_cdf, csv_outfile_name)
+        write.csv(pred_pdf_cdf, csv_outfile_name, row.names = FALSE)
 
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"

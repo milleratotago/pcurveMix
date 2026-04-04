@@ -1,18 +1,21 @@
 # pcurveMix
 
-This is an R package for computations with *p*-curves under the Ulrich &amp; Miller (2026) mixture model.
+This is an R package for computations with *p*-curves under the Ulrich &amp; Miller (2026, in preparation) mixture model.
+
 According to the model, an observed set of *p* values comes from a population of studies within which
 the proportion $\pi$ test for effects that are actually present (i.e., H1 is true)
 and the proportion $1-\pi$ test for effects that are actually absent (i.e., H0 is true).
 Among studies testing for effects that are present, the noncentrality parameters vary
 normally with mean $\mu$ and standard deviation $\sigma$.
 
+Look at the vignette 'Intro' for instructions on how to fit the model to a set of observed p values.
 This package fits the model by maximum likelihood to a set of observed *p* values, which can come
 either from a complete set of studies (i.e., 0<*p*<1) or from a set of studies
 selected to have significant results (i.e., $p<\alpha$).
-The fitting results include estimates of the model's parameters and standard errors of those estimates.
+The fitted results include estimates of the model's parameters and standard errors of those estimates.
 
-Functions are also provided to compute the model's predicted PDFs of *p*, CDFs of *p*, and quantiles, as well as to generate random *p* values
+Functions are also provided to compute the model's predicted PDFs of *p*, CDFs of *p*, and quantiles,
+as well as to generate random *p* values,
 under any specified set of parameter values.
 
 Both one- and two-tailed *p* values are supported.
@@ -22,7 +25,7 @@ Both one- and two-tailed *p* values are supported.
 Install package **pcurveMix** directly from source via GitHub using the command in RStudio: 
 
 ```r
-> remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)
+remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)
 ```
 
 The package files are installed into R's standard package directory, wherever that is on your computer, just as if you were installing from CRAN.
@@ -36,21 +39,21 @@ If package `remotes` is not already installed, first run the command `install.pa
 Check that the installation has been successful.
 
 ```r
-> # Call a pcurveMix function with test values. This method generates random
-> # p-curves from a random-effects model
-> ps <- pcurveMix::random(n = 20, mu = 2, sigma = 1)
-> print(ps)
-> # This should give 20 random p values.
+# Call a pcurveMix function with test values. This method generates random
+# p-curves from a random-effects model
+ps <- pcurveMix::random(n = 20, mu = 2, sigma = 1)
+print(ps)
+# This should give 20 random p values.
 ```
 
 ```r
-> # Make sure that RStudio can load the library successfully.
-> library(pcurveMix)
+# Make sure that RStudio can load the library successfully.
+library(pcurveMix)
 ```
 
 ```r
-> # Display the source code of one of pcurveMix's functions
-> pcurveMix::bootstrap
+# Display the source code of one of pcurveMix's functions
+pcurveMix::bootstrap
 ```
 
 ## Demos
@@ -58,14 +61,16 @@ Check that the installation has been successful.
 After installation, you should be able to see the demonstration vignettes with
 
 ```r
-> browseVignettes(package = "pcurveMix")
+browseVignettes(package = "pcurveMix")
 ```
 
-These vignettes illustrate different computations and model fitting scenarios.
+The "Intro" vignette describes how to fit the model to a given set of $p$
+values, and the other vignettes illustrate various model fitting scenarios
+and model-based computations.
 
 ## Launch the Companion RShiny Application
 
-With this GUI tool, you can upload a csv file of p-values and quickly fit the model. 
+With the included shiny GUI tool, you can upload a csv file of p-values and quickly fit the model. 
 Here is how to do start the shiny app from inside RStudio:
 
 ```r
