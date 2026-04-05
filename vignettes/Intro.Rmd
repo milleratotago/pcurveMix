@@ -35,13 +35,10 @@ The outputs that are obtained from the fitting process include estimates of thos
 ## Option 1: Fitting with the shiny app
 
 The simplest way to fit the model is by using the shiny app that comes with the package.
-Use the following commands in RStudio to start the app:
+Use the following RStudio command to start the app:
 
 ```{r, eval = FALSE}
-# Find the path to the RShiny app.R file as installed on your machine
-shiny_path <- system.file("shiny", "app.R", package = "pcurveMix")
-# Launch the shiny application:
-shiny::runApp(shiny_path)
+run_shiny_app()
 ```
 
 Once the app opens, you must set five arguments before beginning the fitting process:

@@ -70,18 +70,22 @@ bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2,
 
 #' Function to summarize the data frame produced by parametric bootstrapping of fitted model.
 #' @param boot_df Output data frame produced by bootstrap() function.
+#' @param boot_ci_limits A vector with the two limiting proportions
+#'  (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975)).
 #' @returns Summary data frame with SEs & CIs for model parameters
 #' @export
-bootstrap_summary <- function(boot_df) {
+bootstrap_summary <- function(boot_df, boot_ci_limits = c(0.025, 0.975)) {
   boot_df <- boot_df[stats::complete.cases(boot_df), , drop = FALSE]
   if (!nrow(boot_df)) stop("No successful bootstrap refits -- adjust starts/bounds.")
 
+  boot_mn <- sapply(boot_df, mean)
   boot_se <- sapply(boot_df, stats::sd)
-  boot_ci <- t(sapply(boot_df, stats::quantile, probs = c(0.025, 0.975)))  # NEWJEFF: probs argument
+  boot_ci <- t(sapply(boot_df, stats::quantile, probs = boot_ci_limits))
   colnames(boot_ci) <- c("lwr","upr")
 
   boot_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
+    Boot_Mean = round(boot_mn[c("pi","mu","sigma","power")], 6),
     Boot_SE   = round(boot_se[c("pi","mu","sigma","power")], 6),
     Boot_lwr  = round(boot_ci[c("pi","mu","sigma","power"), "lwr"], 6),
     Boot_upr  = round(boot_ci[c("pi","mu","sigma","power"), "upr"], 6),
@@ -90,19 +94,19 @@ bootstrap_summary <- function(boot_df) {
   return(boot_tbl)
   # cat("\n[Bootstrap summary]\n")
   # print(boot_tbl, row.names = FALSE)
-}
+} # bootstrap_summary.
 
-#' Function to combine tables produced by mle and by bootstrap.
-#' @param mle_tbl Table produced fit fit_p_curve
+#' Function to combine tables produced by fit_to_estimates_tbl and by bootstrap_summary.
+#' @param estimates_tbl Table produced fit fit_p_curve
 #' @param boot_tbl Output data frame produced by bootstrap() function.
 #' @returns Combined data frame with fit & boot estimates, SEs & CIs for model parameters
 #' @importFrom rlang .data
 #' @export
-merge_tables <- function(mle_tbl, boot_tbl) {
-  combined <- dplyr::inner_join(mle_tbl, boot_tbl, by = "parameter")
+merge_tables <- function(estimates_tbl, boot_tbl) {
+  combined <- dplyr::inner_join(estimates_tbl, boot_tbl, by = "parameter")
   names(combined) <- c("Param",
                        "MLE_est", "Wald_SE", "Wald_CI_lwr", "Wald_CI_upr",
-                       "Boot_SE", "Boot_CI_lwr", "Boot_CI_upr")
+                       "Boot_Mean", "Boot_SE", "Boot_CI_lwr", "Boot_CI_upr")
   combined <- combined |> dplyr::arrange(factor(.data$Param, levels = c("mu", "sigma", "pi", "power")))
   return(combined)
 }

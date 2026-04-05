@@ -1,5 +1,13 @@
 # utils.R
 
+#' Function to start the shiny app for model-fitting from
+#' the RStudio console.
+#' @export
+run_shiny_app <- function() {
+  appDir <- system.file("shiny", package = "pcurveMix")
+  shiny::runApp(appDir, display.mode = "normal")
+}
+
 # Function to compute a case identifier for use in switch statements.
 # Possible identifiers are strings:
 #  uncond_2t_h1
@@ -32,11 +40,11 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
     return(s)
 }
 
-#' Check a vector of p values to see whether they are
-#'   all >0 and <=alpha_cutoff as expected.
-#' @param ps Vector of p values
-#' @param alpha_cutoff Maximum p value allowed in file
-#' @returns A list all_in_bounds, n_too_small, etc
+# Check a vector of p values to see whether they are
+#   all >0 and <=alpha_cutoff as expected.
+# @param ps Vector of p values
+# @param alpha_cutoff Maximum p value allowed in file
+# @returns A list all_in_bounds, n_too_small, etc
 # DO NOT export
 check_ps <- function(ps, alpha_cutoff) {
   too_small <- ps < 0
@@ -63,10 +71,10 @@ check_ps <- function(ps, alpha_cutoff) {
   return(l)
 }
 
-#' Construct a string describing the problems found by check_ps
-#' @param l List produced by check_ps
-#' @returns String
-# DO NOT export
+# Construct a string describing the problems found by check_ps
+# @param l List produced by check_ps
+# @returns String
+# DO NOT exp  ort
 bad_ps_report_string <- function(l) {
   s <- "Check p's; found and altered or eliminated"
   if (l$n_too_small > 0) s <- paste(s,l$n_too_small,"p's < 0")

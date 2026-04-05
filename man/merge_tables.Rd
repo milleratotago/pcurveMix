@@ -2,12 +2,12 @@
 % Please edit documentation in R/bootstrap.R
 \name{merge_tables}
 \alias{merge_tables}
-\title{Function to combine tables produced by mle and by bootstrap.}
+\title{Function to combine tables produced by fit_to_estimates_tbl and by bootstrap_summary.}
 \usage{
-merge_tables(mle_tbl, boot_tbl)
+merge_tables(estimates_tbl, boot_tbl)
 }
 \arguments{
-\item{mle_tbl}{Table produced fit fit_p_curve}
+\item{estimates_tbl}{Table produced fit fit_p_curve}
 
 \item{boot_tbl}{Output data frame produced by bootstrap() function.}
 }
@@ -15,5 +15,5 @@ merge_tables(mle_tbl, boot_tbl)
 Combined data frame with fit & boot estimates, SEs & CIs for model parameters
 }
 \description{
-Function to combine tables produced by mle and by bootstrap.
+Function to combine tables produced by fit_to_estimates_tbl and by bootstrap_summary.
 }

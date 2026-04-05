@@ -1,11 +1,11 @@
 # fitting.R
 
-#' Compute negative log-likelihood of a p value or vector of p values
-#'  under the model with the indicated parameters.
-#' @param p Real 0-1 p value or vector for which nll is to be computed.
-#' @inheritParams pdf
-#' @returns Real negative log-likelihood of the p values.
-#' @export
+# Compute negative log-likelihood of a p value or vector of p values
+#  under the model with the indicated parameters.
+# @param p Real 0-1 p value or vector for which nll is to be computed.
+# @inheritParams pdf
+# @returns Real negative log-likelihood of the p values.
+# @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
   if (pi <= 0 || pi >= 1 || sigma <= 0 || mu < 0) return(1e12)
   if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
@@ -105,11 +105,11 @@ fit_to_estimates_tbl <- function(fit) {
 #' @export
 fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- data.frame()
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("FITTING OPTIONS:", "----------"))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING OPTIONS---", "-------------"))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("DATASET OF P's:", "----------"))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF P's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
   if (!fit$check_ps_list$all_in_bounds) {
     if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's < 0", as.character(round(fit$check_ps_list$n_too_small,0))))
@@ -117,9 +117,15 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
     if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's > alpha_cutoff", as.character(round(fit$check_ps_list$n_too_large,0))))
   }
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit$n,0))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", as.character(fit$min_p)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("max(p)", as.character(round(fit$max_p,6))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("FITTING RESULTS:", "----------"))
+  smin <- formatC(fit$min_p, format = "e", digits = 6)
+  if (fit$max_p < 0.001) {
+    smax <- formatC(fit$max_p, format = "e", digits = 6)
+  } else {
+    smax <- as.character(round(fit$max_p,6))
+  }
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", smin))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("max(p)", smax))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING RESULTS---", "-------------"))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("fit converged",as.character(fit$converged)))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("logLik",as.character(round(fit$logLik,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("ks statistic",as.character(round(fit$ks$statistic,3))))

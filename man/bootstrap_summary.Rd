@@ -4,10 +4,13 @@
 \alias{bootstrap_summary}
 \title{Function to summarize the data frame produced by parametric bootstrapping of fitted model.}
 \usage{
-bootstrap_summary(boot_df)
+bootstrap_summary(boot_df, boot_ci_limits = c(0.025, 0.975))
 }
 \arguments{
 \item{boot_df}{Output data frame produced by bootstrap() function.}
+
+\item{boot_ci_limits}{A vector with the two limiting proportions
+(lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975)).}
 }
 \value{
 Summary data frame with SEs & CIs for model parameters

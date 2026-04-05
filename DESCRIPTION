@@ -1,10 +1,10 @@
 Type: Package
 Package: pcurveMix
-Title: Computations and Fitting for the P-Curve Mixture Model
-Version: 0.1.2
+Title: Computations and Fitting with the P-Curve Mixture Model
+Version: 0.1.3
 Authors@R: c(
     person("Rolf", "Ulrich", , "ulrich@uni-tuebingen.de", role = "aut"),
-    person("Jeff", "Miller", , "miller@psy.otago.ac.nz", role = "cre")
+    person("Jeff", "Miller", , "miller@psy.otago.ac.nz", role = c("aut", "cre") )
   )
 Description: Package for computations and fitting with the p-curve mixture
     model of Ulrich & Miller (2026). According to the model, p values

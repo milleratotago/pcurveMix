@@ -1,6 +1,6 @@
 # random_generators.R
 
-#' Generate random p values from random-effects model.
+#' Generate random p values from the mixture model.
 #' @param n Number of random p values to be generated.
 #' @param mu Mean of noncentrality parameters when H1 is true.
 #' @param sigma Standard deviation of noncentrality parameters when H1 is true.

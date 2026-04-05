@@ -31,7 +31,7 @@ ui <- tagList(
       color:#ffffff;
       background-color:#112446;
       font-size: 120%;
-      width: 200%;
+      width: 50%;
       position: fixed;
       top: 90%;
       left: 20%;
