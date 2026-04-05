@@ -63,10 +63,13 @@ run_shiny_app()
 vignette("Intro", package = "pcurveMix")
 ```
 
-This will start the shiny app in one window and show the `Intro` vignette in the RStudio Help window.
+The first command opens the shiny app in one window, and the second shows the `Intro` vignette in the RStudio Help window.
+You should be able to run the shiny app and make sense of its results by going back and
+forth between the shiny app and the `Intro` vignette.
 The first section of the vignette ("Option 1") explains how to set the various options in the shiny app,
 start the model fitting process, and download the results (if desired).
-The second section ("Option 2") explains what the fitting results mean.
+The second section of the vignette ("Option 2") shows how to do the model-fitting with an `R`
+script instead of the shiny app, and this section explains step-by-step what the fitting results mean.
 
 It is intended that you would upload a CSV file of p-values to which you would like to fit the model. 
 Some example input CSV files are included with the package, and the path to them is shown under the shiny app's `Browse` box.

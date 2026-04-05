@@ -21,18 +21,28 @@ server <- function(input, output) {
                       pdf_plot = NA,
                       cdf_plot = NA)
 
-  package_path <- system.file(package = "pcurveMix")
-  s <- paste0(package_path,"/extdata")
-  output$shiny_examples_path <- renderText(s)
+  # package_path <- system.file(package = "pcurveMix")
+  # s <- paste0(package_path,"/extdata/All_ps_2-tailed.csv")
+  # output$shiny_examples_path <- renderText(s)
 
   observeEvent(input$btnFit, {
-    v$p_filename <- input$p_file$name
-    full_p_filename <- input$p_file$datapath
+    if (input$use_demo) {
+      package_path <- system.file(package = "pcurveMix")
+      full_p_filename <- paste0(package_path,"/extdata/All_ps_2-tailed.csv")
+    } else {
+      v$p_filename <- input$p_file$name
+      full_p_filename <- input$p_file$datapath
+    }
     if (is.null(full_p_filename)) {
       showNotification("You must upload a file of p's before fitting the model.")
     } else {
       df <- read.csv(full_p_filename)
       p_vec_to_fit <- df$p
+
+      output$model_fit_title <- renderText("Model fit summary:")
+      output$parameter_estimates_title <- renderText("Parameter estimates:")
+      output$predicted_pdfs_title <- renderText("Observed/predicted PDFs:")
+      output$predicted_cdfs_title <- renderText("Observed/predicted CDFs:")
 
       tails <- get_tails()
       alpha_cutoff <- as.numeric(input$custom_cutoff)
@@ -53,6 +63,8 @@ server <- function(input, output) {
       n_boot_samples <- as.numeric(input$n_boot_samples)
       if (n_boot_samples > 0) {
         boot_df <- bootstrap(n_ps, v$fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
+        boot_cvrg_tbl <- bootstrap_convergence_tbl(boot_df)
+        output$bootstrap_convergence_tbl <- renderTable(boot_cvrg_tbl, rownames = FALSE)
         boot_tbl <- bootstrap_summary(boot_df)
         v$estimates_tbl <- merge_tables(v$estimates_tbl, boot_tbl)
       }

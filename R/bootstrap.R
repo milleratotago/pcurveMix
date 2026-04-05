@@ -55,15 +55,6 @@ bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2,
       boot[b,] <- one_boot_sample()
     }
   } # if show_progress bar
-  # for (b in seq_len(n_boot_samples)) {
-  #   rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
-  #   fit_b <- fit_p_curve(rand_ps, alpha = alpha, tails = tails)
-  #   if (isTRUE(fit_b$converged)) {
-  #     boot[b, 1:3] <- c(fit_b$pi, fit_b$mu, fit_b$sigma)
-  #     boot[b, 4]   <- cdf(fit$alpha_sig, mu = fit_b$mu, sigma = fit_b$sigma, pi = 1, alpha = 1, tails = tails)  # power for that draw
-  #   }
-  # } # for b
-
   boot_df <- as.data.frame(boot)
   return(boot_df)
 }
@@ -110,3 +101,17 @@ merge_tables <- function(estimates_tbl, boot_tbl) {
   combined <- combined |> dplyr::arrange(factor(.data$Param, levels = c("mu", "sigma", "pi", "power")))
   return(combined)
 }
+
+#' Make a one-row table reporting % bootstrap convergence
+#' @param boot_df Data frame with the output of the bootstrap function.
+#' @returns A data frame with one row
+#' @export
+bootstrap_convergence_tbl <- function(boot_df) {
+  descriptor_tbl <- data.frame()
+  converged <- !is.na(boot_df$mu)
+  pct_converged <- 100 * mean(converged)
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---BOOTSTRAP RESULTS---", "-------------"))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("% bootstrap fits converged",as.character(round(pct_converged,3))))
+  return(descriptor_tbl)
+}
+
