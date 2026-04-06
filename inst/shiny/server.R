@@ -18,6 +18,7 @@ server <- function(input, output) {
                       pred_cdfs = NA,
                       descriptor_tbl = NA,
                       estimates_tbl = NA,
+                      boot_cvrg_tbl = NA,
                       pdf_plot = NA,
                       cdf_plot = NA)
 
@@ -63,8 +64,8 @@ server <- function(input, output) {
       n_boot_samples <- as.numeric(input$n_boot_samples)
       if (n_boot_samples > 0) {
         boot_df <- bootstrap(n_ps, v$fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
-        boot_cvrg_tbl <- bootstrap_convergence_tbl(boot_df)
-        output$bootstrap_convergence_tbl <- renderTable(boot_cvrg_tbl, rownames = FALSE)
+        v$boot_cvrg_tbl <- bootstrap_convergence_tbl(boot_df)
+        output$bootstrap_convergence_tbl <- renderTable(v$boot_cvrg_tbl, rownames = FALSE)
         boot_tbl <- bootstrap_summary(boot_df)
         v$estimates_tbl <- merge_tables(v$estimates_tbl, boot_tbl)
       }
@@ -76,10 +77,6 @@ server <- function(input, output) {
                          alpha = alpha_cutoff, tails = tails)
       v$pred_cdfs <- cdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
                          alpha = alpha_cutoff, tails = tails)
-
-      # pdf_plot <- ggplot() +
-      #   geom_histogram(aes(x = sample_ps, y = after_stat(density)), binwidth = 0.02) +
-      #   geom_line(aes(x = v$p_seq, y = pred_pdfs), color = "red")
 
       v$pdf_plot <- ggplot() +
         geom_histogram(aes(x = p_vec_to_fit, y = after_stat(density)), binwidth = 0.02) +
@@ -132,6 +129,7 @@ server <- function(input, output) {
         rmd = "pcurveMix_shiny_report.Rmd"
         params = list(p_filename = v$p_filename,
           descriptor_tbl = v$descriptor_tbl, estimates_tbl = v$estimates_tbl,
+          boot_cvrg_tbl = v$boot_cvrg_tbl,
           pdf_plot = v$pdf_plot, cdf_plot = v$cdf_plot)
         rmd_outfile_name <- paste0(output_directory_name, "/",
                                    "pcurveMix_report_", time_stamp, ".docx")

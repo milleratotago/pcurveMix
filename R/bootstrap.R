@@ -99,6 +99,8 @@ merge_tables <- function(estimates_tbl, boot_tbl) {
                        "MLE_est", "Wald_SE", "Wald_CI_lwr", "Wald_CI_upr",
                        "Boot_Mean", "Boot_SE", "Boot_CI_lwr", "Boot_CI_upr")
   combined <- combined |> dplyr::arrange(factor(.data$Param, levels = c("mu", "sigma", "pi", "power")))
+  # Compute simple bias-corrected estimate:
+  combined$BC_est <- 2*combined$MLE_est - combined$Boot_Mean
   return(combined)
 }
 

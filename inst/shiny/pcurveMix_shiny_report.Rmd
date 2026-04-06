@@ -8,6 +8,7 @@ params:
   p_filename: NA
   descriptor_tbl: NA
   estimates_tbl: NA
+  boot_cvrg_tbl: NA
   pdf_plot: NA
   cdf_plot: NA
 ---
@@ -22,12 +23,14 @@ Fitting observed $p$ values with the mixture model of Ulrich & Miller (2026, sub
 
 ```{r print_fitting_parameters, echo=FALSE, results='asis'}
 print(knitr::kable(params$descriptor_tbl))
+print(knitr::kable(params$boot_cvrg_tbl))
 ```
 
 ## Estimated model parameters
 
 ```{r print_parameter_estimates, echo=FALSE, results='asis'}
-print(knitr::kable(params$estimates_tbl))
+print(knitr::kable(params$estimates_tbl[,1:5]))
+print(knitr::kable(params$estimates_tbl[,c(1,6:10)]))
 ```
 
 ## Estimated versus predicted PDFs of $p$'s

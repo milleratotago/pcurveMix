@@ -36,7 +36,7 @@ ui <- tagList(
       top: 90%;
       left: 2%;
       }
-      hr{border-top: 2px solid #050505;}"
+      hr{border-top: 10px solid #050505;}"
     )),
 
     tags$style(HTML("#shiny_examples_path { font-style: italic; }")),
@@ -65,6 +65,8 @@ ui <- tagList(
     ),
     sidebarLayout(
       sidebarPanel(width = 4, id = "pcm_sidebar",
+                   h2("SET UP FOR FITTING", align = "center"),
+                   h4(),
                    checkboxInput("use_demo", "Use demo file of p values", FALSE),
                    conditionalPanel(
                      condition = "input.use_demo == false",
@@ -101,7 +103,6 @@ ui <- tagList(
                          ),
                        ),
                    ),
-                   hr(),
                    hr(),
                    fluidRow(
                      column(12, actionButton("btnFit","Fit the model"))

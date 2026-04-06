@@ -69,7 +69,7 @@ forth between the shiny app and the `Intro` vignette.
 The first section of the vignette ("Option 1") explains how to set the various options in the shiny app,
 start the model fitting process, and download the results (if desired).
 The second section of the vignette ("Option 2") shows how to do the model-fitting with an `R`
-script instead of the shiny app, and this section explains step-by-step what the fitting results mean.
+script instead of the shiny app, and this section explains step-by-step what the fitting results outputs mean.
 
 It is intended that you would upload a CSV file of p-values to which you would like to fit the model. 
 Some example input CSV files are included with the package, and the path to them is shown under the shiny app's `Browse` box.

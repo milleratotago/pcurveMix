@@ -13,7 +13,10 @@ utils::globalVariables(c("density"))
   s <- utils::packageVersion(pkgname)
   s <- paste("Package",pkgname,"version",s)
   packageStartupMessage(s)
-  packageStartupMessage("use `browseVignettes(",pkgname,")` to see vignettes.")
-  packageStartupMessage("Check the vignette `intro` for a basic introduction.")
+  packageStartupMessage("Get help with these RStudio console commands:")
+  packageStartupMessage(' ?',pkgname,'    # shows a summary of the package.')
+  packageStartupMessage(' vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
+  packageStartupMessage(' browseVignettes(',pkgname,')    # shows a catalog of all vignettes.')
+  packageStartupMessage(' help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
 } # .onAttach
 

@@ -43,7 +43,7 @@ run_shiny_app()
 
 Once the app opens, you must set five arguments before beginning the fitting process:
 
-1. Choose the CSV file with the $p$ values that are to be analyzed. This file should contain a column named "p" with the $p$ values from the different studies. Other columns, if any, are ignored.
+1. Choose the CSV file with the $p$ values that are to be analyzed. This file should contain a column named "p" with the $p$ values from the different studies. Other columns, if any, are ignored. Just check the checkbox for a demo run using a file of $p$ values supplied with the package.
 
 2. Indicate whether the $p$ values in your file come from 1- or 2-tailed testing (because the computations are slightly different for these two cases).
 
@@ -160,7 +160,9 @@ combined_tbl[,-1] <- round(combined_tbl[,-1],3)
 print(combined_tbl)
 ```
 
-This table just combines the columns of the previous two tables, and it would ordinarily be used *instead of* the previous ones, which are just shown for completeness.
+This table combines the columns of the previous two tables, and it would ordinarily be used *instead of* the previous ones, which are just shown for completeness.
+It also includes a new column `BC_est` ("bias-corrected estimate"), which is the parameter estimate *corrected for* any bias that is present in the bootstrap sample estimates.
+For example, if the original maximum likelihood estimate of $\pi$ was 0.30, then 0.30 was used as the true $\pi$ for the bootstrap samples. If the average $\pi$ estimated in the bootstrap samples was smaller than that (say 0.28), then we know that the fitting process tends to underestimate $\pi$ by about 0.02 (with values of $\mu$, $\sigma$ and $\pi$ similar to those that were estimated). The bias correction process compensates for that underestimation bias by increasing the estimate of $\pi$ from 0.30 to 0.32.
 
 ### Make PDF and CDF plots
 
