@@ -2,7 +2,7 @@
 % Please edit documentation in R/random_generators.R
 \name{random}
 \alias{random}
-\title{Generate random p values from random-effects model.}
+\title{Generate random p values from the mixture model.}
 \usage{
 random(
   n,
@@ -39,5 +39,5 @@ distribution with the quantile function, which is usually slower except for real
 Real vector of n random p values.
 }
 \description{
-Generate random p values from random-effects model.
+Generate random p values from the mixture model.
 }

@@ -16,8 +16,10 @@ alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significan
 tails <- 2
 sample_ps <- pcurveMix::random(n_ps, mu = true_mu, sigma = true_sigma, pi = true_pi, alpha = alpha_cutoff, tails = tails)
 df <- data.frame(p = sample_ps)
-file_name <- "All_ps_2-tailed.csv"
+file_name <- "sample_ps.csv"
 write.csv(df, file = paste0(output_path,file_name), row.names = FALSE)
+
+return()
 
 # Sample 2: Significant p values, 2-tailed
 alpha_cutoff <- 0.05 # selected for significance

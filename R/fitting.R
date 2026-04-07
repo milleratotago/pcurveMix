@@ -126,10 +126,10 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", smin))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("max(p)", smax))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING RESULTS---", "-------------"))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("real p fit converged",as.character(fit$converged)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("logLik",as.character(round(fit$logLik,3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("ks statistic",as.character(round(fit$ks$statistic,3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("ks p value",as.character(round(fit$ks$p.value,5))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("fit converged",as.character(fit$converged)))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("log likelihood",as.character(round(fit$logLik,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s statistic",as.character(round(fit$ks$statistic,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s p value",as.character(round(fit$ks$p.value,5))))
   rownames(descriptor_tbl) <- NULL
   return(descriptor_tbl)
 }

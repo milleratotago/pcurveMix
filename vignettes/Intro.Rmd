@@ -10,6 +10,12 @@ editor_options:
     wrap: sentence
 ---
 
+<style>
+.title {
+  display: none;
+}
+</style>
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -19,20 +25,19 @@ knitr::opts_chunk$set(
 
 # Introduction to `pcurveMix`
 
-This introductory vignette illustrates two options for the simplest and most common use case of
-fitting the mixture model of Ulrich and Miller (in preparation) to a set of observed $p$ values obtained from statistical tests. Specifically, this is the use case in which
+This introductory vignette illustrates two options for the simplest and most common use case of fitting the mixture model of Ulrich and Miller (in preparation) to a set of observed $p$ values obtained from statistical tests. Specifically, this is the use case in which:
 
 -   you have a set of observed $p$ values from a given research area.
 
 -   you would like to fit the mixture model to those $p$ values in order to get estimates of the three model parameters describing the research area from which those $p$ values were obtained:
 
-    -   the proportion of studies in which real effects are present (i.e., H1 is true).
-    -   the mean of those studies' effect sizes.
-    -   the standard deviation of those studies' effect sizes.
+    -   `pi` or $\pi$, the proportion of studies in which real effects are present (i.e., H1 is true).
+    -   `mu` or $\mu$, the mean of those studies' effect sizes.
+    -   `sigma` or $\sigma$, the standard deviation of those studies' effect sizes.
 
-The outputs that are obtained from the fitting process include estimates of those parameters, standard errors and confidence intervals for the estimates, and plots of observed and predicted frequency distributions and cumulative frequency distributions of $p$ values.
+The fitting process provides estimates, standard errors, and confidence intervals for those model parameters, as well as plots of observed and fitted frequency distributions and cumulative frequency distributions of $p$ values.
 
-## Option 1: Fitting with the shiny app
+# Option 1: Fitting with the shiny app
 
 The simplest way to fit the model is by using the shiny app that comes with the package.
 Use the following RStudio command to start the app:
@@ -41,76 +46,58 @@ Use the following RStudio command to start the app:
 run_shiny_app()
 ```
 
-Once the app opens, you must set five arguments before beginning the fitting process:
+## Setup for fitting
 
-1. Choose the CSV file with the $p$ values that are to be analyzed. This file should contain a column named "p" with the $p$ values from the different studies. Other columns, if any, are ignored. Just check the checkbox for a demo run using a file of $p$ values supplied with the package.
+Once the app opens, use the setup panel to set these arguments of the fitting process:
 
-2. Indicate whether the $p$ values in your file come from 1- or 2-tailed testing (because the computations are slightly different for these two cases).
+1. Choose the CSV file with the $p$ values that are to be analyzed. This file should contain a column named "p" with the $p$ values from the different studies. Other columns, if any, are ignored. For this demo run, just check the checkbox to use the `sample_ps.csv` file of $p$ values supplied with the package. These are some (arbitrary) random $p$ values that were generated previously (in accordance with the assumptions of the model).
 
-3. Indicate the upper $p$ cutoff for inclusion in the file (a.k.a. `alpha`). This cutoff is used to indicate whether your $p$ values reflect a full sample of all studies in a research area or reflect a restricted sample including only statistically significant studies (i.e., meeting a significance criterion such as $p\le0.05$, as is often required for publication). Typically this value would be either 1 (all studies) or 0.05 (significant studies only). If the file contains any $p$ values larger than the cutoff, these are discarded prior to fitting.
+2. Indicate whether the $p$ values in the file come from 1- or 2-tailed testing (because the computations are slightly different for these two cases). The `sample_ps.csv` has 2-tailed $p$'s (the default).
 
-4. Indicate an alpha level for power computations (a.k.a. `alpha_sig`). After the $p$-curve model is fit, its parameters can be used to estimate the average power of studies in which a true effect is present (i.e., H1 is true). That power depends on the $\alpha$ level used as the significance cutoff for which you would like power computed, which is specified by this argument. With the default value of `alpha_sig = 0.05`, for example, power will be estimated as the probability of obtaining $p \leq 0.05$ in a study with a true effect.
+3. Indicate the upper $p$ cutoff for inclusion in the file (a.k.a. `alpha` or $\alpha$). This cutoff is the largest $p$ value that could possibly have been included in the `sample_ps` vector. The cutoff of 1, shown here, indicates that $p$ values could come from any study, significant or not. Alternatively, a cutoff of 0.05 would be appropriate if the $p$'s all came from published studies, given the common editorial practice of requiring $p \leq 0.05$ for publication. If the file contains any $p$ values larger than the cutoff, these are discarded prior to fitting. For this demo run, use the default value of 1.
 
-5. Indicate the number of samples for the parametric bootstrap analysis. This is reasonably fast and we recommend using at least 2000 samples for any "real" analysis. Of course you can reduce it to 100 or 200 for quick testing, or even to 0 to skip bootstrapping entirely.
-The analysis provides bootstrap means, standard errors, and confidence intervals for the parameters. These are computed across the indicated number of bootstrap samples, where for each sample the program:
-    a.   generates a random sample of $p$ values from the mixture model with the estimated values of the parameters $\mu$, $\sigma$, and $\pi$.
-    b.   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, as well as to compute a new estimate of power assuming `alpha_sig`.
+4. Indicate an alpha level for power computations (a.k.a. `alpha_sig`). The fitted values of $\mu$ and $\sigma$ can be used to compute the average power of studies in which a true effect is present (i.e., H1 is true), but only in relation to the $\alpha$ level used as the significance cutoff, which is specified by this argument. With the default value of `alpha_sig = 0.05`, for example, power will be estimated as the probability of obtaining $p \leq 0.05$ in a study with a true effect. Use the default of 0.05 for this demo run.
 
-After you have set the above arguments, click the `Fit the model` button and two tables and two graphs will appear with the results. Examples of these tables and graphs are shown below in the section `Option 2: Fitting with an R script`, and the meanings of the tables and graphs are explained there.
+5. Indicate the number of samples for the parametric bootstrap analysis. This is reasonably fast and we recommend using at least 2000 samples for any "real" analysis. Of course you can reduce it to 100 or 200 for quick testing, or even to 0 to skip bootstrapping entirely. For this demo run, use a value of 100.
 
-The `Download results` button produces a `zip` file with the fitting results. The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes a `CSV` file showing the model's predicted pdf and cdf values with the estimated parameters (in case you would like to make your own plots).
+After you have set the above arguments, click the `Fit model` button and the results will appear as shown next.
 
-## Option 2: Fitting with an R script
+There is also a `Download results` button that can be used after the model has been fit. This produces a `zip` file with the fitting results. The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes a `CSV` file showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
 
-For automation or finer-grained control over the fitting process, you can fit the model with a simple `R` script instead of the shiny app, as follows.
+## Maximum-likelihood fitting results
 
-```{r setup, message=FALSE, warning=FALSE}
-library(ggplot2)
-library(pcurveMix)
+```{r,  eval = TRUE, echo = FALSE}
+p_file_name <- "sample_ps.csv"
+package_path <- system.file(package = "pcurveMix")
+file_name <- paste0(package_path,"/extdata/",p_file_name)
 ```
 
-### Read example dataset of $p$ values
+```{r library_and_read_ps, eval = TRUE, echo = FALSE, message = FALSE, warning = FALSE}
+library(pcurveMix)
 
-Typically, users would have their own datasets of $p$ values to which the model should be fit.
-For this introductory demo, we will instead fit some (arbitrary) random $p$ values that were generated previously (in accordance with the assumptions of the model).
+# file_name <- "Set your file_name here"
 
-```{r read_p_values}
-package_path <- system.file(package = "pcurveMix")
-file_name <- paste0(package_path,"/extdata/all_ps_2-tailed.csv")
 df <- read.csv(file_name)
 sample_ps <- df$p
 n_ps <- length(sample_ps)
 ```
 
-### Fit the model to the example dataset
-
-Fit the mixture model to these $p$'s.
-
-```{r fit_model}
+```{r fit_model, eval = TRUE, echo = FALSE}
 alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significance
 tails <- 2
 fit_results_list <- fit_p_curve(sample_ps, alpha = alpha_cutoff, tails = tails)
 ```
 
-The `fit_p_curve` function has a number of optional arguments (for details, see the `fit_p_curve_details` vignette). The two most important ones are specified here:
+### Fitting summary table
 
-- `alpha` is a cutoff indicating the largest $p$ value that could possibly have been
-  included in the `sample_ps` vector (shiny app setting #3). The cutoff of 1, shown here, indicates
-  that $p$ values could come from any study, significant or not. Alternatively, a
-  cutoff of 0.05 would be appropriate if the `sample_ps` all came from
-  published studies, given the common editorial practice of requiring $p \leq 0.05$ for
-  publication.
-- `tails` must be 1 or 2 to indicate whether the $p$ values reflect 1- or 2-tailed tests of the studies' null hypotheses (shiny app setting #2).
+The first table is a summary of the fitting conditions and overall results.
 
-### Print a table summarizing the model fit:
-
-```{r print_descriptors}
+```{r print_descriptors, echo = FALSE}
 # print(fit_results_list)  # Ugly list format printing; better in next 2 tables.
-descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list)
-print(descriptor_tbl)
+descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list, file_name = p_file_name)
+knitr::kable(descriptor_tbl)
 ```
-
-The first part of this table gives information about the fitting options `alpha`, `tails`, and `alpha_sig` as described under the shiny app settings.
+The first part of this table gives information about the fitting options `alpha`, `tails`, and `alpha_sig` as specified in the setup panel.
 
 The second part of the table gives information about the dataset of $p$'s to which the model has been fit,
 including the number of $p$ values in the dataset as well as the minimum and maximum of these $p$ values.
@@ -123,64 +110,113 @@ The third part of the table gives information about the overall results of the m
 - The value of the Kolmogorov-Smirnov Dmax test statistic comparing the observed and model-predicted CDFs of $p$ values.
 - The $p$ value of the Kolmogorov-Smirnov test, where the H0 is that the observed $p$ values came from the model-predicted distribution of $p$'s.
 
-### Print a table summarizing the parameter estimates:
 
-```{r print_parameter_estimates}
-estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
-print(estimates_tbl)
-```
+### Parameter estimates table
 
-This table shows the estimates for the model parameters $\mu$, $\sigma$, and $\pi$. Here, for example, it is
+The next table shows the estimates for the model parameters $\mu$, $\sigma$, and $\pi$. Here, for example, it is
 estimated that the probability of a real effect (H1 true) in this research area is 0.304 and that---when a real effect is present---the size of that effect (in Z-score terms) comes from a normal distribution with a mean of 1.927 and a standard deviation of 1.953.
 
 Also shown is the estimated power---that is, the probability of rejecting H0 when H1 is true. (This is essentially an average power computed across the distribution of possible true effect sizes with the estimated $\mu$ and $\sigma$). There is no standard error or confidence interval for power because it is derived from the others.
 
-### Perform parametric bootstrapping using the fitted parameters:
-
-```{r}
-n_boot_samples <- 2000  # 2000 recommended minimum for real analyses; more is better
-df <- bootstrap(n_ps, fit_results_list, n_boot_samples,
-                alpha = alpha_cutoff, tails = tails)
-boot_cvrg_tbl <- bootstrap_convergence_tbl(df)
-print(boot_cvrg_tbl)
-boot_ests_tbl <- bootstrap_summary(df)
-print(boot_ests_tbl)
+```{r print_parameter_estimates, echo = FALSE}
+estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
+knitr::kable(estimates_tbl)
 ```
 
-The parametric bootstrapping analysis is described above in point 5 of the section on setting the shiny app arguments.
+#### Additional bootstrap analysis table
+
+The bootstrap analysis provides bootstrap means, standard errors, and confidence intervals for the parameters. These are computed across the indicated number of bootstrap samples, where for each sample the program:
+    a.   generates a random sample of $p$ values from the mixture model with the estimated values of the parameters $\mu$, $\sigma$, and $\pi$.
+    b.   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, as well as to compute a new estimate of power assuming `alpha_sig`.
+
+```{r bootstrap_analysis, echo = FALSE, comment = ""}
+n_boot_samples <- 100  # Smaller number for demo, but 2000 recommended minimum for real analyses; more is better
+df <- bootstrap(n_ps, fit_results_list, n_boot_samples,
+                alpha = alpha_cutoff, tails = tails, show_progress_bar = FALSE)
+boot_list <- make_bootstrap_summary_list(df, estimates_tbl)
+cat("* n bootstrap samples =",n_boot_samples,"\n")
+cat("* percent converged =",round(boot_list$pct_converged,2),"\n")
+knitr::kable(boot_list$boot_tbl)
+```
+
 The outputs show the percentage of bootstrap samples for which the fitting process converged
 and the means, standard errors, and confidence intervals of the parameter estimates across the different bootstrap samples.
 
-### Print a combined table with both the fitting and bootstrap results:
-
-```{r out.width="100%"}
-combined_tbl <- merge_tables(estimates_tbl, boot_ests_tbl)
-# Round numeric columns to avoid line wrapping:
-combined_tbl[,-1] <- round(combined_tbl[,-1],3)
-print(combined_tbl)
-```
-
-This table combines the columns of the previous two tables, and it would ordinarily be used *instead of* the previous ones, which are just shown for completeness.
 It also includes a new column `BC_est` ("bias-corrected estimate"), which is the parameter estimate *corrected for* any bias that is present in the bootstrap sample estimates.
 For example, if the original maximum likelihood estimate of $\pi$ was 0.30, then 0.30 was used as the true $\pi$ for the bootstrap samples. If the average $\pi$ estimated in the bootstrap samples was smaller than that (say 0.28), then we know that the fitting process tends to underestimate $\pi$ by about 0.02 (with values of $\mu$, $\sigma$ and $\pi$ similar to those that were estimated). The bias correction process compensates for that underestimation bias by increasing the estimate of $\pi$ from 0.30 to 0.32.
+
+### PDF and CDF plots
+
+The next output is a (density-scaled) histogram of the sample $p$ values superimposed over the predicted density at each $p$ from the fitted model:
+
+```{r, fig.width=6, echo = FALSE}
+quick_pdf_plot(sample_ps, fit_results_list)
+```
+
+The final plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
+
+```{r, fig.width=6, echo = FALSE}
+quick_cdf_plot(sample_ps, fit_results_list)
+```
+
+## Option 2: Fitting with an R script
+
+For automation or finer-grained control over the fitting process, you can fit the model with a simple `R` script instead of the shiny app, as follows.
+
+### Load package and read example dataset of $p$ values
+
+Typically, users would have their own datasets of $p$ values to which the model should be fit.
+
+```{r ref.label = "library_and_read_ps", eval = FALSE, echo = TRUE}
+```
+
+### Fit the model to the example dataset
+
+Fit the mixture model to these $p$'s with the default vallues of `alpha` and `tails`.
+The `fit_p_curve` function has a number of other optional arguments (for details, see the `fit_p_curve_details` vignette).
+
+```{r ref.label = "fit_model", eval = FALSE, echo = TRUE}
+```
+
+Note that the `fit_p_curve` output is called `fit_results_list`; this list is used as input to several subsequent functions.
+
+### Print a table summarizing the model fit:
+
+This prints the table summarizing the fitting conditions and overall results.
+
+```{r ref.label = "print_descriptors", eval = FALSE, echo = TRUE}
+```
+
+### Print a table summarizing the parameter estimates:
+
+```{r ref.label = "print_parameter_estimates", eval = FALSE, echo = TRUE}
+```
+
+
+### Perform parametric bootstrapping using the fitted parameters:
+
+```{r ref.label = "bootstrap_analysis", eval = FALSE, echo = TRUE}
+```
 
 ### Make PDF and CDF plots
 
 This command makes a (density-scaled) histogram of the sample $p$ values and superimposes over it the predicted density at each $p$ from the fitted model:
 
-```{r, fig.width=6}
+```{r, fig.width=6, eval = FALSE}
 quick_pdf_plot(sample_ps, fit_results_list)
 ```
 
 This command plots the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
-```{r, fig.width=6}
+```{r, fig.width=6, eval = FALSE}
 quick_cdf_plot(sample_ps, fit_results_list)
 ```
 
-Also, here are alternative methods of making the PDF and CDF plots that give you more control over the output formats:
+Finally, here are alternative methods of making the PDF and CDF plots that give you more control over the output formats:
 
 ```{r, eval = FALSE}
+library(ggplot2)
+
 # Define a sequence of p values at which to get predicted PDFs and CDFs:
 p_seq <- seq(0.001, alpha_cutoff, 0.002)
 

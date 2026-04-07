@@ -64,8 +64,10 @@ ui <- tagList(
       column(12, titlePanel("Fit Ulrich & Miller (2026) p-curve mixture model"))
     ),
     sidebarLayout(
+
+      # Setup panel:
       sidebarPanel(width = 4, id = "pcm_sidebar",
-                   h2("SET UP FOR FITTING", align = "center"),
+                   h1("Setup for fitting"),
                    h4(),
                    checkboxInput("use_demo", "Use demo file of p values", FALSE),
                    conditionalPanel(
@@ -112,34 +114,56 @@ ui <- tagList(
                      column(12, downloadButton("btnReport","Download results"))
                    )
       ), # end sidebar panel
+
+      # Results panel:
       mainPanel(width = 8,
                 # h2("Model fit:"),
                 fluidRow(
-                  column(12, h2(textOutput("model_fit_title")))
+                  column(12, h1(textOutput("model_fit_title")))
                 ),
                 fluidRow(
                   column(12, tableOutput("descriptor_tbl"))
                 ),
-                fluidRow(
-                  column(12, tableOutput("bootstrap_convergence_tbl"))
-                ),
+                # fluidRow(
+                #   column(12, tableOutput("bootstrap_convergence_tbl"))
+                # ),
                 # h2("Parameter estimates:"),
                 fluidRow(
-                  column(12, h2(textOutput("parameter_estimates_title")))
+                  column(12, h3(textOutput("parameter_estimates_title")))
                 ),
                 fluidRow(
                   column(12, tableOutput("estimates_tbl"))
                 ),
-                # h2("Observed/predicted PDFs:"),
+                div(
+                  fluidRow(
+                    column(12, h4(textOutput("bootstrap_title")))
+                  ),
+                  fluidRow(
+                    column(12,
+                           h5(
+                             div(
+                               textOutput("n_boot_samples"),
+                               style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                             )
+                           )
+                    )
+                  ),
+                  fluidRow(
+                    column(12, h5(textOutput("boot_pct_converged")))
+                  ),
+                  fluidRow(
+                    column(12, tableOutput("bootstrap_tbl"))
+                  )
+                  , style = "margin-left: 35px;"),
                 fluidRow(
-                  column(12, h2(textOutput("predicted_pdfs_title")))
+                  column(12, h3(textOutput("predicted_pdfs_title")))
                 ),
                 fluidRow(
                   column(12, plotOutput("pdf_plot"))
                 ),
                 # h2("Observed/predicted CDFs:"),
                 fluidRow(
-                  column(12, h2(textOutput("predicted_cdfs_title")))
+                  column(12, h3(textOutput("predicted_cdfs_title")))
                 ),
                 fluidRow(
                   column(12, plotOutput("cdf_plot"))

@@ -61,13 +61,17 @@ bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2,
 
 #' Function to summarize the data frame produced by parametric bootstrapping of fitted model.
 #' @param boot_df Output data frame produced by bootstrap() function.
-#' @param boot_ci_limits A vector with the two limiting proportions
+#' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl().
+#' @param boot_ci_limits A vector with the two limiting proportions.
 #'  (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975)).
-#' @returns Summary data frame with SEs & CIs for model parameters
+#' @returns A list with the % convergence and a data frame with the bootstrap
+#'  means, SEs, CIs, & bootstrap-corrected estimates of the model parameters.
 #' @export
-bootstrap_summary <- function(boot_df, boot_ci_limits = c(0.025, 0.975)) {
+make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limits = c(0.025, 0.975)) {
   boot_df <- boot_df[stats::complete.cases(boot_df), , drop = FALSE]
-  if (!nrow(boot_df)) stop("No successful bootstrap refits -- adjust starts/bounds.")
+  if (!nrow(boot_df)) stop("No successful bootstrap refits -- adjust starts/bounds.")  # NEWJEFF SHINY
+  converged <- !is.na(boot_df$mu)
+  pct_converged <- 100 * mean(converged)
 
   boot_mn <- sapply(boot_df, mean)
   boot_se <- sapply(boot_df, stats::sd)
@@ -82,38 +86,43 @@ bootstrap_summary <- function(boot_df, boot_ci_limits = c(0.025, 0.975)) {
     Boot_upr  = round(boot_ci[c("pi","mu","sigma","power"), "upr"], 6),
     row.names = NULL
   )
-  return(boot_tbl)
+
+  boot_tbl <- boot_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
+  # Compute simple bias-corrected estimate:
+  boot_tbl$BC_est <- 2*mle_estimates_tbl$estimate - boot_tbl$Boot_Mean
+
+  return( list(pct_converged = pct_converged, boot_tbl = boot_tbl) )
   # cat("\n[Bootstrap summary]\n")
   # print(boot_tbl, row.names = FALSE)
 } # bootstrap_summary.
 
-#' Function to combine tables produced by fit_to_estimates_tbl and by bootstrap_summary.
-#' @param estimates_tbl Table produced fit fit_p_curve
-#' @param boot_tbl Output data frame produced by bootstrap() function.
-#' @returns Combined data frame with fit & boot estimates, SEs & CIs for model parameters
-#' @importFrom rlang .data
-#' @export
-merge_tables <- function(estimates_tbl, boot_tbl) {
-  combined <- dplyr::inner_join(estimates_tbl, boot_tbl, by = "parameter")
-  names(combined) <- c("Param",
-                       "MLE_est", "Wald_SE", "Wald_CI_lwr", "Wald_CI_upr",
-                       "Boot_Mean", "Boot_SE", "Boot_CI_lwr", "Boot_CI_upr")
-  combined <- combined |> dplyr::arrange(factor(.data$Param, levels = c("mu", "sigma", "pi", "power")))
-  # Compute simple bias-corrected estimate:
-  combined$BC_est <- 2*combined$MLE_est - combined$Boot_Mean
-  return(combined)
-}
+# #' Function to combine tables produced by fit_to_estimates_tbl and by bootstrap_summary.
+# #' @param estimates_tbl Table produced fit fit_p_curve
+# #' @param boot_tbl Output data frame produced by bootstrap() function.
+# #' @returns Combined data frame with fit & boot estimates, SEs & CIs for model parameters
+# #' @importFrom rlang .data
+# #' @export
+# merge_tables <- function(estimates_tbl, boot_tbl) {
+#   combined <- dplyr::inner_join(estimates_tbl, boot_tbl, by = "parameter")
+#   names(combined) <- c("Param",
+#                        "MLE_est", "Wald_SE", "Wald_CI_lwr", "Wald_CI_upr",
+#                        "Boot_Mean", "Boot_SE", "Boot_CI_lwr", "Boot_CI_upr")
+#   combined <- combined |> dplyr::arrange(factor(.data$Param, levels = c("mu", "sigma", "pi", "power")))
+#   # Compute simple bias-corrected estimate:
+#   combined$BC_est <- 2*combined$MLE_est - combined$Boot_Mean
+#   return(combined)
+# }
 
-#' Make a one-row table reporting % bootstrap convergence
-#' @param boot_df Data frame with the output of the bootstrap function.
-#' @returns A data frame with one row
-#' @export
-bootstrap_convergence_tbl <- function(boot_df) {
-  descriptor_tbl <- data.frame()
-  converged <- !is.na(boot_df$mu)
-  pct_converged <- 100 * mean(converged)
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---BOOTSTRAP RESULTS---", "-------------"))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("% bootstrap fits converged",as.character(round(pct_converged,3))))
-  return(descriptor_tbl)
-}
-
+# #' Make a one-row table reporting % bootstrap convergence
+# #' @param boot_df Data frame with the output of the bootstrap function.
+# #' @returns A data frame with one row
+# #' @export
+# bootstrap_convergence_tbl <- function(boot_df) {
+#   descriptor_tbl <- data.frame()
+#   converged <- !is.na(boot_df$mu)
+#   pct_converged <- 100 * mean(converged)
+#   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---BOOTSTRAP RESULTS---", "-------------"))
+#   descriptor_tbl <- rbind(descriptor_tbl, descriptor("% bootstrap fits converged",as.character(round(pct_converged,3))))
+#   return(descriptor_tbl)
+# }
+#

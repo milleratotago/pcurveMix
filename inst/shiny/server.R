@@ -12,24 +12,50 @@ server <- function(input, output) {
 
   v <- reactiveValues(fit_completed = FALSE,
                       p_filename = NULL,
-                      fit_results_list = NA,
-                      p_seq = NA,
-                      pred_pdfs = NA,
-                      pred_cdfs = NA,
-                      descriptor_tbl = NA,
-                      estimates_tbl = NA,
-                      boot_cvrg_tbl = NA,
-                      pdf_plot = NA,
-                      cdf_plot = NA)
+                      fit_results_list = NULL,
+                      p_seq = NULL,
+                      pred_pdfs = NULL,
+                      pred_cdfs = NULL,
+                      descriptor_tbl = NULL,
+                      estimates_tbl = NULL,
+                      boot_tbl = NULL,
+                      boot_pct_converged = NULL,
+                      pdf_plot = NULL,
+                      cdf_plot = NULL)
 
-  # package_path <- system.file(package = "pcurveMix")
-  # s <- paste0(package_path,"/extdata/All_ps_2-tailed.csv")
-  # output$shiny_examples_path <- renderText(s)
+  restart <- function()  {
+    v$fit_completed = FALSE
+    v$p_filename <- NULL
+    v$fit_results_list <- NULL
+    v$p_seq <- NULL
+    v$pred_pdfs <- NULL
+    v$pred_cdfs <- NULL
+    v$descriptor_tbl <- NULL
+    v$estimates_tbl <- NULL
+    v$boot_tbl <- NULL
+    v$boot_pct_converged <- NULL
+    v$pdf_plot <- NULL
+    v$cdf_plot <- NULL
+    output$model_fit_title <- renderText(NULL)
+    output$parameter_estimates_title <- renderText(NULL)
+    output$predicted_pdfs_title <- renderText(NULL)
+    output$predicted_cdfs_title <- renderText(NULL)
+    output$bootstrap_title <- renderText(NULL)
+    output$n_boot_samples <- renderText(NULL)
+    output$boot_pct_converged <- renderText(NULL)
+    output$descriptor_tbl <- renderTable(NULL, rownames = FALSE)
+    output$estimates_tbl <- renderTable(NULL, rownames = FALSE)
+    output$boot_tbl <- renderTable(NULL, rownames = FALSE)
+    output$pdf_plot <- renderPlot(NULL)
+    output$cdf_plot <- renderPlot(NULL)
+  } # restart
 
   observeEvent(input$btnFit, {
+    restart()
     if (input$use_demo) {
       package_path <- system.file(package = "pcurveMix")
-      full_p_filename <- paste0(package_path,"/extdata/All_ps_2-tailed.csv")
+      v$p_filename <- "sample_ps.csv"
+      full_p_filename <- paste0(package_path,"/extdata/",v$p_filename)
     } else {
       v$p_filename <- input$p_file$name
       full_p_filename <- input$p_file$datapath
@@ -40,7 +66,7 @@ server <- function(input, output) {
       df <- read.csv(full_p_filename)
       p_vec_to_fit <- df$p
 
-      output$model_fit_title <- renderText("Model fit summary:")
+      output$model_fit_title <- renderText("Maximum-likelihood fitting summary")
       output$parameter_estimates_title <- renderText("Parameter estimates:")
       output$predicted_pdfs_title <- renderText("Observed/predicted PDFs:")
       output$predicted_cdfs_title <- renderText("Observed/predicted CDFs:")
@@ -61,13 +87,19 @@ server <- function(input, output) {
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
-      n_boot_samples <- as.numeric(input$n_boot_samples)
-      if (n_boot_samples > 0) {
-        boot_df <- bootstrap(n_ps, v$fit_results_list, n_boot_samples, alpha = alpha_cutoff, tails = tails)
-        v$boot_cvrg_tbl <- bootstrap_convergence_tbl(boot_df)
-        output$bootstrap_convergence_tbl <- renderTable(v$boot_cvrg_tbl, rownames = FALSE)
-        boot_tbl <- bootstrap_summary(boot_df)
-        v$estimates_tbl <- merge_tables(v$estimates_tbl, boot_tbl)
+      v$n_boot_samples <- as.numeric(input$n_boot_samples)
+      if (v$n_boot_samples > 0) {
+        boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails)
+        boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl)
+        v$boot_pct_converged <- boot_list$pct_converged
+        v$boot_tbl <- boot_list$boot_tbl
+        v$boot_tbl[,-1] <- round(v$boot_tbl[,-1],3) # Round numeric columns to avoid line wrapping
+        output$bootstrap_title <- renderText("Additional bootstrapping analysis")
+        s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
+        output$n_boot_samples <- renderText(s1)
+        s2 <- paste0("* percent converged = ",round(v$boot_pct_converged,2))
+        output$boot_pct_converged <- renderText(s2)
+        output$bootstrap_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
       }
       v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
       output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
@@ -127,10 +159,15 @@ server <- function(input, output) {
 
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
-        params = list(p_filename = v$p_filename,
-          descriptor_tbl = v$descriptor_tbl, estimates_tbl = v$estimates_tbl,
-          boot_cvrg_tbl = v$boot_cvrg_tbl,
-          pdf_plot = v$pdf_plot, cdf_plot = v$cdf_plot)
+        params = list(
+          p_filename = v$p_filename,
+          descriptor_tbl = v$descriptor_tbl,
+          estimates_tbl = v$estimates_tbl,
+          pdf_plot = v$pdf_plot,
+          cdf_plot = v$cdf_plot,
+          n_boot_samples = v$n_boot_samples,
+          boot_pct_converged = v$boot_pct_converged,
+          boot_tbl = v$boot_tbl)
         rmd_outfile_name <- paste0(output_directory_name, "/",
                                    "pcurveMix_report_", time_stamp, ".docx")
         rmarkdown::render(rmd,

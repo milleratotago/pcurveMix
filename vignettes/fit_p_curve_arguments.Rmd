@@ -1,5 +1,5 @@
 ---
-title: "fit_p_curve_arguments "
+title: "fit_p_curve_arguments"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{fit_p_curve_arguments}
