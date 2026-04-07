@@ -66,7 +66,7 @@ server <- function(input, output) {
       df <- read.csv(full_p_filename)
       p_vec_to_fit <- df$p
 
-      output$model_fit_title <- renderText("Maximum-likelihood fitting summary")
+      output$model_fit_title <- renderText("Maximum-likelihood Fitting Summary")
       output$parameter_estimates_title <- renderText("Parameter estimates:")
       output$predicted_pdfs_title <- renderText("Observed/predicted PDFs:")
       output$predicted_cdfs_title <- renderText("Observed/predicted CDFs:")

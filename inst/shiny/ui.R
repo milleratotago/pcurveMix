@@ -61,13 +61,16 @@ ui <- tagList(
     ")),
 
     fluidRow(
-      column(12, titlePanel("Fit Ulrich & Miller (2026) p-curve mixture model"))
+      column(12,
+             titlePanel(div("Fit Ulrich & Miller (2026) p-Curve Mixture Model", style = "text-align: center;")
+                        )
+             )
     ),
     sidebarLayout(
 
       # Setup panel:
       sidebarPanel(width = 4, id = "pcm_sidebar",
-                   h1("Setup for fitting"),
+                   h1("Setup for Fitting"),
                    h4(),
                    checkboxInput("use_demo", "Use demo file of p values", FALSE),
                    conditionalPanel(
