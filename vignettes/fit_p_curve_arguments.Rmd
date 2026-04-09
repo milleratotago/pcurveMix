@@ -14,9 +14,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, message = FALSE, warning = FALSE}
 library(pcurveMix)
-set.seed(1234)  # for reproducability
+set.seed(4321)  # for reproducability
 ```
 
 This vignette gives a complete explanation of all arguments of the `fit_p_curve` function.
@@ -47,48 +47,57 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
 ### First, generate some (arbitrary) random $p$ values to serve as the dataset that is to be fit:
 
 ```{r generate, fig.width=6}
-# A crude method of generating p values with especially many significant ones.
+# # For H1, a crude method of generating p values with especially many significant ones.
 ps_h0 <- runif(500)
-ps_h1 <- runif(500)^4
+ps_h1 <- runif(500)^3
 ps <- c(ps_h0, ps_h1)
+# ps <- pcurveMix::random(2000, mu = 2, sigma =1, pi =  0.33)
 hist(ps)
+```
+
+### Define a utility function to print the results of each fit:
+
+```{r}
+fit_report <- function(fit_results) {
+  descriptors <- fit_to_descriptor_tbl(fit_results)
+  print( knitr::kable(descriptors) )
+  estimates_tbl <- fit_to_estimates_tbl(fit_results)
+  print( knitr::kable(estimates_tbl) )
+  invisible(NULL)
+}
 ```
 
 ### Fit the mixture model to these $p$'s:
 
 The default arguments of `fit_p_curve` specify that these are 2-tailed $p$'s in the full 0-1 range.
 
-```{r}
+```{r, results = 'asis'}
 fit_results_2tailed <- fit_p_curve(ps) 
-estimates_tbl <- fit_to_estimates_tbl(fit_results_2tailed)
-knitr::kable(estimates_tbl)
+fit_report(fit_results_2tailed)
 ```
 
 ### Alternatively, fit the same $p$'s assuming that they come from 1-tailed tests:
 
 ...still using the default 0-1 range of $p$'s.
 
-```{r}
+```{r, results = 'asis'}
 fit_results_1tailed <- fit_p_curve(ps, tails = 1)
-estimates_tbl <- fit_to_estimates_tbl(fit_results_1tailed)
-knitr::kable(estimates_tbl)
+fit_report(fit_results_1tailed)
 ```
 
 ### Select out the significant $p$'s and refit the model using just those.
 
 The `alpha` parameter is used to indicate to the fitting function that these $p$ values
-were pre-selected to be significant.
+were pre-selected to be significant at $p \leq \alpha = 0.05$.
 
-```{r}
+```{r, results = 'asis'}
 alpha <- 0.05
 ps_sig <- ps[ps < alpha]
 
-fit_sig_results_2tailed <- fit_p_curve(ps_sig, alpha = alpha) # assumes 2-tailed p's in 0-alpha range
-estimates_tbl <- fit_to_estimates_tbl(fit_results_2tailed)
-knitr::kable(estimates_tbl)
+fit_sig_results_2tailed <- fit_p_curve(ps_sig, alpha = alpha)
+fit_report(fit_sig_results_2tailed)
 
-fit_sig_results_1tailed <- fit_p_curve(ps_sig, alpha = alpha, tails = 1) # or assuming 1-tailed
-estimates_tbl <- fit_to_estimates_tbl(fit_results_1tailed)
-knitr::kable(estimates_tbl)
+fit_sig_results_1tailed <- fit_p_curve(ps_sig, alpha = alpha, tails = 1)
+fit_report(fit_sig_results_1tailed)
 ```
 
