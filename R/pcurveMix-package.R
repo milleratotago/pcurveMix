@@ -6,7 +6,8 @@
 #'  to a set of observed p values.
 #'
 #' @references
-#' Ulrich and Miller (2026). "On the Power and Limitations of P-Curve Analysis"
+#' Ulrich and Miller (2026). "On the Power and Limitations of P-Curve Analysis:
+#'  A Mixture-model Approach"
 #'
 #' @keywords internal
 "_PACKAGE"

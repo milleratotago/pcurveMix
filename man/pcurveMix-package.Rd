@@ -6,14 +6,15 @@
 \alias{pcurveMix-package}
 \title{pcurveMix: Computations and Fitting with the P-Curve Mixture Model}
 \description{
-Package for computations and fitting with the p-curve mixture model of Ulrich & Miller (2026). According to the model, p values from statistical tests come from a mixture distribution with some proportion 'pi' of studies having a true effect (H1 is true), whereas the remaining studies have no true effect (H0 is true). Among studies with H1 true, the noncentrality parameter is normally distributed with mean 'mu' and standard deviation 'sigma'. Packages routines provide the PDF and CDF values of specific p's given particular values of 'pi', 'mu', and 'sigma', and they estimate the underlying 'pi', 'mu', and 'sigma' values from a set of observed p values.
+Package for computations and fitting with the p-curve mixture model of Ulrich & Miller (2026). According to the model, p values from statistical tests come from a mixture distribution with some proportion 'pi' of studies having a true effect (H1 is true), whereas the remaining studies have no true effect (H0 is true). Among studies with H1 true, the noncentrality parameter is normally distributed with mean 'mu' and standard deviation 'sigma'. Package functions can fit the model to a set of observed p values by estimating the underlying 'pi', 'mu', and 'sigma' values, and they can also provide the model's true PDF and CDF values of specific p's given particular values of the model's parameters 'pi', 'mu', and 'sigma'.
 }
 \details{
 Look at the vignette 'Intro' for instructions on how to fit the model
  to a set of observed p values.
 }
 \references{
-Ulrich and Miller (2026). "On the Power and Limitations of P-Curve Analysis"
+Ulrich and Miller (2026). "On the Power and Limitations of P-Curve Analysis:
+ A Mixture-model Approach"
 }
 \author{
 \strong{Maintainer}: Jeff Miller \email{miller@psy.otago.ac.nz}

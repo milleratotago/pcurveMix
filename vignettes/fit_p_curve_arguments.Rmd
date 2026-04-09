@@ -20,7 +20,7 @@ set.seed(1234)  # for reproducability
 ```
 
 This vignette gives a complete explanation of all arguments of the `fit_p_curve` function.
-Then, by way of illustration, it shows how to fit the model to four different sets of observed $p$ values.
+Then, as illustrations, it shows how to fit the model to four different sets of observed $p$ values.
 The four sets differ according to whether the $p$'s come from:
 - 1- or 2-tailed tests.
 - all studies or studies selected for having significant results (i.e., $p \leq \alpha$)
@@ -32,22 +32,21 @@ See the `Intro_to_pcurveMix` vignette for nicer ways of displaying the fitted mo
 Here is the function definition:
 ```{r eval = FALSE}
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
-                        start = list(pi = 0.5, mu = 2, sigma = 2),
-                        lower = c(1e-6,      0, 1e-6),
-                        upper = c(1 - 1e-6, 15, 10))
+                        start = list(mu =  2, sigma = 2,    pi = 0.5),
+                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6))
 ```
 
 - `p` is the vector of the $p$ values that are to be fit.
 - `alpha` is the cutoff indicating the maximum $p$ value that might have been included in the vector `p`. This is typically either 1 if the vector includes all studies without selection for significance or else 0.05 if the vector includes only studies selected based on having significant results (i.e., $p \leq 0.05$; e.g., published studies).
 - `tails` must be 1 or 2 to indicate whether the $p$ values reflect 1- or 2-tailed tests of the studies' null hypotheses.
 - `alpha_sig` After the $p$-curve model is fit, its parameters can be used to estimate the average power of studies in which a true effect is present (i.e., H1 is true). That power depends on the $\alpha$ level used as the significance cutoff for which you would like power computed, which is specified by this argument. With the default value of `alpha_sig = 0.05`, for example, power will be estimated as the probability of obtaining $p \leq 0.05$ in a study with a true effect.
-- `start` is a list of starting parameter values that is passed to R's `optim` numerical search function.
-- `lower` and `upper` are vectors of the minimum and maximum allowable values of the three parameters. Note the order: pi, mu, sigma.
-NEWJEFF: Make these lists to prevent order errors.
+- `start` is a list of starting parameter values that is passed to R's `optim` numerical search function. When analyzing a real dataset of $p$'s, it is a good idea to run `fit_p_curve` several times from different starting point to make sure that it converges to the same parameter estimates in all cases (i.e., there are no local minimum problems).
+- `lower` and `upper` are lists of the minimum and maximum allowable values of the three parameters that are passed to `optim`.
 
 ### First, generate some (arbitrary) random $p$ values to serve as the dataset that is to be fit:
 
-```{r generate}
+```{r generate, fig.width=6}
 # A crude method of generating p values with especially many significant ones.
 ps_h0 <- runif(500)
 ps_h1 <- runif(500)^4
@@ -57,18 +56,22 @@ hist(ps)
 
 ### Fit the mixture model to these $p$'s:
 
-The default assumption is that these are 2-tailed $p$'s in the full 0-1 range.
+The default arguments of `fit_p_curve` specify that these are 2-tailed $p$'s in the full 0-1 range.
 
 ```{r}
 fit_results_2tailed <- fit_p_curve(ps) 
-print(fit_results_2tailed)
+estimates_tbl <- fit_to_estimates_tbl(fit_results_2tailed)
+knitr::kable(estimates_tbl)
 ```
 
 ### Alternatively, fit the same $p$'s assuming that they come from 1-tailed tests:
 
+...still using the default 0-1 range of $p$'s.
+
 ```{r}
 fit_results_1tailed <- fit_p_curve(ps, tails = 1)
-print(fit_results_1tailed)
+estimates_tbl <- fit_to_estimates_tbl(fit_results_1tailed)
+knitr::kable(estimates_tbl)
 ```
 
 ### Select out the significant $p$'s and refit the model using just those.
@@ -81,9 +84,11 @@ alpha <- 0.05
 ps_sig <- ps[ps < alpha]
 
 fit_sig_results_2tailed <- fit_p_curve(ps_sig, alpha = alpha) # assumes 2-tailed p's in 0-alpha range
-print(fit_sig_results_2tailed)
+estimates_tbl <- fit_to_estimates_tbl(fit_results_2tailed)
+knitr::kable(estimates_tbl)
 
 fit_sig_results_1tailed <- fit_p_curve(ps_sig, alpha = alpha, tails = 1) # or assuming 1-tailed
-print(fit_sig_results_1tailed)
+estimates_tbl <- fit_to_estimates_tbl(fit_results_1tailed)
+knitr::kable(estimates_tbl)
 ```
 

@@ -19,7 +19,8 @@ make_bootstrap_summary_list(
 (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975)).}
 }
 \value{
-A list with the % convergence and a data frame with the bootstrap
+A list with the percent of samples in which the estimation process
+ converged OK and a data frame with the bootstrap
  means, SEs, CIs, & bootstrap-corrected estimates of the model parameters.
 }
 \description{

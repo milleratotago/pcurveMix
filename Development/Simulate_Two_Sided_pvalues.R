@@ -13,6 +13,8 @@ r_p_mix_sig_1 <- function(pi, mu_c, sigma_c, alpha = 0.05) {
     }
 
     if (runif(1) < p_left / p_total) {
+      # Effect is present
+      # Pick noncentrality parameter for this study:
       u <- runif(1, min = 0, max = p_left)
       z <- qnorm(u, mean = mu, sd = sigma)
     } else {
@@ -45,7 +47,7 @@ plot(ecdf(p_values), main = "New method")
 # ROLF: Unfortunately this ecdf does not match the predicted CDF from pcurveMix::cdf().
 # The above code makes sense to me, but I cannot find an error, so I am not sure
 # why these lines don't match.
-# NEWJEFF: I think we compare two models. Please see 
+# JEFF: I think we compare two models. Please see 
 p_seq <- seq(0.0001,0.05,0.0002)
 pred_cdf <- pcurveMix::cdf(p_seq, mu = 2, sigma = 2, pi = 0.4, alpha = 0.05, tails = 2)
 lines(p_seq, pred_cdf, lty = "dashed")

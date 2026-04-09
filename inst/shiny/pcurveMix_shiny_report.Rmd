@@ -17,9 +17,8 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.width = 6, fig.height = 4)
+# Fitting observed $p$ values with the mixture model of Ulrich & Miller (2026, submitted).
 ```
-
-Fitting observed $p$ values with the mixture model of Ulrich & Miller (2026, submitted).
 
 # Maximum-likelihood fitting summary
 
@@ -41,7 +40,7 @@ print(knitr::kable(params$estimates_tbl))
 
 ```{r echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
 cat(paste0("* n bootstrap samples = ",params$n_boot_samples,"\n"))
-cat(paste0("* percent converged = ",params$boot_pct_converged,"\n"))
+cat(paste0("* percent converged OK = ",params$boot_pct_converged,"\n"))
 ```
 
 ```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$n_boot_samples > 0}

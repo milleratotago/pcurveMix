@@ -1,34 +1,37 @@
 Type: Package
 Package: pcurveMix
 Title: Computations and Fitting with the P-Curve Mixture Model
-Version: 0.1.3
+Version: 1.0.0
 Authors@R: c(
     person("Rolf", "Ulrich", , "ulrich@uni-tuebingen.de", role = "aut"),
-    person("Jeff", "Miller", , "miller@psy.otago.ac.nz", role = c("aut", "cre") )
+    person("Jeff", "Miller", , "miller@psy.otago.ac.nz", role = c("aut", "cre"))
   )
 Description: Package for computations and fitting with the p-curve mixture
-    model of Ulrich & Miller (2026). According to the model, p values
-    from statistical tests come from a mixture distribution with some
+    model of Ulrich & Miller (2026). According to the model, p values from
+    statistical tests come from a mixture distribution with some
     proportion 'pi' of studies having a true effect (H1 is true), whereas
     the remaining studies have no true effect (H0 is true).  Among studies
     with H1 true, the noncentrality parameter is normally distributed with
-    mean 'mu' and standard deviation 'sigma'.  Packages routines provide the
-    PDF and CDF values of specific p's given particular values of 'pi',
-    'mu', and 'sigma', and they estimate the underlying 'pi', 'mu', and 'sigma'
-    values from a set of observed p values.
-Depends: R (>= 4.1.0)
+    mean 'mu' and standard deviation 'sigma'.  Package functions can fit
+    the model to a set of observed p values by estimating the underlying
+    'pi', 'mu', and 'sigma' values, and they can also provide the model's
+    true PDF and CDF values of specific p's given particular values of the
+    model's parameters 'pi', 'mu', and 'sigma'.
 License: GPL (>= 3) + file LICENSE
+Depends: 
+    R (>= 4.1.0)
 Imports:
     dplyr,
-    stats,
-    rlang
-Encoding: UTF-8
-RoxygenNote: 7.3.3
+    rlang,
+    stats
 Suggests: 
     ggplot2,
     knitr,
     rmarkdown,
     shiny,
     testthat (>= 3.0.0)
-VignetteBuilder: knitr
+VignetteBuilder: 
+    knitr
 Config/testthat/edition: 3
+Encoding: UTF-8
+RoxygenNote: 7.3.3

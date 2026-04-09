@@ -4,6 +4,7 @@ if (!require(shiny)) install.packages('shiny')
 if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
 if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
 
+
 # Helper function for ui
 inline_numericInput=function(ni){
   tags$div( class="form-inline",ni)
@@ -60,11 +61,19 @@ ui <- tagList(
       .custom-text-input input { width: 25%; }
     ")),
 
+    tags$style(HTML("
+                    #start_mu { width: 60px; }
+                    #start_sigma { width: 60px; }
+                    #start_pi { width: 60px; }
+                    ")),
+
+    fluidPage(title = "pcurveMix"),
+
     fluidRow(
       column(12,
              titlePanel(div("Fit Ulrich & Miller (2026) p-Curve Mixture Model", style = "text-align: center;")
-                        )
              )
+      )
     ),
     sidebarLayout(
 
@@ -72,20 +81,11 @@ ui <- tagList(
       sidebarPanel(width = 4, id = "pcm_sidebar",
                    h1("Setup for Fitting"),
                    h4(),
-                   checkboxInput("use_demo", "Use demo file of p values", FALSE),
+                   checkboxInput("use_demo", label = strong("Use demo file of p values"), FALSE),
                    conditionalPanel(
                      condition = "input.use_demo == false",
                      fileInput("p_file", "Upload CSV file with column of p value", accept = ".csv")
                    ),
-                   # div(style="height: 70px;",fileInput("p_file",
-                   #                                     label = "Choose a CSV file with a column of p values:" ,
-                   #                                     multiple=FALSE,
-                   #                                     accept = c(".csv"),
-                   #                                     placeholder = "")),
-                   # h5("Paste the following into the browse box to use an example CSV file:"),
-                   # fluidRow(
-                   #   column(12, textOutput("shiny_examples_path"))
-                   # ),
                    h4(),
                    fluidRow(
                      column(12, radioButtons("tails",
@@ -96,18 +96,36 @@ ui <- tagList(
                    ),
                    div(class = "custom-text-input",
                        fluidRow(
-                         column(12, textInput("custom_cutoff","Upper p cutoff for inclusion in file ('alpha'):", value = "1")
+                         column(12, numericInput("custom_cutoff","Upper p cutoff for inclusion in file ('alpha'):", value = "1",
+                                                 min = 0, max = 1, step = 0.05)
                          ),
                        ),
                        fluidRow(
-                         column(12, textInput("alpha_sig","Alpha level to use for power computations ('alpha_sig'):", value = "0.05")
+                         column(12, numericInput("alpha_sig","Alpha level to use for power computations ('alpha_sig'):", value = "0.05",
+                                                 min = 0, max = 1, step = 0.01)
                          ),
                        ),
                        fluidRow(
-                         column(12, textInput("n_boot_samples","N samples for parametric bootstrap analysis (recommended minimum 2000 for real analyses):", value = "100")
+                         column(12, numericInput("n_boot_samples","N parametric bootstrap samples (recommended min 2000 for real analyses):",
+                                                 value = "100", min = 0, step = 100)
                          ),
                        ),
                    ),
+                   checkboxInput("adjust_starting_values", label = strong("Change default starting parameter values for optim() search:"), FALSE),
+                   conditionalPanel(
+                     condition = "input.adjust_starting_values == true",
+                     fluidRow(
+                       column(4, numericInput("start_mu","mu",2, min = 0, max = 20, step = 0.1)),
+                       column(4, numericInput("start_sigma","sigma",2, min = 1e-6, max = 20, step = 0.1)),
+                       column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
+                     ),
+                   ),
+                   # h5("Starting parameter values for optim() search:", style = "font-weight: bold;"),
+                   # fluidRow(
+                    # column(4, numericInput("start_mu","mu",2, min = 0, max = 20, step = 0.1)),
+                    # column(4, numericInput("start_sigma","sigma",2, min = 1e-6, max = 20, step = 0.1)),
+                    # column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
+                   # ),
                    hr(),
                    fluidRow(
                      column(12, actionButton("btnFit","Fit the model"))

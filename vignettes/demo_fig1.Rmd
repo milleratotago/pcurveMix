@@ -19,7 +19,7 @@ library(ggplot2)
 library(pcurveMix)
 ```
 
-This demo shows how to recreate the PDF and CDF plots of Figure 1 of the Ulrich and Miller article describing the model.
+This demo shows how to recreate the PDF and CDF plots of Figure 1 of the Ulrich and Miller (2026) article describing the model.
 
 ### Computations
 

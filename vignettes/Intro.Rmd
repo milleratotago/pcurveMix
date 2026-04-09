@@ -10,11 +10,13 @@ editor_options:
     wrap: sentence
 ---
 
+```{=html}
 <style>
 .title {
   display: none;
 }
 </style>
+```
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -25,7 +27,8 @@ knitr::opts_chunk$set(
 
 # Introduction to `pcurveMix`
 
-This introductory vignette illustrates two options for the simplest and most common use case of fitting the mixture model of Ulrich and Miller (in preparation) to a set of observed $p$ values obtained from statistical tests. Specifically, this is the use case in which:
+This introductory vignette illustrates two options for the simplest and most common use case of fitting the mixture model of Ulrich and Miller (in preparation) to a set of observed $p$ values obtained from statistical tests.
+Specifically, this is the use case in which:
 
 -   you have a set of observed $p$ values from a given research area.
 
@@ -50,19 +53,37 @@ run_shiny_app()
 
 Once the app opens, use the setup panel to set these arguments of the fitting process:
 
-1. Choose the CSV file with the $p$ values that are to be analyzed. This file should contain a column named "p" with the $p$ values from the different studies. Other columns, if any, are ignored. For this demo run, just check the checkbox to use the `sample_ps.csv` file of $p$ values supplied with the package. These are some (arbitrary) random $p$ values that were generated previously (in accordance with the assumptions of the model).
+1.  Choose the CSV file with the $p$ values that are to be analyzed.
+    This file should contain a column named "p" with the $p$ values from the different studies.
+    Other columns, if any, are ignored.
+    For this demo run, just check the checkbox to use the `sample_ps.csv` file of $p$ values supplied with the package.
+    These are some (arbitrary) random $p$ values that were generated previously (in accordance with the assumptions of the model).
 
-2. Indicate whether the $p$ values in the file come from 1- or 2-tailed testing (because the computations are slightly different for these two cases). The `sample_ps.csv` has 2-tailed $p$'s (the default).
+2.  Indicate whether the $p$ values in the file come from 1- or 2-tailed testing (because the computations are slightly different for these two cases).
+    The `sample_ps.csv` has 2-tailed $p$'s (the default).
 
-3. Indicate the upper $p$ cutoff for inclusion in the file (a.k.a. `alpha` or $\alpha$). This cutoff is the largest $p$ value that could possibly have been included in the `sample_ps` vector. The cutoff of 1, shown here, indicates that $p$ values could come from any study, significant or not. Alternatively, a cutoff of 0.05 would be appropriate if the $p$'s all came from published studies, given the common editorial practice of requiring $p \leq 0.05$ for publication. If the file contains any $p$ values larger than the cutoff, these are discarded prior to fitting. For this demo run, use the default value of 1.
+3.  Indicate the upper $p$ cutoff for inclusion in the file (a.k.a. `alpha` or $\alpha$).
+    This cutoff is the largest $p$ value that could possibly have been included in the `sample_ps` vector.
+    The cutoff of 1, shown here, indicates that $p$ values could come from any study, significant or not.
+    Alternatively, a cutoff of 0.05 would be appropriate if the $p$'s all came from published studies, given the common editorial practice of requiring $p \leq 0.05$ for publication.
+    If the file contains any $p$ values larger than the cutoff, these are discarded prior to fitting.
+    For this demo run, use the default value of 1.
 
-4. Indicate an alpha level for power computations (a.k.a. `alpha_sig`). The fitted values of $\mu$ and $\sigma$ can be used to compute the average power of studies in which a true effect is present (i.e., H1 is true), but only in relation to the $\alpha$ level used as the significance cutoff, which is specified by this argument. With the default value of `alpha_sig = 0.05`, for example, power will be estimated as the probability of obtaining $p \leq 0.05$ in a study with a true effect. Use the default of 0.05 for this demo run.
+4.  Indicate an alpha level for power computations (a.k.a. `alpha_sig`).
+    The fitted values of $\mu$ and $\sigma$ can be used to compute the average power of studies in which a true effect is present (i.e., H1 is true), but only in relation to the $\alpha$ level used as the significance cutoff, which is specified by this argument.
+    With the default value of `alpha_sig = 0.05`, for example, power will be estimated as the probability of obtaining $p \leq 0.05$ in a study with a true effect.
+    Use the default of 0.05 for this demo run.
 
-5. Indicate the number of samples for the parametric bootstrap analysis. This is reasonably fast and we recommend using at least 2000 samples for any "real" analysis. Of course you can reduce it to 100 or 200 for quick testing, or even to 0 to skip bootstrapping entirely. For this demo run, use a value of 100.
+5.  Indicate the number of samples for the parametric bootstrap analysis.
+    This is reasonably fast and we recommend using at least 2000 samples for any "real" analysis.
+    Of course you can reduce it to 100 or 200 for quick testing, or even to 0 to skip bootstrapping entirely.
+    For this demo run, use a value of 100.
 
 After you have set the above arguments, click the `Fit model` button and the results will appear as shown next.
 
-There is also a `Download results` button that can be used after the model has been fit. This produces a `zip` file with the fitting results. The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes a `CSV` file showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
+There is also a `Download results` button that can be used after the model has been fit.
+This produces a `zip` file with the fitting results.
+The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes a `CSV` file showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
 
 ## Maximum-likelihood fitting results
 
@@ -97,26 +118,28 @@ The first table is a summary of the fitting conditions and overall results.
 descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list, file_name = p_file_name)
 knitr::kable(descriptor_tbl)
 ```
-The first part of this table gives information about the fitting options `alpha`, `tails`, and `alpha_sig` as specified in the setup panel.
 
-The second part of the table gives information about the dataset of $p$'s to which the model has been fit,
-including the number of $p$ values in the dataset as well as the minimum and maximum of these $p$ values.
-Notations are also included here if any $p$ values were excluded for being less than zero or greater than the `alpha` cutoff. In addition, $p$ values of 0 cause numerical errors in the fitting computations, so it is noted if any of these have been replaced with a smaller value.
+The first part of this table gives information about the fitting options `alpha`, `tails`, and `alpha_sig` as specified in the setup panel. It also shows the starting parameter values passed to the `optim` function.
+
+The second part of the table gives information about the dataset of $p$'s to which the model has been fit, including the number of $p$ values in the dataset as well as the minimum and maximum of these $p$ values.
+Notations are also included here if any $p$ values were excluded for being less than zero or greater than the `alpha` cutoff.
+In addition, $p$ values of 0 cause numerical errors in the fitting computations, so it is noted if any of these have been replaced with a smaller value.
 
 The third part of the table gives information about the overall results of the model fit:
 
-- Whether or not the `optim` function reported convergence on a final set of parameter estimates.
-- The overall log likelihood of the $p$'s dataset under the model with the estimated parameter values.
-- The value of the Kolmogorov-Smirnov Dmax test statistic comparing the observed and model-predicted CDFs of $p$ values.
-- The $p$ value of the Kolmogorov-Smirnov test, where the H0 is that the observed $p$ values came from the model-predicted distribution of $p$'s.
-
+-   Whether or not the `optim` function reported convergence on a final set of parameter estimates.
+-   The overall log likelihood of the $p$'s dataset under the model with the estimated parameter values.
+-   The value of the Kolmogorov-Smirnov Dmax test statistic comparing the observed and model-predicted CDFs of $p$ values.
+-   The $p$ value of the Kolmogorov-Smirnov test, where the H0 is that the observed $p$ values came from the model-predicted distribution of $p$'s.
 
 ### Parameter estimates table
 
-The next table shows the estimates for the model parameters $\mu$, $\sigma$, and $\pi$. Here, for example, it is
-estimated that the probability of a real effect (H1 true) in this research area is 0.304 and that---when a real effect is present---the size of that effect (in Z-score terms) comes from a normal distribution with a mean of 1.927 and a standard deviation of 1.953.
+The next table shows the estimates for the model parameters $\mu$, $\sigma$, and $\pi$.
+Here, for example, it is estimated that the probability of a real effect (H1 true) in this research area is 0.304 and that---when a real effect is present---the size of that effect (in Z-score terms) comes from a normal distribution with a mean of 1.927 and a standard deviation of 1.953.
 
-Also shown is the estimated power---that is, the probability of rejecting H0 when H1 is true. (This is essentially an average power computed across the distribution of possible true effect sizes with the estimated $\mu$ and $\sigma$). There is no standard error or confidence interval for power because it is derived from the others.
+Also shown is the estimated power---that is, the probability of rejecting H0 when H1 is true.
+(This is essentially an average power computed across the distribution of possible true effect sizes with the estimated $\mu$ and $\sigma$).
+There is no standard error or confidence interval for power because it is derived from the others.
 
 ```{r print_parameter_estimates, echo = FALSE}
 estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
@@ -125,9 +148,11 @@ knitr::kable(estimates_tbl)
 
 #### Additional bootstrap analysis table
 
-The bootstrap analysis provides bootstrap means, standard errors, and confidence intervals for the parameters. These are computed across the indicated number of bootstrap samples, where for each sample the program:
-    a.   generates a random sample of $p$ values from the mixture model with the estimated values of the parameters $\mu$, $\sigma$, and $\pi$.
-    b.   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, as well as to compute a new estimate of power assuming `alpha_sig`.
+The bootstrap analysis provides bootstrap means, standard errors, and confidence intervals for the parameters.
+These are computed across the indicated number of bootstrap samples, where for each sample the program:
+
+-   generates a random sample of $p$ values from the mixture model with the estimated values of the parameters $\mu$, $\sigma$, and $\pi$.
+-   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, as well as to compute a new estimate of power given the specified `alpha_sig` criterion.
 
 ```{r bootstrap_analysis, echo = FALSE, comment = ""}
 n_boot_samples <- 100  # Smaller number for demo, but 2000 recommended minimum for real analyses; more is better
@@ -135,15 +160,36 @@ df <- bootstrap(n_ps, fit_results_list, n_boot_samples,
                 alpha = alpha_cutoff, tails = tails, show_progress_bar = FALSE)
 boot_list <- make_bootstrap_summary_list(df, estimates_tbl)
 cat("* n bootstrap samples =",n_boot_samples,"\n")
-cat("* percent converged =",round(boot_list$pct_converged,2),"\n")
+cat("* percent converged OK =",round(boot_list$pct_converged,2),"\n")
 knitr::kable(boot_list$boot_tbl)
 ```
 
-The outputs show the percentage of bootstrap samples for which the fitting process converged
-and the means, standard errors, and confidence intervals of the parameter estimates across the different bootstrap samples.
+The outputs show the percentage of bootstrap samples for which the fitting process converged with legal parameter values (e.g., $0\leq\pi\leq1$) and the means, standard errors, and confidence intervals of the parameter estimates across the different bootstrap samples.
 
-It also includes a new column `BC_est` ("bias-corrected estimate"), which is the parameter estimate *corrected for* any bias that is present in the bootstrap sample estimates.
-For example, if the original maximum likelihood estimate of $\pi$ was 0.30, then 0.30 was used as the true $\pi$ for the bootstrap samples. If the average $\pi$ estimated in the bootstrap samples was smaller than that (say 0.28), then we know that the fitting process tends to underestimate $\pi$ by about 0.02 (with values of $\mu$, $\sigma$ and $\pi$ similar to those that were estimated). The bias correction process compensates for that underestimation bias by increasing the estimate of $\pi$ from 0.30 to 0.32.
+```{r BC_est_explanation, echo = FALSE}
+mu_row <- 1 # estimates_tbl$parameter == "estimate"
+mu_est <- estimates_tbl$estimate[mu_row]
+boot_mean_mu <- boot_list$boot_tbl$Boot_Mean[mu_row]
+bias <- boot_mean_mu - mu_est
+bc_est <- 2*mu_est - boot_mean_mu
+```
+
+It also includes the `BC_est` column to show *bias-corrected* parameter estimates.
+These are the original parameter estimates that are *corrected for* any bias that is suggested by the mean of the bootstrap sample estimates.
+
+Here is an illustration of the bias correction for the $\mu$ parameter in the current example.
+As shown in the "Parameter estimates" table, the original estimate of $\mu$ was `r mu_est`.
+This value was then used as the true $\mu$ for all of the parametric bootstrap samples.
+Therefore, if there were no bias, the "Boot_Mean" would also be (very close to) `r mu_est`.
+But the actual "Boot_Mean" for $\mu$ was `r boot_mean_mu`, suggesting that there is an estimation bias of
+
+<center>`r boot_mean_mu` - `r mu_est` = `r bias`.</center>
+
+The `BC_est` value is thus computed as
+
+<center>`r mu_est` - `r bias` = `r bc_est`</center>
+
+to correct for this bias.
 
 ### PDF and CDF plots
 
@@ -191,7 +237,6 @@ This prints the table summarizing the fitting conditions and overall results.
 
 ```{r ref.label = "print_parameter_estimates", eval = FALSE, echo = TRUE}
 ```
-
 
 ### Perform parametric bootstrapping using the fitted parameters:
 
@@ -245,4 +290,3 @@ cdf_plot <- ggplot() +
       y = "cumulative proportion")
 print(cdf_plot)
 ```
-

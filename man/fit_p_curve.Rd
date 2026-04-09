@@ -9,9 +9,9 @@ fit_p_curve(
   alpha = 1,
   tails = 2,
   alpha_sig = 0.05,
-  start = list(pi = 0.5, mu = 2, sigma = 2),
-  lower = c(1e-06, 0, 1e-06),
-  upper = c(1 - 1e-06, 15, 10)
+  start = list(mu = 2, sigma = 2, pi = 0.5),
+  lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
+  upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06)
 )
 }
 \arguments{
@@ -25,13 +25,13 @@ fit_p_curve(
 power when H0 is false (default = 0.05).}
 
 \item{start}{List of starting parameter values for the optim search
-(defaults:  pi = 0.5, mu = 2, sigma = 2).}
+(defaults: mu = 2, sigma = 2, pi = 0.5).}
 
-\item{lower}{Vector of lower bounds for pi, mu, and sigma
-(defaults = c(1e-6, 0, 1e-6))}
+\item{lower}{List of lower bounds for the optim search
+(defaults: mu = 0, sigma = 1e-6, pi = 1e-6).}
 
-\item{upper}{Vector of upper bounds for pi, mu, and sigma
-(defaults = c(1 - 1e-6, 15, 10))}
+\item{upper}{List of upper bounds for the optim search
+(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6).}
 }
 \value{
 List including estimated parameter values, their standard errors

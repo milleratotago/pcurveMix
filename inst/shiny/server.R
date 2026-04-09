@@ -72,8 +72,9 @@ server <- function(input, output) {
       output$predicted_cdfs_title <- renderText("Observed/predicted CDFs:")
 
       tails <- get_tails()
-      alpha_cutoff <- as.numeric(input$custom_cutoff)
-      alpha_sig <- as.numeric(input$alpha_sig)
+      alpha_cutoff <- input$custom_cutoff
+      alpha_sig <- input$alpha_sig
+      start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
       # Note: triple colon operator allows app to see un-exported package functions.
       l <- pcurveMix:::check_ps(p_vec_to_fit, alpha_cutoff = alpha_cutoff)
       if (!l$all_in_bounds) {
@@ -83,11 +84,11 @@ server <- function(input, output) {
       }
       n_ps <- length(p_vec_to_fit)
 
-      v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+      v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start = start_list)
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
-      v$n_boot_samples <- as.numeric(input$n_boot_samples)
+      v$n_boot_samples <- input$n_boot_samples
       if (v$n_boot_samples > 0) {
         boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails)
         boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl)
@@ -97,7 +98,7 @@ server <- function(input, output) {
         output$bootstrap_title <- renderText("Additional bootstrapping analysis")
         s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
         output$n_boot_samples <- renderText(s1)
-        s2 <- paste0("* percent converged = ",round(v$boot_pct_converged,2))
+        s2 <- paste0("* percent converged OK = ",round(v$boot_pct_converged,2))
         output$boot_pct_converged <- renderText(s2)
         output$bootstrap_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
       }
@@ -147,6 +148,7 @@ server <- function(input, output) {
         # Create time stamp to mark output file names
         time_stamp <- timestamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
 
+        id <- showNotification("Preparing report...", duration = NULL)
         # Path is relative to the Rmd folder
         output_directory_name <- "outputs"
         if (!dir.exists(output_directory_name)) dir.create(output_directory_name)
@@ -176,6 +178,7 @@ server <- function(input, output) {
                           envir = new.env(parent = globalenv()))
 
         all_file_paths <- c(csv_outfile_name, rmd_outfile_name)
+        removeNotification(id)
 
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)

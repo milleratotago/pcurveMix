@@ -27,28 +27,31 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @param alpha_sig Significance cutoff used in computing the estimated average
 #'  power when H0 is false (default = 0.05).
 #' @param start List of starting parameter values for the optim search
-#'  (defaults:  pi = 0.5, mu = 2, sigma = 2).
-#' @param lower Vector of lower bounds for pi, mu, and sigma
-#'  (defaults = c(1e-6, 0, 1e-6))
-#' @param upper Vector of upper bounds for pi, mu, and sigma
-#'  (defaults = c(1 - 1e-6, 15, 10))
+#'  (defaults: mu = 2, sigma = 2, pi = 0.5).
+#' @param lower List of lower bounds for the optim search
+#'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6).
+#' @param upper List of upper bounds for the optim search
+#'  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6).
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more.
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
-                        start = list(pi = 0.5, mu = 2, sigma = 2),
-                        lower = c(1e-6,      0, 1e-6),
-                        upper = c(1 - 1e-6, 15, 10)) {
+                        start = list(mu =  2, sigma = 2,    pi = 0.5),
+                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   p <- as.numeric(p);
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
   if (!check_ps_list$all_in_bounds) {
     p <- check_ps_list$ps_in_bounds
   }
   if (!length(p)) stop("No valid p-values in (0,1).")
+  start_vec <- c(start$pi, start$mu, start$sigma)
+  lower_vec <- c(lower$pi, lower$mu, lower$sigma)
+  upper_vec <- c(upper$pi, upper$mu, upper$sigma)
 
-  opt <- stats::optim(par = unlist(start), fn = nll_optim, p = p, alpha = alpha, tails = tails,
-               method = "L-BFGS-B", lower = lower, upper = upper, hessian = TRUE)
+  opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
+               method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE)
   est <- opt$par; H <- opt$hessian
   se <- ci <- NULL
   if (is.matrix(H) && all(is.finite(H))) {
@@ -64,7 +67,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
     }
   }
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
-              pi = est[1], mu = est[2], sigma = est[3],
+              pi = est[1], mu = est[2], sigma = est[3], start = start,
               se = se, ci95 = ci, logLik = -opt$value,
               converged = (opt$convergence == 0), n = length(p), min_p = min(p), max_p = max(p),
               check_ps_list = check_ps_list)
@@ -109,6 +112,9 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,3))))
+  rounded <- lapply(fit$start, round, digits = 3)
+  start_str <- paste(names(fit$start), rounded, sep = " = ", collapse = ", ")
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("starting values",start_str))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF P's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
   if (!fit$check_ps_list$all_in_bounds) {
