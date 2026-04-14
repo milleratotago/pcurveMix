@@ -11,17 +11,17 @@ make_bootstrap_summary_list(
 )
 }
 \arguments{
-\item{boot_df}{Output data frame produced by bootstrap() function.}
+\item{boot_df}{Output data frame produced by bootstrap() function}
 
-\item{mle_estimates_tbl}{Data frame produced by fit_to_estimates_tbl().}
+\item{mle_estimates_tbl}{Data frame produced by fit_to_estimates_tbl()}
 
-\item{boot_ci_limits}{A vector with the two limiting proportions.
-(lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975)).}
+\item{boot_ci_limits}{A vector with the two limiting proportions
+(lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975))}
 }
 \value{
 A list with the percent of samples in which the estimation process
  converged OK and a data frame with the bootstrap
- means, SEs, CIs, & bootstrap-corrected estimates of the model parameters.
+ means, SEs, CIs, & bootstrap-corrected estimates of the model parameters
 }
 \description{
 Function to summarize the data frame produced by parametric bootstrapping of fitted model.

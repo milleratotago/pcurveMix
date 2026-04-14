@@ -2,9 +2,9 @@
 
 # Compute negative log-likelihood of a p value or vector of p values
 #  under the model with the indicated parameters.
-# @param p Real 0-1 p value or vector for which nll is to be computed.
+# @param p Real 0-1 p value or vector for which nll is to be computed
 # @inheritParams pdf
-# @returns Real negative log-likelihood of the p values.
+# @returns Real negative log-likelihood of the p values
 # @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
   if (pi <= 0 || pi >= 1 || sigma <= 0 || mu < 0) return(1e12)
@@ -25,16 +25,16 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @param p Vector of p values in 0--1
 #' @inheritParams pdf
 #' @param alpha_sig Significance cutoff used in computing the estimated average
-#'  power when H0 is false (default = 0.05).
+#'  power when H0 is false (default = 0.05)
 #' @param start List of starting parameter values for the optim search
-#'  (defaults: mu = 2, sigma = 2, pi = 0.5).
+#'  (defaults: mu = 2, sigma = 2, pi = 0.5)
 #' @param lower List of lower bounds for the optim search
-#'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6).
+#'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 #' @param upper List of upper bounds for the optim search
-#'  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6).
+#'  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
-#'  H0 when it is false, and more.
+#'  H0 when it is false, and more
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                         start = list(mu =  2, sigma = 2,    pi = 0.5),
@@ -44,14 +44,20 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
   if (!check_ps_list$all_in_bounds) {
     p <- check_ps_list$ps_in_bounds
+    if (shiny::isRunning()) {
+      problem_string <- bad_ps_report_string(check_ps_list)
+      shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
+      # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
+    }
   }
+
   if (!length(p)) stop("No valid p-values in (0,1).")
   start_vec <- c(start$pi, start$mu, start$sigma)
   lower_vec <- c(lower$pi, lower$mu, lower$sigma)
   upper_vec <- c(upper$pi, upper$mu, upper$sigma)
 
   opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-               method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE)
+               method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE,  control = pcm_env$optim_control)
   est <- opt$par; H <- opt$hessian
   se <- ci <- NULL
   if (is.matrix(H) && all(is.finite(H))) {
@@ -115,13 +121,12 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   rounded <- lapply(fit$start, round, digits = 3)
   start_str <- paste(names(fit$start), rounded, sep = " = ", collapse = ", ")
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("starting values",start_str))
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor("edge_p",as.character(pcm_env$edge_p)))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF P's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
-  if (!fit$check_ps_list$all_in_bounds) {
-    if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's < 0", as.character(round(fit$check_ps_list$n_too_small,0))))
-    if (fit$check_ps_list$n_equal_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n small p's set to 1e-12", as.character(round(fit$check_ps_list$n_equal_zero,0))))
-    if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("n excluded p's > alpha_cutoff", as.character(round(fit$check_ps_list$n_too_large,0))))
-  }
+  if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_small,"p's < 0")))
+  if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_large,"p's > ",fit$alpha)))
+  if (fit$check_ps_list$n_equal_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit$check_ps_list$n_equal_zero,"small p's set to",pcm_env$edge_p)))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit$n,0))))
   smin <- formatC(fit$min_p, format = "e", digits = 6)
   if (fit$max_p < 0.001) {

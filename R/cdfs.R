@@ -5,7 +5,7 @@
 #' @returns Real CDF value or vector of CDF values.
 #' @export
 cdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
-  p2 <- pmin(pmax(as.numeric(p), 1e-12), min(1 - 1e-12, alpha) )
+  p2 <- pmin(pmax(as.numeric(p), pcm_env$edge_p), min(1 - pcm_env$edge_p, alpha) )
   cdfs <- switch(
     case_id(alpha, tails, pi),
     "uncond_2t_h1"  = F_uncond_2t_h1  (p2, mu, sigma),

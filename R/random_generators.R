@@ -1,17 +1,17 @@
 # random_generators.R
 
 #' Generate random p values from the mixture model.
-#' @param n Number of random p values to be generated.
-#' @param mu Mean of noncentrality parameters when H1 is true.
-#' @param sigma Standard deviation of noncentrality parameters when H1 is true.
-#' @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1).
-#' @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2).
-#' @param alpha Maximum p value in distribution conditional on p<=alpha (default = 1).
+#' @param n Number of random p values to be generated
+#' @param mu Mean of noncentrality parameters when H1 is true
+#' @param sigma Standard deviation of noncentrality parameters when H1 is true
+#' @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)
+#' @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
+#' @param alpha Maximum p value in distribution conditional on p<=alpha (default = 1)
 #' @param cond_method Set to string "rejection" (default) or "inversion" to generate random
 #'  p's from conditional distribution via rejection or quantile method. Rejection generates
 #'  values 0-1 but only keeps those less than alpha. Inversion uses numerical search of the p
-#'  distribution with the quantile function, which is usually slower except for really small alpha.
-#' @param tol Real tolerance when generating p's via quantiles (default = 1e-8).
+#'  distribution with the pcm_quantile function, which is usually slower except for really small alpha
+#' @param tol Real tolerance when generating p's via quantiles (default = 1e-8)
 #' @returns Real vector of n random p values.
 #' @export
 random <- function(n, mu, sigma, pi = 1, alpha = 1, tails = 2, cond_method = c("rejection", "inversion"), tol = 1e-8 ) {
@@ -36,10 +36,10 @@ random <- function(n, mu, sigma, pi = 1, alpha = 1, tails = 2, cond_method = c("
       "cond_1t_mix"   = cond_sampler(r_uncond_1t_mix, n, mu, sigma, alpha, pi = pi)  # r_cond_1t_mix (n, mu, sigma, pi, alpha)
     ) # rejection
   } else { # cond_method == "inversion"
-    # Generate runif's and then invert CDF back to p values with quantile function.
+    # Generate runif's and then invert CDF back to p values with pcm_quantile function.
     # Slow due to CDF inversion by search.
     rr <- stats::runif(n)
-    rands <- quantile(rr, mu, sigma, pi = pi, alpha = alpha, tails = tails, tol = tol)
+    rands <- pcm_quantile(rr, mu, sigma, pi = pi, alpha = alpha, tails = tails, tol = tol)
   }
   return(rands)
 }

@@ -32,10 +32,10 @@ ui <- tagList(
       color:#ffffff;
       background-color:#112446;
       font-size: 120%;
-      width: 25%;
+      width: 32%;
       position: fixed;
-      top: 90%;
-      left: 2%;
+      top: 80%;
+      left: 1%;
       }
       hr{border-top: 10px solid #050505;}"
     )),
@@ -58,7 +58,7 @@ ui <- tagList(
     tags$style(HTML("
       .custom-text-input { width: 100%; }
       .custom-text-input label { width: 100%; font-weight: bold; }
-      .custom-text-input input { width: 25%; }
+      .custom-text-input input { width: 45%; }
     ")),
 
     tags$style(HTML("
@@ -94,23 +94,27 @@ ui <- tagList(
                                              selected = "2-tailed"),
                      )
                    ),
+                   h4(),
                    div(class = "custom-text-input",
                        fluidRow(
                          column(12, numericInput("custom_cutoff","Upper p cutoff for inclusion in file ('alpha'):", value = "1",
                                                  min = 0, max = 1, step = 0.05)
                          ),
                        ),
+                       h4(),
                        fluidRow(
                          column(12, numericInput("alpha_sig","Alpha level to use for power computations ('alpha_sig'):", value = "0.05",
                                                  min = 0, max = 1, step = 0.01)
                          ),
                        ),
+                       h4(),
                        fluidRow(
                          column(12, numericInput("n_boot_samples","N parametric bootstrap samples (recommended min 2000 for real analyses):",
                                                  value = "100", min = 0, step = 100)
                          ),
                        ),
                    ),
+                   h4(),
                    checkboxInput("adjust_starting_values", label = strong("Change default starting parameter values for optim() search:"), FALSE),
                    conditionalPanel(
                      condition = "input.adjust_starting_values == true",

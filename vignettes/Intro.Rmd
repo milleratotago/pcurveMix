@@ -79,11 +79,21 @@ Once the app opens, use the setup panel to set these arguments of the fitting pr
     Of course you can reduce it to 100 or 200 for quick testing, or even to 0 to skip bootstrapping entirely.
     For this demo run, use a value of 100.
 
+6.  Optionally, you can adjust the starting values for $\mu$, $\sigma$, and $\pi$ that are given to optim. We have not found much effect of changing these values but there could be an effect with some datasets.
+
+7.  There are also a few other rather technical variables that can be adjusted using the `set_globals` function (see that function's documentation). Use the following command sequence to change the values of these variables:
+
+```{r eval = FALSE}
+library(pcurveMix)
+set_globals(edge_p = 1e-13) # Set any values here
+run_shiny_app()
+```
+
 After you have set the above arguments, click the `Fit model` button and the results will appear as shown next.
 
 There is also a `Download results` button that can be used after the model has been fit.
 This produces a `zip` file with the fitting results.
-The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes a `CSV` file showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
+The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes `CSV` files showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
 
 ## Maximum-likelihood fitting results
 
@@ -196,13 +206,13 @@ to correct for this bias.
 The next output is a (density-scaled) histogram of the sample $p$ values superimposed over the predicted density at each $p$ from the fitted model:
 
 ```{r, fig.width=6, echo = FALSE}
-quick_pdf_plot(sample_ps, fit_results_list)
+quick_pdf_plot(fit_results_list)
 ```
 
 The final plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
 ```{r, fig.width=6, echo = FALSE}
-quick_cdf_plot(sample_ps, fit_results_list)
+quick_cdf_plot(fit_results_list)
 ```
 
 ## Option 2: Fitting with an R script

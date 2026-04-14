@@ -13,7 +13,8 @@ server <- function(input, output) {
   v <- reactiveValues(fit_completed = FALSE,
                       p_filename = NULL,
                       fit_results_list = NULL,
-                      p_seq = NULL,
+                      p_seq_pdf = NULL,
+                      p_seq_cdf = NULL,
                       pred_pdfs = NULL,
                       pred_cdfs = NULL,
                       descriptor_tbl = NULL,
@@ -27,7 +28,8 @@ server <- function(input, output) {
     v$fit_completed = FALSE
     v$p_filename <- NULL
     v$fit_results_list <- NULL
-    v$p_seq <- NULL
+    v$p_seq_pdf <- NULL
+    v$p_seq_cdf <- NULL
     v$pred_pdfs <- NULL
     v$pred_cdfs <- NULL
     v$descriptor_tbl <- NULL
@@ -75,22 +77,16 @@ server <- function(input, output) {
       alpha_cutoff <- input$custom_cutoff
       alpha_sig <- input$alpha_sig
       start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
-      # Note: triple colon operator allows app to see un-exported package functions.
-      l <- pcurveMix:::check_ps(p_vec_to_fit, alpha_cutoff = alpha_cutoff)
-      if (!l$all_in_bounds) {
-        problem_string <- pcurveMix:::bad_ps_report_string(l)
-        showNotification(problem_string, type = "warning", duration = 15)
-        p_vec_to_fit <- l$ps_in_bounds
-      }
-      n_ps <- length(p_vec_to_fit)
 
       v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start = start_list)
+      ps_in_bounds <- v$fit_results_list$check_ps_list$ps_in_bounds
+      n_ps <- length(ps_in_bounds)
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
       v$n_boot_samples <- input$n_boot_samples
       if (v$n_boot_samples > 0) {
-        boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails)
+        boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start = start_list)
         boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl)
         v$boot_pct_converged <- boot_list$pct_converged
         v$boot_tbl <- boot_list$boot_tbl
@@ -105,24 +101,25 @@ server <- function(input, output) {
       v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
       output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
 
-      v$p_seq <- seq(0.001,min(0.9999,alpha_cutoff),0.001)
-      v$pred_pdfs <- pdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
+      v$p_seq_pdf <- pcurveMix:::pcm_env$p_seq_pdf
+      v$p_seq_cdf <- pcurveMix:::pcm_env$p_seq_cdf
+      v$pred_pdfs <- pdf(v$p_seq_pdf, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
                          alpha = alpha_cutoff, tails = tails)
-      v$pred_cdfs <- cdf(v$p_seq, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
+      v$pred_cdfs <- cdf(v$p_seq_cdf, mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi,
                          alpha = alpha_cutoff, tails = tails)
 
       v$pdf_plot <- ggplot() +
-        geom_histogram(aes(x = p_vec_to_fit, y = after_stat(density)), binwidth = 0.02) +
-        geom_line(aes(x = v$p_seq, y = v$pred_pdfs), color = "red") +
+        geom_histogram(aes(x = ps_in_bounds, y = after_stat(density)), binwidth = 0.02) +
+        geom_line(aes(x = v$p_seq_pdf, y = v$pred_pdfs), color = "red") +
         labs(title = "Observed (black) vs predicted (red) PDFs",
              x = "p value",
              y = "density")
       output$pdf_plot <- renderPlot(v$pdf_plot)
 
-      df2 <- data.frame(p = p_vec_to_fit)
+      df2 <- data.frame(p = ps_in_bounds)
       v$cdf_plot <- ggplot() +
         stat_ecdf(data = df2, aes(x = p), geom = "step") +
-        geom_line(aes(x = v$p_seq, y = v$pred_cdfs), color = "red") +
+        geom_line(aes(x = v$p_seq_cdf, y = v$pred_cdfs), color = "red") +
         labs(title = "Observed (black) vs predicted (red) CDFs",
              x = "p value",
              y = "cumulative proportion")
@@ -153,11 +150,15 @@ server <- function(input, output) {
         output_directory_name <- "outputs"
         if (!dir.exists(output_directory_name)) dir.create(output_directory_name)
 
-        # Write CSV file of predicted pdf and cdf values
-        csv_outfile_name <- paste0(output_directory_name, "/",
-                                   "pred_pdf_cdf_", time_stamp, ".csv")
-        pred_pdf_cdf <- data.frame(p = v$p_seq, pdf = v$pred_pdfs, cdf = v$pred_cdfs)
-        write.csv(pred_pdf_cdf, csv_outfile_name, row.names = FALSE)
+        # Write CSV files of predicted pdf and cdf values
+        csv_pdf_outfile_name <- paste0(output_directory_name, "/",
+                                       "pred_pdf_", time_stamp, ".csv")
+        pred_pdf <- data.frame(p = v$p_seq_pdf, pdf = v$pred_pdfs)
+        write.csv(pred_pdf, csv_pdf_outfile_name, row.names = FALSE)
+        csv_cdf_outfile_name <- paste0(output_directory_name, "/",
+                                       "pred_cdf_", time_stamp, ".csv")
+        pred_cdf <- data.frame(p = v$p_seq_cdf, cdf = v$pred_cdfs)
+        write.csv(pred_cdf, csv_cdf_outfile_name, row.names = FALSE)
 
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
@@ -177,7 +178,7 @@ server <- function(input, output) {
                           params = params,
                           envir = new.env(parent = globalenv()))
 
-        all_file_paths <- c(csv_outfile_name, rmd_outfile_name)
+        all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
         removeNotification(id)
 
         # Zip using the filename returned by function filename

@@ -5,12 +5,12 @@
 \title{Make a simple plot of observed p cumulative histogram and
   predicted cdf}
 \usage{
-quick_cdf_plot(ps, fit, show_plot = TRUE)
+quick_cdf_plot(fit, p_seq = pcm_env$p_seq_cdf, show_plot = TRUE)
 }
 \arguments{
-\item{ps}{Vector of observed p values}
-
 \item{fit}{List output of fit_p_curve function}
+
+\item{p_seq}{Sequence of p values at which to compute predictions}
 
 \item{show_plot}{Display the plot after making it (default = TRUE)}
 }

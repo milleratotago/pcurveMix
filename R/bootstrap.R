@@ -1,33 +1,41 @@
 # bootstrap.R
 
-# NEWJEFF: Accepting lots of defaults for parameters of these two functions:
-# random <- function(n, mu, sigma, pi = 1, alpha = 1, tails = 2, cond_method = c("rejection", "inversion"), tol = 1e-8 )
-# fit_p_curve <- function(p, alpha = 1, tails = 2,
-#                         start = list(pi = 0.5, mu = 2, sigma = 2),
-#                         lower = c(1e-6,      0, 1e-6),
-#                         upper = c(1 - 1e-6, 15, 10))
-
 #' Function for parametric bootstrapping of fitted model.
 #' @inheritParams random
-#' @param fit Fitted model returned by fit_p_curve.
+#' @inheritParams fit_p_curve
+#' @param fit Fitted model returned by fit_p_curve
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
-#' @returns Data frame with 1 row per bootstrap sample.
+#' @returns Data frame with 1 row per bootstrap sample
 #' @export
-bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2,
-                      show_progress_bar = TRUE) {
+bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2, alpha_sig = 0.05,
+                      start = list(mu =  2, sigma = 2,    pi = 0.5),
+                      lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+                      upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6),
+                      show_progress_bar = TRUE,
+                      cond_method = "rejection", tol = 1e-8) {
   if (show_progress_bar) shiny_running <- shiny::isRunning()
   boot <- matrix(NA_real_, nrow = n_boot_samples, ncol = 4)
   colnames(boot) <- c("pi", "mu", "sigma", "power")
+  start_vec <- c(start$pi, start$mu, start$sigma)
+  lower_vec <- c(lower$pi, lower$mu, lower$sigma)
+  upper_vec <- c(upper$pi, upper$mu, upper$sigma)
 
   # Nest function for one sample that is used with console progress bar,
   # shiny progress bar, or no progress bar
   one_boot_sample <- function() {
-    rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
-    fit_b <- fit_p_curve(rand_ps, alpha = alpha, tails = tails)
-    if (isTRUE(fit_b$converged)) {
-      vec <- c(fit_b$pi, fit_b$mu, fit_b$sigma,
-               cdf(fit$alpha_sig, mu = fit_b$mu, sigma = fit_b$sigma, pi = 1, alpha = 1, tails = tails))  # power for that draw
+    rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails,
+                      cond_method = cond_method, tol = tol)
+    rand_ps[rand_ps == 0] <- pcm_env$edge_p
+    # fit_b <- fit_p_curve(rand_ps, alpha = alpha, tails = tails)
+    opt <- stats::optim(par = start_vec, fn = nll_optim, p = rand_ps, alpha = alpha, tails = tails,
+                        method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = FALSE,
+                        control = pcm_env$optim_control)
+    # print(opt)
+    est <- opt$par; pi <- est[1]; mu <- est[2]; sigma <- est[3]
+    if (isTRUE(opt$convergence == 0)) {
+      vec <- c(pi, mu, sigma,
+               cdf(alpha_sig, mu = mu, sigma = sigma, pi = 1, alpha = 1, tails = tails))  # power estimated from current mu/sigma/ip
     } else {
       vec <- rep(NA,4)
     }
@@ -60,13 +68,13 @@ bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2,
 }
 
 #' Function to summarize the data frame produced by parametric bootstrapping of fitted model.
-#' @param boot_df Output data frame produced by bootstrap() function.
-#' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl().
-#' @param boot_ci_limits A vector with the two limiting proportions.
-#'  (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975)).
+#' @param boot_df Output data frame produced by bootstrap() function
+#' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl()
+#' @param boot_ci_limits A vector with the two limiting proportions
+#'  (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975))
 #' @returns A list with the percent of samples in which the estimation process
 #'  converged OK and a data frame with the bootstrap
-#'  means, SEs, CIs, & bootstrap-corrected estimates of the model parameters.
+#'  means, SEs, CIs, & bootstrap-corrected estimates of the model parameters
 #' @export
 make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limits = c(0.025, 0.975)) {
   n_attempts <- nrow(boot_df)
@@ -79,8 +87,8 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
   n_ok <- nrow(boot_df)
   if (n_ok == 0) {
     problem_string <- "No successful bootstrap refits; try adjusting start/lower/upper of fit_p_curve()."
-    if (shiny_running) {
-      showNotification(problem_string, type = "warning", duration = 15)
+    if (shiny::isRunning()) {
+      shiny::showNotification(problem_string, type = "warning", duration = 45)
       return( list(pct_converged = NULL, boot_tbl = NULL) )
     } else {
       stop(problem_string)

@@ -10,24 +10,49 @@ bootstrap(
   n_boot_samples,
   alpha = 1,
   tails = 2,
-  show_progress_bar = TRUE
+  alpha_sig = 0.05,
+  start = list(mu = 2, sigma = 2, pi = 0.5),
+  lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
+  upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06),
+  show_progress_bar = TRUE,
+  cond_method = "rejection",
+  tol = 1e-08
 )
 }
 \arguments{
-\item{n}{Number of random p values to be generated.}
+\item{n}{Number of random p values to be generated}
 
-\item{fit}{Fitted model returned by fit_p_curve.}
+\item{fit}{Fitted model returned by fit_p_curve}
 
 \item{n_boot_samples}{Number of bootstrap samples to take}
 
-\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1).}
+\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
-\item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2).}
+\item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
+
+\item{alpha_sig}{Significance cutoff used in computing the estimated average
+power when H0 is false (default = 0.05)}
+
+\item{start}{List of starting parameter values for the optim search
+(defaults: mu = 2, sigma = 2, pi = 0.5)}
+
+\item{lower}{List of lower bounds for the optim search
+(defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
+
+\item{upper}{List of upper bounds for the optim search
+(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
 
 \item{show_progress_bar}{Boolean determining whether progress bar is used (default = TRUE)}
+
+\item{cond_method}{Set to string "rejection" (default) or "inversion" to generate random
+p's from conditional distribution via rejection or quantile method. Rejection generates
+values 0-1 but only keeps those less than alpha. Inversion uses numerical search of the p
+distribution with the pcm_quantile function, which is usually slower except for really small alpha}
+
+\item{tol}{Real tolerance when generating p's via quantiles (default = 1e-8)}
 }
 \value{
-Data frame with 1 row per bootstrap sample.
+Data frame with 1 row per bootstrap sample
 }
 \description{
 Function for parametric bootstrapping of fitted model.

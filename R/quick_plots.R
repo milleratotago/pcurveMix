@@ -2,13 +2,14 @@
 
 #' Make a simple plot of observed p histogram and
 #'   predicted pdf density
-#' @param ps Vector of observed p values
 #' @param fit List output of fit_p_curve function
+#' @param p_seq Sequence of p values at which to compute predictions
 #' @param show_plot Display the plot after making it (default = TRUE)
 #' @returns Figure object made by ggplot
 #' @export
-quick_pdf_plot <- function(ps, fit, show_plot = TRUE) {
-  p_seq <- seq(0.001, fit$alpha, 0.002) # alpha_cutoff
+quick_pdf_plot <- function(fit, p_seq = pcm_env$p_seq_pdf, show_plot = TRUE) {
+  ps <- fit$check_ps_list$ps_in_bounds
+  p_seq <- p_seq[p_seq <= fit$alpha]
   pred_pdfs <- pdf(p_seq, mu = fit$mu, sigma = fit$sigma, pi = fit$pi,
                    alpha = fit$alpha) # _cutoff)  # compute predicted
   pdf_df <- data.frame(p = ps)
@@ -31,8 +32,9 @@ quick_pdf_plot <- function(ps, fit, show_plot = TRUE) {
 #' @returns Figure object made by ggplot
 #' @importFrom rlang .data
 #' @export
-quick_cdf_plot <- function(ps, fit, show_plot = TRUE) {
-  p_seq <- seq(0.001, fit$alpha, 0.002) # alpha_cutoff
+quick_cdf_plot <- function(fit, p_seq = pcm_env$p_seq_cdf, show_plot = TRUE) {
+  ps <- fit$check_ps_list$ps_in_bounds
+  p_seq <- p_seq[p_seq <= fit$alpha]
   pred_cdfs <- cdf(p_seq, mu = fit$mu, sigma = fit$sigma, pi = fit$pi,
                    alpha = fit$alpha) # _cutoff)  # compute predicted
   cdf_df <- data.frame(p = ps)

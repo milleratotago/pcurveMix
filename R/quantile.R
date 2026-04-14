@@ -2,10 +2,10 @@
 
 #' Get quantile(s) of p-curves corresponding to requested target_cdfs.
 #' @inheritParams pdf
-#' @param target_cdfs The CDFs of the p-curve distribution at which to determine the quantile p value.
-#' @param tol Tolerance value for uniroot search function (default = 1e-8).
+#' @param target_cdfs The CDFs of the p-curve distribution at which to determine the quantile p value
+#' @param tol Tolerance value for uniroot search function (default = 1e-8)
 #' @export
-quantile <- function(target_cdfs, mu, sigma, pi = 1, alpha = 1, tails = 2, tol = 1e-8) {
+pcm_quantile <- function(target_cdfs, mu, sigma, pi = 1, alpha = 1, tails = 2, tol = 1e-8) {
   f <- function(p, mu, sigma, pi, alpha, tails, target_cdf) {
     pcurveMix::cdf(p, mu, sigma, pi = pi, alpha = alpha, tails = tails) - target_cdf
   }

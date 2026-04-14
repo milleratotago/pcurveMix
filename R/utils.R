@@ -53,21 +53,17 @@ check_ps <- function(ps, alpha_cutoff) {
   n_too_small <- sum(too_small)
   n_equal_zero <- sum(equal_zero)
   n_too_large <- sum(too_large)
-  if (n_too_small + n_equal_zero + n_too_large == 0) {
-    l <- list(all_in_bounds = TRUE,
-              alpha_cutoff = alpha_cutoff)
-  } else {
-    ps[equal_zero] <- 1e-12
-    l <- list(all_in_bounds = FALSE,
-              alpha_cutoff = alpha_cutoff,
-              n_too_small = n_too_small,
-              n_equal_zero = n_equal_zero,
-              n_too_large = n_too_large,
-              ps_too_small = ps[too_small],
-              ps_too_large = ps[too_large],
-              ps_in_bounds = ps[ !(too_small | too_large) ]
-              )
-  }
+  all_in_bounds <- (n_too_small + n_equal_zero + n_too_large == 0)
+  if (n_equal_zero > 0) ps[equal_zero] <- pcm_env$edge_p
+  l <- list(all_in_bounds = all_in_bounds,
+            alpha_cutoff = alpha_cutoff,
+            n_too_small = n_too_small,
+            n_equal_zero = n_equal_zero,
+            n_too_large = n_too_large,
+            ps_too_small = ps[too_small],
+            ps_too_large = ps[too_large],
+            ps_in_bounds = ps[ !(too_small | too_large) ]
+  )
   return(l)
 }
 

@@ -17,26 +17,26 @@ fit_p_curve(
 \arguments{
 \item{p}{Vector of p values in 0--1}
 
-\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1).}
+\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
-\item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2).}
+\item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
 
 \item{alpha_sig}{Significance cutoff used in computing the estimated average
-power when H0 is false (default = 0.05).}
+power when H0 is false (default = 0.05)}
 
 \item{start}{List of starting parameter values for the optim search
-(defaults: mu = 2, sigma = 2, pi = 0.5).}
+(defaults: mu = 2, sigma = 2, pi = 0.5)}
 
 \item{lower}{List of lower bounds for the optim search
-(defaults: mu = 0, sigma = 1e-6, pi = 1e-6).}
+(defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
 
 \item{upper}{List of upper bounds for the optim search
-(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6).}
+(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
 }
 \value{
 List including estimated parameter values, their standard errors
  and 95% confidence limits, an estimate of the average power to reject
- H0 when it is false, and more.
+ H0 when it is false, and more
 }
 \description{
 Fit estimates of model pi, mu, sigma to a vector of p values.
