@@ -10,7 +10,7 @@ initialize_globals <- function() {
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pwrs <- 4:12
   small_ps <- sort( 10^(-pwrs) )
-  pcm_env$p_seq_cdf <- c(small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
+  pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
 }
 
 #' Function to override defaults of a few global variables.

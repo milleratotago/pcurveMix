@@ -17,8 +17,8 @@ cdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
     "cond_1t_h1"    =   F_cond_1t_h1  (p2, mu, sigma, alpha),
     "cond_1t_mix"   =   F_cond_1t_mix (p2, mu, sigma, pi, alpha)
   )
-  too_small <- p < 0
-  too_large <- p > alpha
+  too_small <- p <= 0
+  too_large <- p >= alpha
   cdfs[too_small] <- 0
   cdfs[too_large] <- 1
   return(cdfs)

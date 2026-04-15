@@ -183,6 +183,8 @@ server <- function(input, output) {
 
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)
+        delay(5000,
+              showNotification("After download finishes, perform another analysis or quit.", duration = 45))
       } # end of else
     },  # end content function
 
@@ -202,5 +204,9 @@ server <- function(input, output) {
     }
     return(n_tails)
   }
+
+  observeEvent(input$btnquit, {
+    stopApp()
+  })
 
 } # end server function

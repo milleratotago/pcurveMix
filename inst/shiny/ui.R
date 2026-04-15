@@ -137,6 +137,10 @@ ui <- tagList(
                    h4(),
                    fluidRow(
                      column(12, downloadButton("btnReport","Download results"))
+                   ),
+                   h4(),
+                   fluidRow(
+                     column(12, actionButton("btnquit","Quit"))
                    )
       ), # end sidebar panel
 
