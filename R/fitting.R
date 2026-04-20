@@ -1,14 +1,16 @@
 # fitting.R
 
-# Compute negative log-likelihood of a p value or vector of p values
-#  under the model with the indicated parameters.
-# @param p Real 0-1 p value or vector for which nll is to be computed
-# @inheritParams pdf
-# @returns Real negative log-likelihood of the p values
-# @export
+#' Compute negative log-likelihood of a p value or vector of p values
+#'  under the model with the indicated parameters.
+#' @param p Real 0-1 p value or vector for which nll is to be computed. p values
+#'  should be checked to make sure they are in range (0--1] before calling
+#'  this function.
+#' @inheritParams pdf
+#' @returns Real negative log-likelihood of the p values
+#' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
-  if (pi <= 0 || pi >= 1 || sigma <= 0 || mu < 0) return(1e12)
-  if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
+  if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
+  # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
   pdfs <- pdf(p, mu, sigma, pi, alpha, tails)
   -sum(log(pmax(pdfs, .Machine$double.xmin)))
 }

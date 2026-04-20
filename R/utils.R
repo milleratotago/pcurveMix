@@ -49,7 +49,7 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 check_ps <- function(ps, alpha_cutoff) {
   too_small <- ps < 0
   equal_zero <- ps == 0
-  too_large <- ps > alpha_cutoff
+  too_large <- (ps > alpha_cutoff) | (ps == 1)
   n_too_small <- sum(too_small)
   n_equal_zero <- sum(equal_zero)
   n_too_large <- sum(too_large)
