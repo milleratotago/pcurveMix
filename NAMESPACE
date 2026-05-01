@@ -2,6 +2,7 @@
 
 export(bootstrap)
 export(cdf)
+export(fit_list_to_df)
 export(fit_p_curve)
 export(fit_to_descriptor_tbl)
 export(fit_to_estimates_tbl)

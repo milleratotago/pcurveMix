@@ -81,3 +81,52 @@ bad_ps_report_string <- function(l) {
   if ( (l$n_too_small == 0) && (l$n_equal_zero == 0) && (l$n_too_large == 0) ) s <- paste(s,"no problematic p's")
   return(s)
 }
+
+#' Convert a fit_list (output of fit_p_curve) to a data frame with a single row
+#'  for convenient accumulation of multiple fit results via rbind
+#' @param fit_list A list that was the output of fit_p_curve
+#' @returns A data frame with a single row
+#' @export
+fit_list_to_df <- function(fit_list) {
+  fit_list$start <- NULL
+  fit_list$check_ps_list <- NULL
+  fit_list$pi_se <- fit_list$se["pi"]
+  fit_list$mu_se <- fit_list$se["mu"]
+  fit_list$sigma_se <- fit_list$se["sigma"]
+  fit_list$se <- NULL
+  fit_list$pi_lwr95 <- fit_list$ci95["pi","lwr95"]
+  fit_list$pi_upr95 <- fit_list$ci95["pi","upr95"]
+  fit_list$mu_lwr95 <- fit_list$ci95["mu","lwr95"]
+  fit_list$mu_upr95 <- fit_list$ci95["mu","upr95"]
+  fit_list$sigma_lwr95 <- fit_list$ci95["sigma","lwr95"]
+  fit_list$sigma_upr95 <- fit_list$ci95["sigma","upr95"]
+  fit_list$ci95 <- NULL
+  fit_list$ks_Dmax <- fit_list$ks$statistic
+  fit_list$ks_p_value <- fit_list$ks$p.value
+  fit_list$ks_exact <- fit_list$ks$exact
+  fit_list$ks <- NULL
+  df <- as.data.frame(fit_list)
+  return(df)
+}
+
+# Function to convert parameters on their natural scales
+#  into values across the full real range for optim to adjust.
+# param parms List with elements of mu>0, sigma>0, and 0<pi<1
+parms_to_reals <- function(parms) {
+  r <- parms
+  r$pi <- stats::qnorm(parms$pi)
+  r$mu <- log(parms$mu)
+  r$sigma <- log(parms$sigma)
+  return(r)
+}
+
+# Function to convert parameters on their natural scales
+#  into values across the full real range for optim to adjust.
+# param parms List with elements of mu, sigma, and pi
+reals_to_parms <- function(reals) {
+  p <- reals
+  p$pi <- stats::pnorm(reals$pi)
+  p$mu <- exp(reals$mu)
+  p$sigma <- exp(reals$sigma)
+  return(p)
+}

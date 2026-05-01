@@ -1,26 +1,53 @@
 # fitting.R
 
 #' Compute negative log-likelihood of a p value or vector of p values
-#'  under the model with the indicated parameters.
+#'  under the model with the indicated parameters. Use the direct
+#'  method with pdf() or use a censoring method that bins all p's
+#'  less than small_p_bin_cutoff
 #' @param p Real 0-1 p value or vector for which nll is to be computed. p values
 #'  should be checked to make sure they are in range (0--1] before calling
 #'  this function.
 #' @inheritParams pdf
 #' @returns Real negative log-likelihood of the p values
 #' @export
-nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
+nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
+                small_p_bin_cutoff = pcm_env$small_p_bin_cutoff) {
   if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
   # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
-  pdfs <- pdf(p, mu, sigma, pi, alpha, tails)
-  -sum(log(pmax(pdfs, .Machine$double.xmin)))
+  if (is.null(small_p_bin_cutoff)) {
+    # Direct method
+    pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
+    this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
+  } else {
+    # Censoring method
+    above_cutoff <- p > small_p_bin_cutoff
+    pdfs <- pcurveMix::pdf(p[above_cutoff], mu, sigma, pi, alpha, tails)
+    n_in_small_bin <- sum(!above_cutoff)
+    cdf_at_cutoff <- pcurveMix::cdf(small_p_bin_cutoff, mu, sigma, pi, alpha, tails)
+    pdfs <- pdfs / (1 - cdf_at_cutoff)  # conditionalize on p above cutoff
+    this_nll <- -( sum(log(pmax(pdfs, .Machine$double.xmin))) +
+                     n_in_small_bin * log(cdf_at_cutoff) )
+  }
+  return(this_nll)
 }
 
 # This version is just for optim's use; it unpacks to-be-adjusted
 # parameters bundled in par.
 # param par Vector of the three model parameters pi, mu, sigma (in order)
+# param p Vector of p's for which negative log likelihood is to be computed
 nll_optim <- function(par, p, alpha = 1, tails = 2) {
+  # NEWJEFF: Convert reals to parms here if you want optim
+  #  to search in real space, but that messes up se & wald cis
+  # reals <- list(pi = par[1], mu = par[2], sigma = par[3])
+  # p <- reals_to_parms(reals)
+  # pi <- p$pi; mu <- p$mu; sigma <- p$sigma
   pi <- par[1]; mu <- par[2]; sigma <- par[3]
-  nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
+  this_nll <- pcurveMix::nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
+  # print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
+  # if (this_nll < 0.01) {
+  #   stop("error") # NEWJEFF
+  # }
+  return(this_nll)
 }
 
 #' Fit estimates of model pi, mu, sigma to a vector of p values.
@@ -59,9 +86,10 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   upper_vec <- c(upper$pi, upper$mu, upper$sigma)
 
   opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-               method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE,  control = pcm_env$optim_control)
+                      method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE,
+                      control = pcm_env$optim_control)
   est <- opt$par; H <- opt$hessian
-  se <- ci <- NULL
+  # se <- ci <- NULL
   if (is.matrix(H) && all(is.finite(H))) {
     Vinv <- try(solve(H), silent = TRUE)
     if (!inherits(Vinv, "try-error")) {
@@ -72,6 +100,11 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
       ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
       ci["mu",]    <- pmax(ci["mu",], 0)
       ci["sigma",] <- pmax(ci["sigma",], 1e-6)
+    } else {
+      # Ensure that there is _something_ in these positions.
+      se <- c(NA, NA, NA); names(se) <- c("pi","mu","sigma")
+      ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
+      rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
     }
   }
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,

@@ -4,7 +4,13 @@
 \alias{set_globals}
 \title{Function to override defaults of a few global variables.}
 \usage{
-set_globals(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA)
+set_globals(
+  edge_p = NA,
+  p_seq_pdf = NA,
+  p_seq_cdf = NA,
+  optim_control = NA,
+  small_p_bin_cutoff = NA
+)
 }
 \arguments{
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
@@ -18,6 +24,10 @@ values for plots (default same as pdf with added 10^(4:10))}
 
 \item{optim_control}{A control list passed to R's optim() function
 (default = NULL, in which case the optim defaults are used)}
+
+\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
+censoring (default = NULL, in which case likelihoods are computed without
+censoring)}
 }
 \value{
 A list of the adjusted values of the global variables

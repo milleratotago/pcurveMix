@@ -3,9 +3,19 @@
 \name{nll}
 \alias{nll}
 \title{Compute negative log-likelihood of a p value or vector of p values
- under the model with the indicated parameters.}
+ under the model with the indicated parameters. Use the direct
+ method with pdf() or use a censoring method that bins all p's
+ less than small_p_bin_cutoff}
 \usage{
-nll(p, mu, sigma, pi = 1, alpha = 1, tails = 2)
+nll(
+  p,
+  mu,
+  sigma,
+  pi = 1,
+  alpha = 1,
+  tails = 2,
+  small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+)
 }
 \arguments{
 \item{p}{Real 0-1 p value or vector for which nll is to be computed. p values
@@ -27,5 +37,7 @@ Real negative log-likelihood of the p values
 }
 \description{
 Compute negative log-likelihood of a p value or vector of p values
- under the model with the indicated parameters.
+ under the model with the indicated parameters. Use the direct
+ method with pdf() or use a censoring method that bins all p's
+ less than small_p_bin_cutoff
 }

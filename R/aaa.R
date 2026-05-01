@@ -6,11 +6,12 @@ pcm_env <- new.env(parent = baseenv())
 
 initialize_globals <- function() {
   pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
-  pcm_env$optim_control <- NULL # Use optim defaults
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pwrs <- 4:12
   small_ps <- sort( 10^(-pwrs) )
   pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
+  pcm_env$optim_control <- NULL # Use optim defaults
+  pcm_env$small_p_bin_cutoff <- NULL
 }
 
 #' Function to override defaults of a few global variables.
@@ -22,16 +23,22 @@ initialize_globals <- function() {
 #'  values for plots (default same as pdf with added 10^(4:10))
 #' @param optim_control A control list passed to R's optim() function
 #'  (default = NULL, in which case the optim defaults are used)
+#' @param small_p_bin_cutoff The cutoff point for computing likelihoods with
+#'  censoring (default = NULL, in which case likelihoods are computed without
+#'  censoring)
 #' @returns A list of the adjusted values of the global variables
 #' @export
-set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA) {
+set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
+                        small_p_bin_cutoff = NA) {
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
-  if (!is.na(optim_control)) pcm_env$optim_control <- optim_control
+  if (is.null(optim_control) || !is.na(optim_control)) pcm_env$optim_control <- optim_control
+  if (is.null(small_p_bin_cutoff) || !is.na(small_p_bin_cutoff)) pcm_env$small_p_bin_cutoff <- small_p_bin_cutoff
   l <- list(edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
-            p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control)
-  return(l)
+            p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
+            small_p_bin_cutoff = pcm_env$small_p_bin_cutoff)
+  invisible(l)
 }
 
 # Next line suppresses package check warning about "density"
