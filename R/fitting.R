@@ -26,8 +26,8 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
     n_in_small_bin <- sum(!above_cutoff)
     cdf_at_cutoff <- pcurveMix::cdf(small_p_bin_cutoff, mu, sigma, pi, alpha, tails)
     pdfs <- pdfs / (1 - cdf_at_cutoff)  # conditionalize on p above cutoff
-    this_nll <- -( sum(log(pmax(pdfs, .Machine$double.xmin))) +
-                     n_in_small_bin * log(cdf_at_cutoff) )
+    this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
+      n_in_small_bin * log(cdf_at_cutoff)
   }
   return(this_nll)
 }
@@ -156,12 +156,12 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list) {
   # print("parms after optim & conversion:")
   # print(parms)
   MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)
-  print("  **** MLSE ****")
-  print(MLSE)
+  # print("  **** MLSE ****")
+  # print(MLSE)
   est <- c(parms$pi, parms$mu, parms$sigma)
-  print("  **** l ****")
   l <- make_se_ci(est, MLSE$SE)
-  print(l)
+  # print("  **** l ****")
+  # print(l)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
               se = l$se, ci95 = l$ci, logLik = -opt$value,
