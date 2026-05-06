@@ -12,10 +12,11 @@
 #' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
                 small_p_bin_cutoff = pcm_env$small_p_bin_cutoff) {
+  # print( paste("mu =",mu, "sigma =",sigma, "pi =",pi) )
   if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
   # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
   if (is.null(small_p_bin_cutoff)) {
-    # Direct method
+    # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
@@ -36,12 +37,17 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
 # param par Vector of the three model parameters pi, mu, sigma (in order)
 # param p Vector of p's for which negative log likelihood is to be computed
 nll_optim <- function(par, p, alpha = 1, tails = 2) {
-  # NEWJEFF: Convert reals to parms here if you want optim
-  #  to search in real space, but that messes up se & wald cis
-  # reals <- list(pi = par[1], mu = par[2], sigma = par[3])
-  # p <- reals_to_parms(reals)
-  # pi <- p$pi; mu <- p$mu; sigma <- p$sigma
-  pi <- par[1]; mu <- par[2]; sigma <- par[3]
+  if (pcm_env$fit_constrained) {
+    pi <- par[1]; mu <- par[2]; sigma <- par[3]
+    # print("constrained")
+  } else {
+    # Convert reals to parms so that optim can
+    #  search in unconstrained real space.
+    reals <- list(pi = par[1], mu = par[2], sigma = par[3])
+    parms <- reals_to_parms(reals)
+    pi <- parms$pi; mu <- parms$mu; sigma <- parms$sigma
+    # print("unconstrained")
+  }
   this_nll <- pcurveMix::nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
   # print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
   # if (this_nll < 0.01) {
@@ -81,10 +87,28 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   }
 
   if (!length(p)) stop("No valid p-values in (0,1).")
+  if (pcm_env$fit_constrained) {
+    fit <- optim_fit_constrained(p, alpha, tails, alpha_sig,
+                                 start, lower, upper)
+  } else {
+    fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start)
+  }
+  # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
+  fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
+  cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = 1, tails = tails)
+  fit$ks <- ks_with_cdf(p, cdf_fit)
+  fit$n <- length(p)
+  fit$min_p <- min(p)
+  fit$max_p <- max(p)
+  fit$check_ps_list <- check_ps_list
+return(fit)
+} # fit_p_curve
+
+optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
+                                  start, lower, upper) {
   start_vec <- c(start$pi, start$mu, start$sigma)
   lower_vec <- c(lower$pi, lower$mu, lower$sigma)
   upper_vec <- c(upper$pi, upper$mu, upper$sigma)
-
   opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                       method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE,
                       control = pcm_env$optim_control)
@@ -110,13 +134,59 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = est[1], mu = est[2], sigma = est[3], start = start,
               se = se, ci95 = ci, logLik = -opt$value,
-              converged = (opt$convergence == 0), n = length(p), min_p = min(p), max_p = max(p),
-              check_ps_list = check_ps_list)
-  fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
-  cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = 1, tails = tails)
-  fit$ks <- ks_with_cdf(p, cdf_fit)
+              converged = (opt$convergence == 0))
   return(fit)
-} # fit_p_curve
+} # optim_fit_constrained
+
+optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list) {
+  # print(start_list)
+  start_reals <- parms_to_reals(start_list)
+  # print(start_reals)
+  start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
+  # print(start_real_vec)
+  opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
+                      method = "L-BFGS-B", hessian = FALSE,
+                      control = pcm_env$optim_control)
+  # print(opt)
+  est <- opt$par;
+  real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
+  # print("parms after optim & before conversion:")
+  # print(real_parms)
+  parms <- reals_to_parms(real_parms)
+  # print("parms after optim & conversion:")
+  # print(parms)
+  MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)
+  print("  **** MLSE ****")
+  print(MLSE)
+  est <- c(parms$pi, parms$mu, parms$sigma)
+  print("  **** l ****")
+  l <- make_se_ci(est, MLSE$SE)
+  print(l)
+  fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
+              pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
+              se = l$se, ci95 = l$ci, logLik = -opt$value,
+              converged = (opt$convergence == 0))
+  # print(fit)
+  return(fit)
+}
+
+make_se_ci <- function(est, se) {
+  if (!any(is.na(se))) {
+    z <- 1.96
+    ci <- cbind(est - z*se, est + z*se)
+    rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+    ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
+    ci["mu",]    <- pmax(ci["mu",], 0)
+    ci["sigma",] <- pmax(ci["sigma",], 1e-6)
+  } else {
+    # Ensure that there is _something_ in these positions.
+    se <- c(NA, NA, NA);
+    ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
+    rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+  }
+  names(se) <- c("pi","mu","sigma")
+  return( list(se = se, ci = ci) )
+}
 
 # ---------- Helper: KS with tiny jitter to avoid ties warnings ----------
 ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {

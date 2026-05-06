@@ -9,7 +9,10 @@ set_globals(
   p_seq_pdf = NA,
   p_seq_cdf = NA,
   optim_control = NA,
-  small_p_bin_cutoff = NA
+  small_p_bin_cutoff = NA,
+  fit_constrained = NA,
+  MLSEh = NA,
+  small_rcond = NA
 )
 }
 \arguments{
@@ -28,6 +31,17 @@ values for plots (default same as pdf with added 10^(4:10))}
 \item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
 censoring (default = NULL, in which case likelihoods are computed without
 censoring)}
+
+\item{fit_constrained}{Boolean determining whether optim() is run using
+parameters constrained with limits (e.g., pi = 0-1) or is run with
+unconstrained -inf/+inf real parameters that are artificially transformed
+into the desired limits (default = FALSE, recommended)}
+
+\item{MLSEh}{Small +/- increment to parameter values used in computing
+the Fisher information matrix (default = 1e-7)}
+
+\item{small_rcond}{The cutoff reciprocal condition number for deciding that
+a Fisher information matrix is ill-conditioned (default = 1e-15)}
 }
 \value{
 A list of the adjusted values of the global variables

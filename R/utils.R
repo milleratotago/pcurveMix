@@ -109,23 +109,24 @@ fit_list_to_df <- function(fit_list) {
   return(df)
 }
 
-# Function to convert parameters on their natural scales
-#  into values across the full real range for optim to adjust.
+# Function to convert parameters on their natural scales (i.e., positive or 0-1)
+#  into values across the full -inf/+inf real range for optim to adjust.
 # param parms List with elements of mu>0, sigma>0, and 0<pi<1
 parms_to_reals <- function(parms) {
   r <- parms
-  r$pi <- stats::qnorm(parms$pi)
+  r$pi <- stats::qlogis(parms$pi)
   r$mu <- log(parms$mu)
   r$sigma <- log(parms$sigma)
   return(r)
 }
 
-# Function to convert parameters on their natural scales
-#  into values across the full real range for optim to adjust.
-# param parms List with elements of mu, sigma, and pi
+# Function to convert parameters in the full -inf/+inf real ranges
+#  into values on their natural scales (i.e., positive or 0-1)
+# param real List with real values of mu, sigma, and pi that are to be
+#  converted back to the natural scale.
 reals_to_parms <- function(reals) {
   p <- reals
-  p$pi <- stats::pnorm(reals$pi)
+  p$pi <- stats::plogis(reals$pi)
   p$mu <- exp(reals$mu)
   p$sigma <- exp(reals$sigma)
   return(p)
