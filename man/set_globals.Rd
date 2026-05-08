@@ -12,7 +12,8 @@ set_globals(
   small_p_bin_cutoff = NA,
   fit_constrained = NA,
   MLSEh = NA,
-  small_rcond = NA
+  small_rcond = NA,
+  optim_starting_parms = NA
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ the Fisher information matrix (default = 1e-7)}
 
 \item{small_rcond}{The cutoff reciprocal condition number for deciding that
 a Fisher information matrix is ill-conditioned (default = 1e-15)}
+
+\item{optim_starting_parms}{A list or data frame of parameter combinations
+at which to start the optim search(es)}
 }
 \value{
 A list of the adjusted values of the global variables

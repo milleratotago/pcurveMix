@@ -33,9 +33,6 @@ bootstrap(
 \item{alpha_sig}{Significance cutoff used in computing the estimated average
 power when H0 is false (default = 0.05)}
 
-\item{start}{List of starting parameter values for the optim search
-(defaults: mu = 2, sigma = 2, pi = 0.5)}
-
 \item{lower}{List of lower bounds for the optim search
 (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
 

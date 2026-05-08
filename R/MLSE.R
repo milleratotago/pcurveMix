@@ -59,16 +59,22 @@ pcm_MLSE <- function(ps, mu, sigma, pi, alpha, tails
   # Set up output matrices in case try block fails
   Cov <- matrix(NaN, nrow = NParms, ncol = NParms)
   SE <- rep(NaN, NParms)
-  # rcond estimates the reciprocal condition number of a matrix in the 1-norm, measuring its nearness to singularity. It returns a scalar between \(0\) and \(1.0\), where a value near \(0\) indicates a badly conditioned (nearly singular) matrix, and a value near \(1.0\) indicates a well-conditioned matrix
+  # rcond estimates the reciprocal condition number of a matrix in the 1-norm,
+  # measuring its nearness to singularity. It returns a scalar between \(0\) and \(1.0\),
+  # where a value near \(0\) indicates a badly conditioned (nearly singular) matrix,
+  # and a value near \(1.0\) indicates a well-conditioned matrix.
   thisrcond <- Matrix::rcond(FI)
   if (thisrcond < pcm_env$small_rcond) {
-    warning( paste0("Nearly singular information matrix (i.e., rcond <= ",small_rcond,")") )
-  }
+    warning( paste0("Nearly singular information matrix (i.e., rcond <= ",pcm_env$small_rcond,")") )
+    # Ensure that there is _something_ in these positions.
+    SE <- c(NA, NA, NA); names(SE) <- c("pi","mu","sigma")
+    CI <- matrix(rep(NA,6), nrow = 3, ncol = 2);
+    rownames(CI) <- c("pi","mu","sigma"); colnames(CI) <- c("lwr95","upr95")
+  } else {
   # This may generate a warning, because FI may not be invertible.
-  FI  # NEWJEFF
+  # FI
   CovReal <- solve(FI);  # Covariance is the inverse of the information matrix.
   SEReal <- sqrt(diag(CovReal));  # WAS TRANSPOSE in MATLAB, not needed in R
-  # SEReal <- t(SEReal)  # transpose
   for (iParm in 1:NParms) {
     SE[iParm] <- SEReal[iParm]
     for (jParm in iParm:NParms) {
@@ -76,6 +82,7 @@ pcm_MLSE <- function(ps, mu, sigma, pi, alpha, tails
       Cov[jParm,iParm] <- CovReal[iParm,jParm]
     } # for jParm
   } # for iParm
+  } # else with thisrcond ok
   return( list(SE = SE, Cov = Cov) )
 
 } # function MLSE

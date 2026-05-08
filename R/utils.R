@@ -31,9 +31,10 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 
   if (pi == 1) {
     s <- paste0(s,"_h1")
-  } else if (pi < 1 && pi > 0) {
+  } else if (pi < 1 && pi >= 0) {
     s <- paste0(s,"_mix")
   } else {
+    print( paste("error with pi =",pi) )
     stop("pi must be in the range 0--1")
   }
 

@@ -56,13 +56,20 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
   return(this_nll)
 }
 
-#' Fit estimates of model pi, mu, sigma to a vector of p values.
-#' @param p Vector of p values in 0--1
+#' Fit estimates of the model parameters pi, mu, sigma to a vector of p values.
+#' Repeatedly fit model with multiple starting points,
+#'  saving at the end the best fit.
+#' @param p Vector of to-be-fitted p values in 0--1
 #' @inheritParams pdf
 #' @param alpha_sig Significance cutoff used in computing the estimated average
 #'  power when H0 is false (default = 0.05)
-#' @param start List of starting parameter values for the optim search
-#'  (defaults: mu = 2, sigma = 2, pi = 0.5)
+#' @param start_parms Either a list of starting parameter values for the optim search,
+#'  or else a data frame where each row is a combination of starting parameter values
+#'  and the function trials all combinations (defaults to optim_starting_parms).
+#'  start_parms$pi values of NA are replaced with the proportion of to-be-fitted
+#'  p values that are significant (i.e., <= sig_cutoff_p)
+#' @param sig_cutoff_p Significance cutoff used to determine the proportion of
+#'  significant to-be-fitted p values(default = 0.05)
 #' @param lower List of lower bounds for the optim search
 #'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 #' @param upper List of upper bounds for the optim search
@@ -70,11 +77,46 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more
+#' @param start_df Data frame with columns for mu, sigma, and pi, where each
+#'  row specifies on combination of optim() starting points for the parameters
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
-                        start = list(mu =  2, sigma = 2,    pi = 0.5),
+                        start_parms = pcm_env$default_start_parms_list,
+                        sig_cutoff_p = 0.05,
                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
+  if (any(is.na(start_parms$pi))) {
+    pi_est <- mean(p <= sig_cutoff_p)
+    start_parms$pi[is.na(start_parms$pi)] <- pi_est
+  }
+  single_start <- !is.data.frame(start_parms)
+  if (single_start) {
+    fit_list <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                             start = start_parms, lower = lower, upper = upper)
+    return(fit_list)
+  }
+  # start_parms is a data frame
+  n_starting_points <- nrow(start_parms)
+  start_parms1 <- as.list(start_parms[1,])
+  best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                           start = start_parms1, lower = lower, upper = upper)
+  for (i_row in 2:n_starting_points) {
+    start_parms1 <- as.list(start_df[i_row,])
+    one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                            start = start_parms1, lower = lower, upper = upper)
+    if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
+  }
+  return(best_fit)
+}
+
+
+#' Fit estimates of model pi, mu, sigma to a vector of p values.
+#' @inheritParams fit_p_curve
+#' @export
+fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
+                         start = pcm_env$optim_starting_parms,
+                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   p <- as.numeric(p);
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
   if (!check_ps_list$all_in_bounds) {
@@ -101,7 +143,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit$min_p <- min(p)
   fit$max_p <- max(p)
   fit$check_ps_list <- check_ps_list
-return(fit)
+  return(fit)
 } # fit_p_curve
 
 optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
@@ -139,34 +181,21 @@ optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
 } # optim_fit_constrained
 
 optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list) {
-  # print(start_list)
   start_reals <- parms_to_reals(start_list)
-  # print(start_reals)
   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
-  # print(start_real_vec)
   opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                       method = "L-BFGS-B", hessian = FALSE,
                       control = pcm_env$optim_control)
-  # print(opt)
   est <- opt$par;
   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
-  # print("parms after optim & before conversion:")
-  # print(real_parms)
   parms <- reals_to_parms(real_parms)
-  # print("parms after optim & conversion:")
-  # print(parms)
   MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)
-  # print("  **** MLSE ****")
-  # print(MLSE)
   est <- c(parms$pi, parms$mu, parms$sigma)
   l <- make_se_ci(est, MLSE$SE)
-  # print("  **** l ****")
-  # print(l)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
               se = l$se, ci95 = l$ci, logLik = -opt$value,
               converged = (opt$convergence == 0))
-  # print(fit)
   return(fit)
 }
 

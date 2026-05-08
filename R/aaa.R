@@ -5,6 +5,7 @@
 pcm_env <- new.env(parent = baseenv())
 
 initialize_globals <- function() {
+  pcm_env$default_start_parms_list <- list(mu = 2, sigma = 2, pi = 0.5)  # Used at least two places
   pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pwrs <- 4:12
@@ -15,6 +16,27 @@ initialize_globals <- function() {
   pcm_env$fit_constrained <- FALSE
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
+  pcm_env$optim_starting_parms <- pcm_env$default_start_parms_list
+}
+
+#' Function to construct a grid of parameter values to use as starting points
+#'  for fitting the model using fit_p_curve_many_starts. The grid df has rows
+#'  for all possible combinations of the values in mu_vec, sigma_vec, and pi_vec.
+#' @param mu_vec Vector of different starting values of the mu parameter
+#'  (default = 0.0, 0.5, 1.0, 2.0, 3.0)
+#' @param sigma_vec Vector of different starting values of the sigma parameter
+#'  (default = 0.5, 1.0, 1.5, 2.0, 3.0)
+#' @param pi_vec Vector of different starting values of the pi parameter.
+#'  (default = 0.02, 0.2, 0.4, 0.6, 0.8). If this is set to NA, then a single
+#'  starting value will be computed based on the proportion of significant
+#'  results in the vector of p's that is to be fit.
+#' @export
+set_optim_starting_parms_df <- function(mu_vec = c(0.1, 0.5, 1.0, 2.0, 3.0),
+                                        sigma_vec = c(0.5, 1.0, 1.5, 2.0, 3.0),
+                                        pi_vec = c(0.02, 0.2, 0.4, 0.6, 0.8) ) {
+  start_df <- expand.grid(mu_vec, sigma_vec, pi_vec)
+  colnames(start_df) <- c("mu", "sigma", "pi")
+  return(start_df)
 }
 
 #' Function to override defaults of a few global variables.
@@ -37,10 +59,13 @@ initialize_globals <- function() {
 #'  the Fisher information matrix (default = 1e-7)
 #' @param small_rcond The cutoff reciprocal condition number for deciding that
 #'  a Fisher information matrix is ill-conditioned (default = 1e-15)
+#' @param optim_starting_parms A list or data frame of parameter combinations
+#'  at which to start the optim search(es)
 #' @returns A list of the adjusted values of the global variables
 #' @export
 set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
-                        small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA) {
+                        small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA,
+                        optim_starting_parms = NA) {
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
@@ -49,11 +74,13 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
   if (!is.na(fit_constrained)) pcm_env$fit_constrained <- fit_constrained
   if (!is.na(MLSEh)) pcm_env$MLSEh <- MLSEh
   if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
+  if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
   l <- list(edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
             p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
             small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
             fit_constrained = pcm_env$fit_constrained,
-            MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond)
+            MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond,
+            optim_starting_parms = pcm_env$optim_starting_parms)
   invisible(l)
 }
 
