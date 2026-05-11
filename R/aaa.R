@@ -22,20 +22,19 @@ initialize_globals <- function() {
 #' Function to construct a grid of parameter values to use as starting points
 #'  for fitting the model using fit_p_curve_many_starts. The grid df has rows
 #'  for all possible combinations of the values in mu_vec, sigma_vec, and pi_vec.
-#' @param mu_vec Vector of different starting values of the mu parameter
+#' @param mu Vector of different starting values of the mu parameter
 #'  (default = 0.0, 0.5, 1.0, 2.0, 3.0)
-#' @param sigma_vec Vector of different starting values of the sigma parameter
+#' @param sigma Vector of different starting values of the sigma parameter
 #'  (default = 0.5, 1.0, 1.5, 2.0, 3.0)
-#' @param pi_vec Vector of different starting values of the pi parameter.
+#' @param pi Vector of different starting values of the pi parameter.
 #'  (default = 0.02, 0.2, 0.4, 0.6, 0.8). If this is set to NA, then a single
 #'  starting value will be computed based on the proportion of significant
 #'  results in the vector of p's that is to be fit.
 #' @export
-set_optim_starting_parms_df <- function(mu_vec = c(0.1, 0.5, 1.0, 2.0, 3.0),
-                                        sigma_vec = c(0.5, 1.0, 1.5, 2.0, 3.0),
-                                        pi_vec = c(0.02, 0.2, 0.4, 0.6, 0.8) ) {
-  start_df <- expand.grid(mu_vec, sigma_vec, pi_vec)
-  colnames(start_df) <- c("mu", "sigma", "pi")
+set_optim_starting_parms_df <- function(mu = c(0.1, 0.5, 1.0, 2.0, 3.0),
+                                        sigma = c(0.5, 1.0, 1.5, 2.0, 3.0),
+                                        pi = c(0.02, 0.2, 0.4, 0.6, 0.8) ) {
+  start_df <- expand.grid(mu = mu, sigma = sigma, pi = pi)
   return(start_df)
 }
 
@@ -61,11 +60,15 @@ set_optim_starting_parms_df <- function(mu_vec = c(0.1, 0.5, 1.0, 2.0, 3.0),
 #'  a Fisher information matrix is ill-conditioned (default = 1e-15)
 #' @param optim_starting_parms A list or data frame of parameter combinations
 #'  at which to start the optim search(es)
+#' @param reset_to_defaults Boolean; if true, reset all values to their
+#'  defaults before applying the other arguments
 #' @returns A list of the adjusted values of the global variables
 #' @export
 set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
                         small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA,
-                        optim_starting_parms = NA) {
+                        optim_starting_parms = NA,
+                        reset_to_defaults = FALSE) {
+  if (reset_to_defaults) initialize_globals()
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf

@@ -13,7 +13,8 @@ set_globals(
   fit_constrained = NA,
   MLSEh = NA,
   small_rcond = NA,
-  optim_starting_parms = NA
+  optim_starting_parms = NA,
+  reset_to_defaults = FALSE
 )
 }
 \arguments{
@@ -46,6 +47,9 @@ a Fisher information matrix is ill-conditioned (default = 1e-15)}
 
 \item{optim_starting_parms}{A list or data frame of parameter combinations
 at which to start the optim search(es)}
+
+\item{reset_to_defaults}{Boolean; if true, reset all values to their
+defaults before applying the other arguments}
 }
 \value{
 A list of the adjusted values of the global variables

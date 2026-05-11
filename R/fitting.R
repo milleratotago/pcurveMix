@@ -25,7 +25,6 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
     pdfs <- pcurveMix::pdf(p[above_cutoff], mu, sigma, pi, alpha, tails)
     n_in_small_bin <- sum(!above_cutoff)
     cdf_at_cutoff <- pcurveMix::cdf(small_p_bin_cutoff, mu, sigma, pi, alpha, tails)
-    pdfs <- pdfs / (1 - cdf_at_cutoff)  # conditionalize on p above cutoff
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
       n_in_small_bin * log(cdf_at_cutoff)
   }
@@ -184,14 +183,15 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list) {
   start_reals <- parms_to_reals(start_list)
   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
   opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-                      method = "L-BFGS-B", hessian = FALSE,
+                      method = "L-BFGS-B", hessian = TRUE,
                       control = pcm_env$optim_control)
   est <- opt$par;
   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
   parms <- reals_to_parms(real_parms)
-  MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)
-  est <- c(parms$pi, parms$mu, parms$sigma)
-  l <- make_se_ci(est, MLSE$SE)
+  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
+  # est <- c(parms$pi, parms$mu, parms$sigma)
+  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
+  l <- real_to_nat_se_ci(opt$par, opt$hessian)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
               se = l$se, ci95 = l$ci, logLik = -opt$value,

@@ -7,19 +7,19 @@
  for all possible combinations of the values in mu_vec, sigma_vec, and pi_vec.}
 \usage{
 set_optim_starting_parms_df(
-  mu_vec = c(0.1, 0.5, 1, 2, 3),
-  sigma_vec = c(0.5, 1, 1.5, 2, 3),
-  pi_vec = c(0.02, 0.2, 0.4, 0.6, 0.8)
+  mu = c(0.1, 0.5, 1, 2, 3),
+  sigma = c(0.5, 1, 1.5, 2, 3),
+  pi = c(0.02, 0.2, 0.4, 0.6, 0.8)
 )
 }
 \arguments{
-\item{mu_vec}{Vector of different starting values of the mu parameter
+\item{mu}{Vector of different starting values of the mu parameter
 (default = 0.0, 0.5, 1.0, 2.0, 3.0)}
 
-\item{sigma_vec}{Vector of different starting values of the sigma parameter
+\item{sigma}{Vector of different starting values of the sigma parameter
 (default = 0.5, 1.0, 1.5, 2.0, 3.0)}
 
-\item{pi_vec}{Vector of different starting values of the pi parameter.
+\item{pi}{Vector of different starting values of the pi parameter.
 (default = 0.02, 0.2, 0.4, 0.6, 0.8). If this is set to NA, then a single
 starting value will be computed based on the proportion of significant
 results in the vector of p's that is to be fit.}
