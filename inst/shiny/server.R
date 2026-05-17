@@ -78,7 +78,7 @@ server <- function(input, output) {
       alpha_sig <- input$alpha_sig
       start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
 
-      v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start = start_list)
+      v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start_parms = start_list)
       ps_in_bounds <- v$fit_results_list$check_ps_list$ps_in_bounds
       n_ps <- length(ps_in_bounds)
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename)
@@ -86,7 +86,7 @@ server <- function(input, output) {
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
       v$n_boot_samples <- input$n_boot_samples
       if (v$n_boot_samples > 0) {
-        boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start = start_list)
+        boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
         boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl)
         v$boot_pct_converged <- boot_list$pct_converged
         v$boot_tbl <- boot_list$boot_tbl

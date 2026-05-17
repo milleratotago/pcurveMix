@@ -11,6 +11,7 @@ fit_p_curve(
   alpha = 1,
   tails = 2,
   alpha_sig = 0.05,
+  want_optim_hessian = TRUE,
   start_parms = pcm_env$default_start_parms_list,
   sig_cutoff_p = 0.05,
   lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
@@ -27,6 +28,10 @@ fit_p_curve(
 \item{alpha_sig}{Significance cutoff used in computing the estimated average
 power when H0 is false (default = 0.05)}
 
+\item{want_optim_hessian}{Boolean indicating whether optim() should compute
+the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
+hessian is not used)}
+
 \item{start_parms}{Either a list of starting parameter values for the optim search,
 or else a data frame where each row is a combination of starting parameter values
 and the function trials all combinations (defaults to optim_starting_parms).
@@ -34,16 +39,14 @@ start_parms$pi values of NA are replaced with the proportion of to-be-fitted
 p values that are significant (i.e., <= sig_cutoff_p)}
 
 \item{sig_cutoff_p}{Significance cutoff used to determine the proportion of
-significant to-be-fitted p values(default = 0.05)}
+significant to-be-fitted p values for use in adjusting starting value of pi
+(default = 0.05)}
 
 \item{lower}{List of lower bounds for the optim search
 (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
 
 \item{upper}{List of upper bounds for the optim search
 (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
-
-\item{start_df}{Data frame with columns for mu, sigma, and pi, where each
-row specifies on combination of optim() starting points for the parameters}
 }
 \value{
 List including estimated parameter values, their standard errors

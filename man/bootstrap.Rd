@@ -11,9 +11,6 @@ bootstrap(
   alpha = 1,
   tails = 2,
   alpha_sig = 0.05,
-  start = list(mu = 2, sigma = 2, pi = 0.5),
-  lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
-  upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06),
   show_progress_bar = TRUE,
   cond_method = "rejection",
   tol = 1e-08
@@ -32,12 +29,6 @@ bootstrap(
 
 \item{alpha_sig}{Significance cutoff used in computing the estimated average
 power when H0 is false (default = 0.05)}
-
-\item{lower}{List of lower bounds for the optim search
-(defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
-
-\item{upper}{List of upper bounds for the optim search
-(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
 
 \item{show_progress_bar}{Boolean determining whether progress bar is used (default = TRUE)}
 

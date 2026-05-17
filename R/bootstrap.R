@@ -9,31 +9,34 @@
 #' @returns Data frame with 1 row per bootstrap sample
 #' @export
 bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2, alpha_sig = 0.05,
-                      start = list(mu =  2, sigma = 2,    pi = 0.5),
-                      lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
-                      upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6),
                       show_progress_bar = TRUE,
                       cond_method = "rejection", tol = 1e-8) {
   if (show_progress_bar) shiny_running <- shiny::isRunning()
   boot <- matrix(NA_real_, nrow = n_boot_samples, ncol = 4)
   colnames(boot) <- c("pi", "mu", "sigma", "power")
-  start_vec <- c(start$pi, start$mu, start$sigma)
-  lower_vec <- c(lower$pi, lower$mu, lower$sigma)
-  upper_vec <- c(upper$pi, upper$mu, upper$sigma)
 
   # Nest function for one sample that is used with console progress bar,
   # shiny progress bar, or no progress bar
   one_boot_sample <- function() {
     rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails,
                       cond_method = cond_method, tol = tol)
+    # print("rand_ps =")
+    # print(rand_ps[1:4])
     rand_ps[rand_ps == 0] <- pcm_env$edge_p
-    # fit_b <- fit_p_curve(rand_ps, alpha = alpha, tails = tails)
-    opt <- stats::optim(par = start_vec, fn = nll_optim, p = rand_ps, alpha = alpha, tails = tails,
-                        method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = FALSE,
-                        control = pcm_env$optim_control)
+    fit_list <- fit_p_curve(rand_ps, alpha = alpha, tails = tails, want_optim_hessian = FALSE)
+    pi <- fit_list$pi
+    mu <- fit_list$mu
+    sigma <- fit_list$sigma
+    # print(fit_list)
+    # opt <- stats::optim(par = start_vec, fn = nll_optim, p = rand_ps, alpha = alpha, tails = tails,
+    #                     method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = FALSE,
+    #                     control = pcm_env$optim_control)
     # print(opt)
-    est <- opt$par; pi <- est[1]; mu <- est[2]; sigma <- est[3]
-    if (isTRUE(opt$convergence == 0)) {
+    # est <- opt$par; pi <- est[1]; mu <- est[2]; sigma <- est[3]
+    # print("est = ")
+    # print(est)
+    # if (isTRUE(opt$convergence == 0)) {
+    if (fit_list$converged) {
       vec <- c(pi, mu, sigma,
                cdf(alpha_sig, mu = mu, sigma = sigma, pi = 1, alpha = 1, tails = tails))  # power estimated from current mu/sigma/ip
     } else {

@@ -11,7 +11,7 @@ initialize_globals <- function() {
   pwrs <- 4:12
   small_ps <- sort( 10^(-pwrs) )
   pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
-  pcm_env$optim_control <- NULL # Use optim defaults
+  pcm_env$optim_control <- list(maxit = 1000)  # Use other optim defaults
   pcm_env$small_p_bin_cutoff <- NULL
   pcm_env$fit_constrained <- FALSE
   pcm_env$MLSEh <- 1e-7

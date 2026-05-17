@@ -18,8 +18,8 @@ real_to_nat_se_ci <- function(par_hat, H) {
   # Natural-scale parameter estimates.
   mu_hat    <- exp(par_hat["log_mu"])
   sigma_hat <- exp(par_hat["log_sigma"])
-  pi_hat    <- plogis(par_hat["logit_pi"])
-  print(pi_hat)
+  pi_hat    <- stats::plogis(par_hat["logit_pi"])
+  # print(pi_hat)
 
   # Apply numerical safety clipping to pi.
   pi_hat <- pmin(pmax(pi_hat, 1e-10), 1 - 1e-10)
@@ -88,12 +88,12 @@ real_to_nat_se_ci <- function(par_hat, H) {
   # The CI limits are then back-transformed:
   # log(mu)     -> mu
   # log(sigma)  -> sigma
-  # plogis(pi)   -> pi
+  # stats::plogis(pi)   -> pi
   #
   # As a result, the CIs for mu, sigma, and pi are generally asymmetric.
   # They also automatically respect the parameter boundaries.
 
-  z <- qnorm(0.975)
+  z <- stats::qnorm(0.975)
 
   # CI for log(mu).
   ci_log_mu <- c(
@@ -116,7 +116,7 @@ real_to_nat_se_ci <- function(par_hat, H) {
   # Back-transform CI limits to the natural scale.
   ci_mu    <- exp(ci_log_mu)
   ci_sigma <- exp(ci_log_sigma)
-  ci_pi    <- plogis(ci_logit_pi)
+  ci_pi    <- stats::plogis(ci_logit_pi)
 
   ci <- rbind(ci_pi, ci_mu, ci_sigma)
   rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")

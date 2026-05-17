@@ -31,6 +31,10 @@ this function.}
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
+
+\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
+censoring (default = NULL, in which case likelihoods are computed without
+censoring)}
 }
 \value{
 Real negative log-likelihood of the p values

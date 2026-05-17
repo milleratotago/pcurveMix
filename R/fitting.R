@@ -8,6 +8,7 @@
 #'  should be checked to make sure they are in range (0--1] before calling
 #'  this function.
 #' @inheritParams pdf
+#' @inheritParams set_globals
 #' @returns Real negative log-likelihood of the p values
 #' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
@@ -62,13 +63,17 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @inheritParams pdf
 #' @param alpha_sig Significance cutoff used in computing the estimated average
 #'  power when H0 is false (default = 0.05)
+#' @param want_optim_hessian Boolean indicating whether optim() should compute
+#'  the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
+#'  hessian is not used)
 #' @param start_parms Either a list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
 #'  and the function trials all combinations (defaults to optim_starting_parms).
 #'  start_parms$pi values of NA are replaced with the proportion of to-be-fitted
 #'  p values that are significant (i.e., <= sig_cutoff_p)
 #' @param sig_cutoff_p Significance cutoff used to determine the proportion of
-#'  significant to-be-fitted p values(default = 0.05)
+#'  significant to-be-fitted p values for use in adjusting starting value of pi
+#'  (default = 0.05)
 #' @param lower List of lower bounds for the optim search
 #'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 #' @param upper List of upper bounds for the optim search
@@ -76,10 +81,8 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more
-#' @param start_df Data frame with columns for mu, sigma, and pi, where each
-#'  row specifies on combination of optim() starting points for the parameters
 #' @export
-fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
+fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
                         start_parms = pcm_env$default_start_parms_list,
                         sig_cutoff_p = 0.05,
                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
@@ -91,6 +94,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
     fit_list <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                             want_optim_hessian = want_optim_hessian,
                              start = start_parms, lower = lower, upper = upper)
     return(fit_list)
   }
@@ -98,10 +102,12 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   n_starting_points <- nrow(start_parms)
   start_parms1 <- as.list(start_parms[1,])
   best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                           want_optim_hessian = want_optim_hessian,
                            start = start_parms1, lower = lower, upper = upper)
   for (i_row in 2:n_starting_points) {
-    start_parms1 <- as.list(start_df[i_row,])
+    start_parms1 <- as.list(start_parms[i_row,])
     one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                            want_optim_hessian = want_optim_hessian,
                             start = start_parms1, lower = lower, upper = upper)
     if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
   }
@@ -109,10 +115,13 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
 }
 
 
-#' Fit estimates of model pi, mu, sigma to a vector of p values.
+#' Fit estimates of model pi, mu, sigma to a vector of p values starting from
+#'  a single combination of parameter values.
 #' @inheritParams fit_p_curve
+#' @param start A list of starting parameter values for mu, sigma, and pi.
 #' @export
 fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
+                         want_optim_hessian = TRUE,
                          start = pcm_env$optim_starting_parms,
                          lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
                          upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
@@ -130,9 +139,9 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   if (!length(p)) stop("No valid p-values in (0,1).")
   if (pcm_env$fit_constrained) {
     fit <- optim_fit_constrained(p, alpha, tails, alpha_sig,
-                                 start, lower, upper)
+                                 start, lower, upper, want_optim_hessian = want_optim_hessian)
   } else {
-    fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start)
+    fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   }
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
@@ -145,13 +154,18 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   return(fit)
 } # fit_p_curve
 
+# Note: optim() fit method "L-BFGS-B": allows for lower and upper bounds for parameters,
+#  but "BFGS" is better when these are not used.
+
 optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
+                                  want_optim_hessian,
                                   start, lower, upper) {
   start_vec <- c(start$pi, start$mu, start$sigma)
   lower_vec <- c(lower$pi, lower$mu, lower$sigma)
   upper_vec <- c(upper$pi, upper$mu, upper$sigma)
   opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-                      method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = TRUE,
+                      method = "L-BFGS-B", lower = lower_vec, upper = upper_vec,
+                      hessian = want_optim_hessian,
                       control = pcm_env$optim_control)
   est <- opt$par; H <- opt$hessian
   # se <- ci <- NULL
@@ -179,11 +193,12 @@ optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
   return(fit)
 } # optim_fit_constrained
 
-optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list) {
+optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
+                                    want_optim_hessian) {
   start_reals <- parms_to_reals(start_list)
   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
   opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-                      method = "L-BFGS-B", hessian = TRUE,
+                      method = "BFGS", hessian = want_optim_hessian,
                       control = pcm_env$optim_control)
   est <- opt$par;
   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
