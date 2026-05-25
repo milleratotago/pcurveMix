@@ -90,6 +90,7 @@ bad_ps_report_string <- function(l) {
 #' @export
 fit_list_to_df <- function(fit_list) {
   fit_list$start <- NULL
+  fit_list$start_parm_set <- NULL
   fit_list$check_ps_list <- NULL
   fit_list$pi_se <- fit_list$se["pi"]
   fit_list$mu_se <- fit_list$se["mu"]

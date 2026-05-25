@@ -12,7 +12,7 @@ fit_p_curve(
   tails = 2,
   alpha_sig = 0.05,
   want_optim_hessian = TRUE,
-  start_parms = pcm_env$default_start_parms_list,
+  start_parms = pcm_env$optim_starting_parms,
   sig_cutoff_p = 0.05,
   lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
   upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06)

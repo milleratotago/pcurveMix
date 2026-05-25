@@ -5,7 +5,6 @@
 pcm_env <- new.env(parent = baseenv())
 
 initialize_globals <- function() {
-  pcm_env$default_start_parms_list <- list(mu = 2, sigma = 2, pi = 0.5)  # Used at least two places
   pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pwrs <- 4:12
@@ -16,24 +15,24 @@ initialize_globals <- function() {
   pcm_env$fit_constrained <- FALSE
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
-  pcm_env$optim_starting_parms <- pcm_env$default_start_parms_list
+  pcm_env$optim_starting_parms <- list(mu = 2, sigma = 2, pi = 0.5)
 }
 
 #' Function to construct a grid of parameter values to use as starting points
-#'  for fitting the model using fit_p_curve_many_starts. The grid df has rows
-#'  for all possible combinations of the values in mu_vec, sigma_vec, and pi_vec.
+#'  for fitting the model using fit_p_curve. The grid df has rows
+#'  for all possible combinations of the values in the vectors mu, sigma, and pi.
 #' @param mu Vector of different starting values of the mu parameter
-#'  (default = 0.0, 0.5, 1.0, 2.0, 3.0)
+#'  (default = 0.5, 1.0, 2.0)
 #' @param sigma Vector of different starting values of the sigma parameter
-#'  (default = 0.5, 1.0, 1.5, 2.0, 3.0)
+#'  (default = 1, 2, 4)
 #' @param pi Vector of different starting values of the pi parameter.
-#'  (default = 0.02, 0.2, 0.4, 0.6, 0.8). If this is set to NA, then a single
+#'  (default = 0.2, 0.5, 0.8). If this is set to NA, then a single
 #'  starting value will be computed based on the proportion of significant
 #'  results in the vector of p's that is to be fit.
 #' @export
-set_optim_starting_parms_df <- function(mu = c(0.1, 0.5, 1.0, 2.0, 3.0),
-                                        sigma = c(0.5, 1.0, 1.5, 2.0, 3.0),
-                                        pi = c(0.02, 0.2, 0.4, 0.6, 0.8) ) {
+make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
+                                        sigma = c(1, 2, 4),
+                                        pi = c(0.2, 0.5, 0.8) ) {
   start_df <- expand.grid(mu = mu, sigma = sigma, pi = pi)
   return(start_df)
 }
@@ -59,10 +58,10 @@ set_optim_starting_parms_df <- function(mu = c(0.1, 0.5, 1.0, 2.0, 3.0),
 #' @param small_rcond The cutoff reciprocal condition number for deciding that
 #'  a Fisher information matrix is ill-conditioned (default = 1e-15)
 #' @param optim_starting_parms A list or data frame of parameter combinations
-#'  at which to start the optim search(es)
+#'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
 #' @param reset_to_defaults Boolean; if true, reset all values to their
 #'  defaults before applying the other arguments
-#' @returns A list of the adjusted values of the global variables
+#' @returns A list of the values of the global variables, after setting
 #' @export
 set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
                         small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA,

@@ -23,11 +23,13 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   } else {
     # Censoring method
     above_cutoff <- p > small_p_bin_cutoff
-    pdfs <- pcurveMix::pdf(p[above_cutoff], mu, sigma, pi, alpha, tails)
-    n_in_small_bin <- sum(!above_cutoff)
+    pdfs <- pcurveMix::pdf(p[above_cutoff], mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails)
+    n_in_small_bin <- sum(p <= small_p_bin_cutoff)
     cdf_at_cutoff <- pcurveMix::cdf(small_p_bin_cutoff, mu, sigma, pi, alpha, tails)
-    this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
-      n_in_small_bin * log(cdf_at_cutoff)
+    # this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
+    #   n_in_small_bin * log(cdf_at_cutoff)
+    # print( paste("Cens:", small_p_bin_cutoff, mu, sigma, pi, n_in_small_bin, log(cdf_at_cutoff), sum(log(pdfs))))
+    this_nll <- -n_in_small_bin * log(cdf_at_cutoff) - sum(log(pdfs))
   }
   return(this_nll)
 }
@@ -45,7 +47,9 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
     #  search in unconstrained real space.
     reals <- list(pi = par[1], mu = par[2], sigma = par[3])
     parms <- reals_to_parms(reals)
-    pi <- parms$pi; mu <- parms$mu; sigma <- parms$sigma
+    pi <- parms$pi
+    mu <- parms$mu
+    sigma <- parms$sigma
     # print("unconstrained")
   }
   this_nll <- pcurveMix::nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
@@ -83,11 +87,11 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #'  H0 when it is false, and more
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
-                        start_parms = pcm_env$default_start_parms_list,
+                        start_parms = pcm_env$optim_starting_parms,
                         sig_cutoff_p = 0.05,
                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
-  if (any(is.na(start_parms$pi))) {
+  if (any(is.na(start_parms$pi))) {  # NEWJEFF: No longer supported?
     pi_est <- mean(p <= sig_cutoff_p)
     start_parms$pi[is.na(start_parms$pi)] <- pi_est
   }
@@ -96,9 +100,10 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
     fit_list <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
                              start = start_parms, lower = lower, upper = upper)
+    fit_list$start_parm_set <- NA
     return(fit_list)
   }
-  # start_parms is a data frame
+  # print("# start_parms is a data frame NEWJEFF")
   n_starting_points <- nrow(start_parms)
   start_parms1 <- as.list(start_parms[1,])
   best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
@@ -109,8 +114,15 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
     one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                             want_optim_hessian = want_optim_hessian,
                             start = start_parms1, lower = lower, upper = upper)
+    # print( paste(best_fit$mu,best_fit$sigma,best_fit$pi,best_fit$logLik,  # NEWJEFF
+    #              start_parms1$mu,start_parms1$sigma,start_parms1$pi,
+    #              one_fit$mu,one_fit$sigma,one_fit$pi,one_fit$logLik) )
     if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
   }
+  # best_fit$start = start_parms
+  # print("best_fit:")
+  # print(best_fit)
+  best_fit$start_parm_set <- start_parms
   return(best_fit)
 }
 
@@ -139,28 +151,29 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   if (!length(p)) stop("No valid p-values in (0,1).")
   if (pcm_env$fit_constrained) {
     fit <- optim_fit_constrained(p, alpha, tails, alpha_sig,
-                                 start, lower, upper, want_optim_hessian = want_optim_hessian)
+                                 start, want_optim_hessian = want_optim_hessian, lower, upper)
   } else {
     fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   }
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
-  cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = 1, tails = tails)
+  cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
   fit$ks <- ks_with_cdf(p, cdf_fit)
   fit$n <- length(p)
   fit$min_p <- min(p)
   fit$max_p <- max(p)
   fit$check_ps_list <- check_ps_list
+  # print( paste(start$mu, start$sigma, start$pi, fit$mu, fit$sigma, fit$pi, fit$logLik) )
   return(fit)
 } # fit_p_curve
 
 # Note: optim() fit method "L-BFGS-B": allows for lower and upper bounds for parameters,
 #  but "BFGS" is better when these are not used.
 
-optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
+optim_fit_constrained <- function(p, alpha, tails, alpha_sig, start_list,
                                   want_optim_hessian,
-                                  start, lower, upper) {
-  start_vec <- c(start$pi, start$mu, start$sigma)
+                                  lower, upper) {
+  start_vec <- c(start_list$pi, start_list$mu, start_list$sigma)
   lower_vec <- c(lower$pi, lower$mu, lower$sigma)
   upper_vec <- c(upper$pi, upper$mu, upper$sigma)
   opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
@@ -168,7 +181,7 @@ optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
                       hessian = want_optim_hessian,
                       control = pcm_env$optim_control)
   est <- opt$par; H <- opt$hessian
-  # se <- ci <- NULL
+  se <- ci <- NULL
   if (is.matrix(H) && all(is.finite(H))) {
     Vinv <- try(solve(H), silent = TRUE)
     if (!inherits(Vinv, "try-error")) {
@@ -179,15 +192,16 @@ optim_fit_constrained <- function(p, alpha, tails, alpha_sig,
       ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
       ci["mu",]    <- pmax(ci["mu",], 0)
       ci["sigma",] <- pmax(ci["sigma",], 1e-6)
-    } else {
+    }
+  } # if (is.matrix(H)
+  if (is.null(se)) {
       # Ensure that there is _something_ in these positions.
       se <- c(NA, NA, NA); names(se) <- c("pi","mu","sigma")
       ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
       rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
-    }
-  }
+  } # if (is.null(se))
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
-              pi = est[1], mu = est[2], sigma = est[3], start = start,
+              pi = est[1], mu = est[2], sigma = est[3], start = start_list,
               se = se, ci95 = ci, logLik = -opt$value,
               converged = (opt$convergence == 0))
   return(fit)
@@ -232,7 +246,7 @@ make_se_ci <- function(est, se) {
   return( list(se = se, ci = ci) )
 }
 
-# ---------- Helper: KS with tiny jitter to avoid ties warnings ----------
+# Helper: KS with tiny jitter to avoid ties warnings
 ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
   p2 <- if (any(duplicated(p))) p + stats::runif(length(p), -jitter_scale, jitter_scale) else p
   suppressWarnings(stats::ks.test(p2, cdf_fun))
@@ -256,6 +270,26 @@ fit_to_estimates_tbl <- function(fit) {
   return(mle_tbl)
 }
 
+starting_parms_to_descriptors <- function(starting_parm_set) {
+  if ( is.data.frame(starting_parm_set) ) {
+    mu_unique <- round( unique(starting_parm_set$mu), digits = 3 )
+    sigma_unique <- round( unique(starting_parm_set$sigma), digits = 3 )
+    pi_unique <- round( unique(starting_parm_set$pi), digits = 3 )
+    start_str <- paste("mu =", paste(mu_unique, collapse = ",") )
+    descriptors_mu <- descriptor("starting value grid:",start_str)
+    start_str <- paste("sigma =", paste(sigma_unique, collapse = ",") )
+    descriptors_sigma <- descriptor(" ",start_str)
+    start_str <- paste("pi =", paste(pi_unique, collapse = ",") )
+    descriptors_pi <- descriptor(" ",start_str)
+    descriptors <- rbind(descriptors_mu, descriptors_sigma, descriptors_pi)
+  } else {
+    rounded <- lapply(start_parm_set, round, digits = 3)
+    start_str <- paste(names(start_parm_set), rounded, sep = " = ", collapse = ", ")
+    descriptors <- descriptor("starting values:",start_str)
+  }
+  return(descriptors)
+}
+
 #' Convert the fit_p_curve fit descriptors into a nice data frame.
 #' @param fit Output list from fit_p_curve
 #' @param file_name Optional string used to include p file name in table
@@ -267,11 +301,21 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,3))))
-  rounded <- lapply(fit$start, round, digits = 3)
-  start_str <- paste(names(fit$start), rounded, sep = " = ", collapse = ", ")
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("starting values",start_str))
+  # rounded <- lapply(fit$start_parm_set, round, digits = 3)
+  # start_str <- paste(names(fit$start_parm_set), rounded, sep = " = ", collapse = ", ")
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor("starting values",start_str))
+  if (any(!is.na(fit$start_parm_set))) {
+    descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit$start_parm_set) )
+  }
   # descriptor_tbl <- rbind(descriptor_tbl, descriptor("edge_p",as.character(pcm_env$edge_p)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF P's---", "-------------"))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("Parameter ranges", ifelse(pcm_env$fit_constrained,"Constrained","Unconstrained")))
+  if (is.null(pcm_env$small_p_bin_cutoff)) {
+    descriptor_tbl <- rbind(descriptor_tbl, descriptor("Low p censoring", "Unused"))
+  } else {
+    descriptor_tbl <- rbind(descriptor_tbl, descriptor( "Low p's censored at small_p_bin_cutoff =",
+                                                        pcm_env$small_p_bin_cutoff) )
+  }
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF p's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
   if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_small,"p's < 0")))
   if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_large,"p's > ",fit$alpha)))

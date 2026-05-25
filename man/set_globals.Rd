@@ -46,7 +46,7 @@ the Fisher information matrix (default = 1e-7)}
 a Fisher information matrix is ill-conditioned (default = 1e-15)}
 
 \item{optim_starting_parms}{A list or data frame of parameter combinations
-at which to start the optim search(es)}
+at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
 
 \item{reset_to_defaults}{Boolean; if true, reset all values to their
 defaults before applying the other arguments}
