@@ -24,7 +24,7 @@ Both one- and two-tailed *p* values are supported.
 Install package **pcurveMix** directly from source via GitHub using the command in RStudio: 
 
 ```r
-1
+remotes::install_github("milleratotago/pcurveMix", build_vignettes = TRUE)
 ```
 
 You can ignore the warnings about masked objects.
