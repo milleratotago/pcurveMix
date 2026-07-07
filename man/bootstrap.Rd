@@ -40,7 +40,7 @@ distribution with the pcm_quantile function, which is usually slower except for 
 \item{tol}{Real tolerance when generating p's via quantiles (default = 1e-8)}
 }
 \value{
-Data frame with 1 row per bootstrap sample
+Data frame with 1 row per bootstrap sample & cols for estimated pi, mu, sigma, etc.
 }
 \description{
 Function for parametric bootstrapping of fitted model.

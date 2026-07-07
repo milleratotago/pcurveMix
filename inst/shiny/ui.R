@@ -196,6 +196,9 @@ ui <- tagList(
                 ),
                 fluidRow(
                   column(12, plotOutput("cdf_plot"))
+                ),
+                fluidRow(
+                  column(12, h3(verbatimTextOutput("optim_failed_output")))
                 )
       ) # end mainPanel
     ) # end sidebarlayout

@@ -34,8 +34,8 @@ hessian is not used)}
 
 \item{start_parms}{Either a list of starting parameter values for the optim search,
 or else a data frame where each row is a combination of starting parameter values
-and the function trials all combinations (defaults to optim_starting_parms).
-start_parms$pi values of NA are replaced with the proportion of to-be-fitted
+and the function tries all combinations (defaults to optim_starting_parms).
+NEWJEFF OBSOLETE start_parms$pi values of NA are replaced with the proportion of to-be-fitted
 p values that are significant (i.e., <= sig_cutoff_p)}
 
 \item{sig_cutoff_p}{Significance cutoff used to determine the proportion of

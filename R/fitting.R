@@ -72,8 +72,8 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #'  hessian is not used)
 #' @param start_parms Either a list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
-#'  and the function trials all combinations (defaults to optim_starting_parms).
-#'  start_parms$pi values of NA are replaced with the proportion of to-be-fitted
+#'  and the function tries all combinations (defaults to optim_starting_parms).
+#'  NEWJEFF OBSOLETE start_parms$pi values of NA are replaced with the proportion of to-be-fitted
 #'  p values that are significant (i.e., <= sig_cutoff_p)
 #' @param sig_cutoff_p Significance cutoff used to determine the proportion of
 #'  significant to-be-fitted p values for use in adjusting starting value of pi
@@ -97,32 +97,32 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
   }
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
-    fit_list <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+    best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
                              start = start_parms, lower = lower, upper = upper)
-    fit_list$start_parm_set <- NA
-    return(fit_list)
+    best_fit$start_parm_set <- NA
+  } else {
+    n_starting_points <- nrow(start_parms)
+    start_parms1 <- as.list(start_parms[1,])
+    best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                             want_optim_hessian = want_optim_hessian,
+                             start = start_parms1, lower = lower, upper = upper)
+    for (i_row in 2:n_starting_points) {
+      start_parms1 <- as.list(start_parms[i_row,])
+      one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                              want_optim_hessian = want_optim_hessian,
+                              start = start_parms1, lower = lower, upper = upper)
+      if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
+    }
+    best_fit$start_parm_set <- start_parms
   }
-  # print("# start_parms is a data frame NEWJEFF")
-  n_starting_points <- nrow(start_parms)
-  start_parms1 <- as.list(start_parms[1,])
-  best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
-                           want_optim_hessian = want_optim_hessian,
-                           start = start_parms1, lower = lower, upper = upper)
-  for (i_row in 2:n_starting_points) {
-    start_parms1 <- as.list(start_parms[i_row,])
-    one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
-                            want_optim_hessian = want_optim_hessian,
-                            start = start_parms1, lower = lower, upper = upper)
-    # print( paste(best_fit$mu,best_fit$sigma,best_fit$pi,best_fit$logLik,  # NEWJEFF
-    #              start_parms1$mu,start_parms1$sigma,start_parms1$pi,
-    #              one_fit$mu,one_fit$sigma,one_fit$pi,one_fit$logLik) )
-    if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
+  if (tails == 1) {
+    best_fit$noncentrality_mean <- best_fit$mu
+    best_fit$noncentrality_sd <- best_fit$sigma
+  } else {
+    best_fit$noncentrality_mean <- mean_folded_normal(best_fit$mu, best_fit$sigma)
+    best_fit$noncentrality_sd <- sd_folded_normal(best_fit$mu, best_fit$sigma)
   }
-  # best_fit$start = start_parms
-  # print("best_fit:")
-  # print(best_fit)
-  best_fit$start_parm_set <- start_parms
   return(best_fit)
 }
 
@@ -141,7 +141,7 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
   if (!check_ps_list$all_in_bounds) {
     p <- check_ps_list$ps_in_bounds
-    if (shiny::isRunning()) {
+    if (pcm_env$shiny_running) {
       problem_string <- bad_ps_report_string(check_ps_list)
       shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
       # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
@@ -167,66 +167,26 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   return(fit)
 } # fit_p_curve
 
-# Note: optim() fit method "L-BFGS-B": allows for lower and upper bounds for parameters,
-#  but "BFGS" is better when these are not used.
-
-optim_fit_constrained <- function(p, alpha, tails, alpha_sig, start_list,
-                                  want_optim_hessian,
-                                  lower, upper) {
-  start_vec <- c(start_list$pi, start_list$mu, start_list$sigma)
-  lower_vec <- c(lower$pi, lower$mu, lower$sigma)
-  upper_vec <- c(upper$pi, upper$mu, upper$sigma)
-  opt <- stats::optim(par = start_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-                      method = "L-BFGS-B", lower = lower_vec, upper = upper_vec,
-                      hessian = want_optim_hessian,
-                      control = pcm_env$optim_control)
-  est <- opt$par; H <- opt$hessian
-  se <- ci <- NULL
-  if (is.matrix(H) && all(is.finite(H))) {
-    Vinv <- try(solve(H), silent = TRUE)
-    if (!inherits(Vinv, "try-error")) {
-      se <- sqrt(pmax(diag(Vinv), 0)); names(se) <- c("pi","mu","sigma")
-      z <- 1.96
-      ci <- cbind(est - z*se, est + z*se)
-      rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
-      ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
-      ci["mu",]    <- pmax(ci["mu",], 0)
-      ci["sigma",] <- pmax(ci["sigma",], 1e-6)
-    }
-  } # if (is.matrix(H)
-  if (is.null(se)) {
-      # Ensure that there is _something_ in these positions.
-      se <- c(NA, NA, NA); names(se) <- c("pi","mu","sigma")
-      ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
-      rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
-  } # if (is.null(se))
-  fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
-              pi = est[1], mu = est[2], sigma = est[3], start = start_list,
-              se = se, ci95 = ci, logLik = -opt$value,
-              converged = (opt$convergence == 0))
-  return(fit)
-} # optim_fit_constrained
-
-optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
-                                    want_optim_hessian) {
-  start_reals <- parms_to_reals(start_list)
-  start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
-  opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-                      method = "BFGS", hessian = want_optim_hessian,
-                      control = pcm_env$optim_control)
-  est <- opt$par;
-  real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
-  parms <- reals_to_parms(real_parms)
-  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
-  # est <- c(parms$pi, parms$mu, parms$sigma)
-  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
-  l <- real_to_nat_se_ci(opt$par, opt$hessian)
-  fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
-              pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
-              se = l$se, ci95 = l$ci, logLik = -opt$value,
-              converged = (opt$convergence == 0))
-  return(fit)
-}
+# optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
+#                                     want_optim_hessian) {
+#   start_reals <- parms_to_reals(start_list)
+#   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
+#   opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
+#                       method = "BFGS", hessian = want_optim_hessian,
+#                       control = pcm_env$optim_control)
+#   est <- opt$par;
+#   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
+#   parms <- reals_to_parms(real_parms)
+#   # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
+#   # est <- c(parms$pi, parms$mu, parms$sigma)
+#   # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
+#   l <- real_to_nat_se_ci(opt$par, opt$hessian)
+#   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
+#               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
+#               se = l$se, ci95 = l$ci, logLik = -opt$value,
+#               converged = (opt$convergence == 0))
+#   return(fit)
+# }
 
 make_se_ci <- function(est, se) {
   if (!any(is.na(se))) {
@@ -266,6 +226,19 @@ fit_to_estimates_tbl <- function(fit) {
     Wald_upr  = c(if (!is.null(fit$ci95)) fit$ci95[, "upr95"] else c(NA,NA,NA), NA),
     row.names = NULL
   )
+  if (fit$tails == 2) {
+    folded_normal_mu <- mean_folded_normal(fit$mu, fit$sigma)
+    folded_normal_sigma <- sd_folded_normal(fit$mu, fit$sigma)
+    folded_normal_cols <- data.frame(
+      parameter = c("folded_normal_mu", "folded_normal_sigma"),
+      estimate  = c(folded_normal_mu, folded_normal_sigma),
+      Wald_SE   = c(NA, NA),
+      Wald_lwr  = c(NA, NA),
+      Wald_upr  = c(NA, NA),
+      row.names = NULL
+    )
+    mle_tbl <- rbind(mle_tbl, folded_normal_cols)
+  }
   mle_tbl <- mle_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
   return(mle_tbl)
 }
@@ -283,8 +256,8 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
     descriptors_pi <- descriptor(" ",start_str)
     descriptors <- rbind(descriptors_mu, descriptors_sigma, descriptors_pi)
   } else {
-    rounded <- lapply(start_parm_set, round, digits = 3)
-    start_str <- paste(names(start_parm_set), rounded, sep = " = ", collapse = ", ")
+    rounded <- lapply(starting_parm_set, round, digits = 3)
+    start_str <- paste(names(starting_parm_set), rounded, sep = " = ", collapse = ", ")
     descriptors <- descriptor("starting values:",start_str)
   }
   return(descriptors)
@@ -334,6 +307,8 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("log likelihood",as.character(round(fit$logLik,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s statistic",as.character(round(fit$ks$statistic,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s p value",as.character(round(fit$ks$p.value,5))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("noncentrality mean",as.character(round(fit$noncentrality_mean,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("noncentrality sd",as.character(round(fit$noncentrality_sd,3))))
   rownames(descriptor_tbl) <- NULL
   return(descriptor_tbl)
 }

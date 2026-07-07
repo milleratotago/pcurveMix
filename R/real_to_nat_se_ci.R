@@ -122,8 +122,6 @@ real_to_nat_se_ci <- function(par_hat, H) {
   rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
 
   names(se) <- c("pi", "mu", "sigma")
-  # print("NEWJEFF 23")
-  # print(se)
 
   l <- list(se = se, ci = ci)
   return(l)

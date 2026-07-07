@@ -5,6 +5,7 @@
 pcm_env <- new.env(parent = baseenv())
 
 initialize_globals <- function() {
+  pcm_env$shiny_running <- FALSE
   pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pwrs <- 4:12
@@ -99,11 +100,12 @@ utils::globalVariables(c("density"))
   s <- utils::packageVersion(pkgname)
   s <- paste("Package",pkgname,"version",s)
   packageStartupMessage(s)
-  packageStartupMessage("Get help with these RStudio console commands:")
+  packageStartupMessage('Get help with these RStudio console commands:')
   packageStartupMessage(' ?',pkgname,'    # shows a summary of the package.')
   packageStartupMessage(' vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
   packageStartupMessage(' browseVignettes(',pkgname,')    # shows a catalog of all vignettes.')
   packageStartupMessage(' help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
+  packageStartupMessage(' run_shiny_app()  # starts the shiny app')
   initialize_globals()
 } # .onAttach
 

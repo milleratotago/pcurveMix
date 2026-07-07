@@ -16,7 +16,7 @@ pfolded_normal <- function(x, mu, sigma) {
 }
 
 rfolded_normal <- function(n, mu, sigma) {
-  vec <- rnorm(n, mean = mu, sd = sigma)
+  vec <- stats::rnorm(n, mean = mu, sd = sigma)
   return( abs(vec) )
 }
 

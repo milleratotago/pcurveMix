@@ -52,7 +52,7 @@ at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5)
 defaults before applying the other arguments}
 }
 \value{
-A list of the adjusted values of the global variables
+A list of the values of the global variables, after setting
 }
 \description{
 Function to override defaults of a few global variables.

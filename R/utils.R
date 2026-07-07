@@ -5,7 +5,9 @@
 #' @export
 run_shiny_app <- function() {
   appDir <- system.file("shiny", package = "pcurveMix")
+  pcm_env$shiny_running <- TRUE
   shiny::runApp(appDir, display.mode = "normal")
+  pcm_env$shiny_running <- FALSE
 }
 
 # Function to compute a case identifier for use in switch statements.
