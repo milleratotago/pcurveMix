@@ -13,12 +13,14 @@
 #' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
                 small_p_bin_cutoff = pcm_env$small_p_bin_cutoff) {
-  # print( paste("mu =",mu, "sigma =",sigma, "pi =",pi) )
+  # print( paste("nll thinks: mu =",mu, "sigma =",sigma, "pi =",pi) )
   if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
   # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
   if (is.null(small_p_bin_cutoff)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
+# print("NEWJEFF no censoring pdfs:")
+# print(pdfs)
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
@@ -35,7 +37,7 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
 }
 
 # This version is just for optim's use; it unpacks to-be-adjusted
-# parameters bundled in par.
+# parameters bundled in par.  USED BY profileCI as well as optim with wantpos = true
 # param par Vector of the three model parameters pi, mu, sigma (in order)
 # param p Vector of p's for which negative log likelihood is to be computed
 nll_optim <- function(par, p, alpha = 1, tails = 2) {
@@ -45,6 +47,7 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
   } else {
     # Convert reals to parms so that optim can
     #  search in unconstrained real space.
+# print(par) # NEWJEFF
     reals <- list(pi = par[1], mu = par[2], sigma = par[3])
     parms <- reals_to_parms(reals)
     pi <- parms$pi
@@ -53,7 +56,8 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
     # print("unconstrained")
   }
   this_nll <- pcurveMix::nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
-  # print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
+# print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
+# readline(prompt="Press [enter] to continue")
   # if (this_nll < 0.01) {
   #   stop("error") # NEWJEFF
   # }

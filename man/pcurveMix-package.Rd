@@ -21,6 +21,7 @@ Ulrich and Miller (2026). "On the Power and Limitations of P-Curve Analysis:
 
 Authors:
 \itemize{
+  \item Jeff Miller \email{miller@psy.otago.ac.nz}
   \item Rolf Ulrich \email{ulrich@uni-tuebingen.de}
 }
 

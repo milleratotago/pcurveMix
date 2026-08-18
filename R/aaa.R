@@ -17,6 +17,10 @@ initialize_globals <- function() {
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
   pcm_env$optim_starting_parms <- list(mu = 2, sigma = 2, pi = 0.5)
+  pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
+                           class = "profCI_model")
+  pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 1.1, faster = FALSE, flat = 1e-08,
+                                 lb = rep(-200,3), ub = rep(200,3) )
 }
 
 #' Function to construct a grid of parameter values to use as starting points
@@ -64,6 +68,7 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #'  defaults before applying the other arguments
 #' @returns A list of the values of the global variables, after setting
 #' @export
+# NEWJEFF: NOT DONE FOR profileCI_args
 set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
                         small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA,
                         optim_starting_parms = NA,
