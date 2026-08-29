@@ -1,5 +1,12 @@
 # aaa.R
 
+# Constant strings used as labels
+CI_LOWER_BOUND_LABEL <- "lwr"
+CI_UPPER_BOUND_LABEL <- "upr"
+FOLDED_NORMAL_MEAN_LABEL <- "folded_normal_mu"
+FOLDED_NORMAL_SD_LABEL <- "folded_normal_sigma"
+LIKELIHOOD_LABEL <- "log likelihood"
+
 # Define an environment to hold settings that
 # are global within the package
 pcm_env <- new.env(parent = baseenv())
@@ -17,8 +24,8 @@ initialize_globals <- function() {
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
   pcm_env$optim_starting_parms <- list(mu = 2, sigma = 2, pi = 0.5)
-  pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
-                           class = "profCI_model")
+  # pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
+  #                          class = "profCI_model")
   pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 1.1, faster = FALSE, flat = 1e-08,
                                  lb = rep(-200,3), ub = rep(200,3) )
 }
@@ -42,7 +49,7 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
   return(start_df)
 }
 
-#' Function to override defaults of a few global variables.
+#' Function to override defaults of some global variables.
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-12)
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
@@ -64,14 +71,15 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #'  a Fisher information matrix is ill-conditioned (default = 1e-15)
 #' @param optim_starting_parms A list or data frame of parameter combinations
 #'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
+#' @param profileCI_args A list of optional arguments to be passed to profileCI.
 #' @param reset_to_defaults Boolean; if true, reset all values to their
 #'  defaults before applying the other arguments
-#' @returns A list of the values of the global variables, after setting
+#' @returns A list of the values of the global variables, after changing any
+#'  of the values as indicated.
 #' @export
-# NEWJEFF: NOT DONE FOR profileCI_args
 set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
                         small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA,
-                        optim_starting_parms = NA,
+                        optim_starting_parms = NA, profileCI_args = NA,
                         reset_to_defaults = FALSE) {
   if (reset_to_defaults) initialize_globals()
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
@@ -83,12 +91,14 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
   if (!is.na(MLSEh)) pcm_env$MLSEh <- MLSEh
   if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
+  if (any(!is.na(profileCI_args))) pcm_env$profileCI_args <- profileCI_args
   l <- list(edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
             p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
             small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
             fit_constrained = pcm_env$fit_constrained,
             MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond,
-            optim_starting_parms = pcm_env$optim_starting_parms)
+            optim_starting_parms = pcm_env$optim_starting_parms,
+            profileCI_args = pcm_env$profileCI_args)
   invisible(l)
 }
 

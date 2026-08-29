@@ -3,7 +3,7 @@
 if (!require(shiny)) install.packages('shiny')
 if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
 if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
-
+if (!require(bslib)) install.packages('bslib')  # layout_columns
 
 # Helper function for ui
 inline_numericInput=function(ni){
@@ -32,7 +32,7 @@ ui <- tagList(
       color:#ffffff;
       background-color:#112446;
       font-size: 120%;
-      width: 32%;
+      width: 65%;
       position: fixed;
       top: 80%;
       left: 1%;
@@ -79,14 +79,14 @@ ui <- tagList(
 
       # Setup panel:
       sidebarPanel(width = 4, id = "pcm_sidebar",
-                   h1("Setup for Fitting"),
+                   h2("Setup for Fitting"),
                    h4(),
                    checkboxInput("use_demo", label = strong("Use demo file of p values"), FALSE),
                    conditionalPanel(
                      condition = "input.use_demo == false",
                      fileInput("p_file", "Upload CSV file with column of p value", accept = ".csv")
                    ),
-                   h4(),
+                   # h4(),
                    fluidRow(
                      column(12, radioButtons("tails",
                                              "File has 1- or 2-tailed p's?",
@@ -101,19 +101,47 @@ ui <- tagList(
                                                  min = 0, max = 1, step = 0.05)
                          ),
                        ),
+                       hr(style = "border-top: 2px solid #808080;"),
                        h4(),
                        fluidRow(
                          column(12, numericInput("alpha_sig","Alpha level to use for power computations ('alpha_sig'):", value = "0.05",
                                                  min = 0, max = 1, step = 0.01)
                          ),
                        ),
-                       h4(),
-                       fluidRow(
-                         column(12, numericInput("n_boot_samples","N parametric bootstrap samples (recommended min 2000 for real analyses):",
-                                                 value = "100", min = 0, step = 100)
-                         ),
+                       hr(style = "border-top: 2px solid #808080;"),
+                   ), # div(class = "custom-text-input",
+
+                   h4(), # I tried very (!!!) hard to indent the numericInput but never succeeded.
+                   # Gemini suggested using bslib & layout_columns but these did not work
+                   checkboxInput("parametric_bootstrapping", label = strong("Compute parametric bootstrap confidence intervals"), FALSE),
+                   conditionalPanel(
+                     condition = "input.parametric_bootstrapping == true",
+                     fluidRow(
+                       column(6, numericInput("boot_confidence_level",
+                                              "% confidence (1-100)",
+                                              value = "95", min = 10, max = 100, step = 1)
                        ),
+                       column(6, numericInput("n_boot_samples",
+                                              "N bootstrap samples (recommended min 2000 for real analyses):",
+                                              value = "100", min = 0, step = 100)
+                       )
+                     )
                    ),
+                   hr(style = "border-top: 2px solid #808080;"),
+
+                   h4(),
+                   checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
+                   conditionalPanel(
+                     condition = "input.profile_ci == true",
+                     fluidRow(
+                       column(6, numericInput("profile_confidence_level",
+                                              "% confidence (1-100)",
+                                              value = "95", min = 10, max = 100, step = 1)
+                       )
+                     )
+                   ),
+                   hr(style = "border-top: 2px solid #808080;"),
+
                    h4(),
                    checkboxInput("adjust_starting_values", label = strong("Change default starting parameter values for optim() search:"), FALSE),
                    conditionalPanel(
@@ -126,13 +154,13 @@ ui <- tagList(
                    ),
                    # h5("Starting parameter values for optim() search:", style = "font-weight: bold;"),
                    # fluidRow(
-                    # column(4, numericInput("start_mu","mu",2, min = 0, max = 20, step = 0.1)),
-                    # column(4, numericInput("start_sigma","sigma",2, min = 1e-6, max = 20, step = 0.1)),
-                    # column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
+                   # column(4, numericInput("start_mu","mu",2, min = 0, max = 20, step = 0.1)),
+                   # column(4, numericInput("start_sigma","sigma",2, min = 1e-6, max = 20, step = 0.1)),
+                   # column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
                    # ),
                    hr(),
                    fluidRow(
-                     column(12, actionButton("btnFit","Fit the model"))
+                     column(12, actionButton("btnFit","Fit model & compute requested CIs"))
                    ),
                    h4(),
                    fluidRow(
@@ -163,9 +191,26 @@ ui <- tagList(
                 fluidRow(
                   column(12, tableOutput("estimates_tbl"))
                 ),
+
+                ##### Obs/pred PDF/CDF plots
+                fluidRow(
+                  column(12, h3(textOutput("predicted_pdfs_title")))
+                ),
+                fluidRow(
+                  column(12, plotOutput("pdf_plot"))
+                ),
+                # h2("Observed/predicted CDFs:"),
+                fluidRow(
+                  column(12, h3(textOutput("predicted_cdfs_title")))
+                ),
+                fluidRow(
+                  column(12, plotOutput("cdf_plot"))
+                ),
+
+                #### Bootstrap results
                 div(
                   fluidRow(
-                    column(12, h4(textOutput("bootstrap_title")))
+                    column(12, h3(textOutput("bootstrap_title")))
                   ),
                   fluidRow(
                     column(12,
@@ -183,20 +228,41 @@ ui <- tagList(
                   fluidRow(
                     column(12, tableOutput("bootstrap_tbl"))
                   )
-                  , style = "margin-left: 35px;"),
-                fluidRow(
-                  column(12, h3(textOutput("predicted_pdfs_title")))
-                ),
-                fluidRow(
-                  column(12, plotOutput("pdf_plot"))
-                ),
-                # h2("Observed/predicted CDFs:"),
-                fluidRow(
-                  column(12, h3(textOutput("predicted_cdfs_title")))
-                ),
-                fluidRow(
-                  column(12, plotOutput("cdf_plot"))
-                ),
+                  , style = "margin-left: 35px;"  # NEWJEFF: Delete margin
+                ),  # end of div
+
+                # Profile confidence interval results
+                div(
+                  fluidRow(
+                    column(12, h3(textOutput("profileCI_title")))
+                  ),
+                  fluidRow(
+                    column(12, tableOutput("profileCI_tbl"))
+                  ),
+                  # fluidRow(
+                  #   column(12, h3(textOutput("profile_mu_title")))  # NEWJEFF: Unused
+                  # ),
+                  fluidRow(
+                    column(12, plotOutput("profile_mu_plot"))
+                  ),
+                  fluidRow(
+                    column(12, plotOutput("profile_sigma_plot"))
+                  ),
+                  fluidRow(
+                    column(12, plotOutput("profile_pi_plot"))
+                  ),
+                  fluidRow(
+                    column(12, plotOutput("profile_power_plot"))
+                  ),
+                  fluidRow(
+                    column(12, plotOutput("profile_folded_normal_mu_plot"))
+                  ),
+                  fluidRow(
+                    column(12, plotOutput("profile_folded_normal_sigma_plot"))
+                  ),
+                  style = "margin-left: 2px;"  # NEWJEFF: Delete margin
+                ),  # end of div
+
                 fluidRow(
                   column(12, h3(verbatimTextOutput("optim_failed_output")))
                 )

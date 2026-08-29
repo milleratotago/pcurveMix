@@ -13,6 +13,14 @@ params:
   n_boot_samples: NA
   boot_pct_converged: NA
   boot_tbl: NA
+  profile_analysis: NA
+  profile_tbl: NA
+  profile_mu_plot: NA
+  profile_sigma_plot: NA
+  profile_pi_plot: NA
+  profile_power_plot: NA
+  profile_folded_normal_mu_plot: NA
+  profile_folded_normal_sigma_plot: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -34,19 +42,6 @@ print(knitr::kable(params$descriptor_tbl))
 print(knitr::kable(params$estimates_tbl))
 ```
 
-```{asis, echo = params$n_boot_samples > 0}
-### Additional bootstrapping analysis
-```
-
-```{r echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
-cat(paste0("* n bootstrap samples = ",params$n_boot_samples,"\n"))
-cat(paste0("* percent converged OK = ",params$boot_pct_converged,"\n"))
-```
-
-```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
-print(knitr::kable(params$boot_tbl))
-```
-
 ## Observed/predicted PDFs:
 
 ```{r plot pdf, echo=FALSE}
@@ -58,3 +53,31 @@ plot(params$pdf_plot)
 ```{r plot cdf, echo=FALSE}
 plot(params$cdf_plot)
 ```
+
+```{asis, echo = params$n_boot_samples > 0}
+## Parametric bootstrapping analysis
+```
+
+```{r echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
+cat(paste0("* n bootstrap samples = ",params$n_boot_samples,"\n"))
+cat(paste0("* percent converged OK = ",params$boot_pct_converged,"\n"))
+```
+
+```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
+print(knitr::kable(params$boot_tbl))
+```
+
+
+```{asis, echo = params$profile_analysis > 0}
+## Profile analysis
+```
+
+```{r profile_plots, echo=FALSE, eval = params$profile_analysis > 0}
+plot(params$profile_mu_plot)
+plot(params$profile_sigma_plot)
+plot(params$profile_pi_plot)
+plot(params$profile_power_plot)
+plot(params$profile_folded_normal_mu_plot)
+plot(params$profile_folded_normal_sigma_plot)
+```
+

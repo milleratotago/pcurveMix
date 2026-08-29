@@ -127,8 +127,8 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
     parameter = parameters,
     Boot_Mean = round(boot_mn[parameters], 6),
     Boot_SE   = round(boot_se[parameters], 6),
-    Boot_lwr  = round(boot_ci[parameters, "lwr"], 6),
-    Boot_upr  = round(boot_ci[parameters, "upr"], 6),
+    Boot_lwr  = round(boot_ci[parameters, CI_LOWER_BOUND_LABEL], 6),
+    Boot_upr  = round(boot_ci[parameters, CI_UPPER_BOUND_LABEL], 6),
     row.names = NULL
   )
 

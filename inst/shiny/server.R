@@ -7,6 +7,7 @@ if (!require(pcurveMix)) remotes::install_github("milleratotago/pcurveMix")
 if (!require(ggplot2)) install.packages('ggplot2')
 if (!require(knitr)) install.packages('knitr')
 if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
+if (!require(profileCI)) install.packages('profileCI')
 
 server <- function(input, output) {
 
@@ -22,7 +23,8 @@ server <- function(input, output) {
                       boot_tbl = NULL,
                       boot_pct_converged = NULL,
                       pdf_plot = NULL,
-                      cdf_plot = NULL)
+                      cdf_plot = NULL,
+                      profile_list = NULL)
 
   restart <- function()  {
     v$fit_completed = FALSE
@@ -84,20 +86,42 @@ server <- function(input, output) {
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
-      v$n_boot_samples <- input$n_boot_samples
+      if (input$parametric_bootstrapping) {
+        v$n_boot_samples <- input$n_boot_samples
+        v$boot_ci_confidence_level <- input$boot_confidence_level / 100
+      } else {
+        v$n_boot_samples <- 0
+      }
       if (v$n_boot_samples > 0) {
-        boot_df <- bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
-        boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl)
+        notif_id <- "bootstrap_notif_id"
+        # NewJeff: It is possible to update the notification by showing one
+        # with the same id but a different message reflecting progress.
+        showNotification(
+          "Bootstrapping in progress ...",
+          id = notif_id,
+          duration = NULL,
+          closeButton = TRUE,
+          type = "message"
+        )
+        boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+        boot_tail_prob <- (1 - v$boot_ci_confidence_level)/2
+        boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl,
+                                                 boot_ci_limits = c(boot_tail_prob, 1-boot_tail_prob) )
+        removeNotification(notif_id)
         v$boot_pct_converged <- boot_list$pct_converged
         v$boot_tbl <- boot_list$boot_tbl
         v$boot_tbl[,-1] <- round(v$boot_tbl[,-1],3) # Round numeric columns to avoid line wrapping
-        output$bootstrap_title <- renderText("Additional bootstrapping analysis")
+        boot_title <- paste0("Parametric bootstrapping analysis (",
+                             round(100*v$boot_ci_confidence_level,2),
+                             "% confidence)")
+        output$bootstrap_title <- renderText(boot_title)
         s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
         output$n_boot_samples <- renderText(s1)
         s2 <- paste0("* percent converged OK = ",round(v$boot_pct_converged,2))
         output$boot_pct_converged <- renderText(s2)
         output$bootstrap_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
       }
+      profile_manager(v$fit_results_list)
       v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
       output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
 
@@ -127,6 +151,147 @@ server <- function(input, output) {
       v$fit_completed <- TRUE
     } # end else (file name not null)
   }) # end observeEvent fit modelbutton
+
+  profile_manager <- function(fit_list) {
+    # NEWJEFF: Display "Profiling in progress" message
+    if (!input$profile_ci) {
+      v$profile_analysis <- 0  # Needed to pass to Rmd
+      return(NULL)
+    } else {
+      v$profile_analysis <- 1
+    }
+    # Computations:
+    v$profile_ci_confidence_level <- input$profile_confidence_level / 100
+    notif_id <- "profileCI_std_notif_id"
+    showNotification(
+      "Profiling mu, sigma, and pi ...",
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+    v$profileCI_std <- pcurveMix::compute_profileCI(fit_list, level = v$profile_ci_confidence_level)
+    showNotification(
+      "Profiling power ...",
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+    v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
+    showNotification(
+      paste("Profiling",FOLDED_NORMAL_MEAN_LABEL,"..."),
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+    v$profileCI_folded_mean <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
+    showNotification(
+      paste("Profiling",FOLDED_NORMAL_SD_LABEL,"..."),
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+    v$profileCI_folded_sd <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
+    removeNotification(notif_id)
+    # Show results in UI mainPanel
+    profileCI_title <- paste0("Profile CIs (",
+                         round(100*v$profile_ci_confidence_level,2),
+                         "% confidence)")
+    output$profileCI_title <- renderText(profileCI_title)
+    # tbl <- v$profileCI_std$tabl
+    # v$profileCI_tbl <- tbl
+    ci_tbl <- data.frame(Parameter = c("mu", "sigma", "pi"))
+    ci_tbl <- cbind(ci_tbl,v$profileCI_std$bounds_matrix)
+    names(ci_tbl) <- c("Parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+
+    power_row <- data.frame(Parameter = "power",
+                            c2 = v$profileCI_power$table$`95% CI lower`,
+                            c3 = v$profileCI_power$table$`95% CI upper`)
+    names(power_row) <- c("Parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, power_row)
+
+    folded_mean_row <- data.frame(Parameter = FOLDED_NORMAL_MEAN_LABEL,
+                            c2 = v$profileCI_folded_mean$table$`95% CI lower`,
+                            c3 = v$profileCI_folded_mean$table$`95% CI upper`)
+    names(folded_mean_row) <- c("Parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, folded_mean_row)
+
+    folded_sd_row <- data.frame(Parameter = FOLDED_NORMAL_SD_LABEL,
+                                  c2 = v$profileCI_folded_sd$table$`95% CI lower`,
+                                  c3 = v$profileCI_folded_sd$table$`95% CI upper`)
+    names(folded_sd_row) <- c("Parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, folded_sd_row)
+    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE)
+
+    # ProfileCI plots
+    # output$profile_mu_title <- renderText("profile for mu")
+
+    # Interesting: you can't re-use plain x & y across multiple ggplots.
+    # If you do, all plots show the final x & y values.
+    mu_x <- v$profileCI_std$profile_curves$mu[,1]
+    mu_y <- v$profileCI_std$profile_curves$mu[,2]
+    v$profile_mu_plot <- ggplot() +
+      geom_line(aes(x = mu_x, y = mu_y), color = "black") +
+      labs(title = "profile for mu",
+           x = "mu",
+           y = LIKELIHOOD_LABEL)
+    output$profile_mu_plot <- renderPlot(v$profile_mu_plot)
+
+    sigma_x <- v$profileCI_std$profile_curves$sigma[,1]
+    sigma_y <- v$profileCI_std$profile_curves$sigma[,2]
+    v$profile_sigma_plot <- ggplot() +
+      geom_line(aes(x = sigma_x, y = sigma_y), color = "black") +
+      labs(title = "profile for sigma",
+           x = "sigma",
+           y = LIKELIHOOD_LABEL)
+    output$profile_sigma_plot <- renderPlot(v$profile_sigma_plot)
+
+    pi_x <- v$profileCI_std$profile_curves$pi[,1]
+    pi_y <- v$profileCI_std$profile_curves$pi[,2]
+    v$profile_pi_plot <- ggplot() +
+      geom_line(aes(x = pi_x, y = pi_y), color = "black") +
+      labs(title = "profile for pi",
+           x = "pi",
+           y = LIKELIHOOD_LABEL)
+    output$profile_pi_plot <- renderPlot(v$profile_pi_plot)
+
+    profile_curves <- as.matrix(attr(v$profileCI_power$profile,"for_plot")[["logit_relative_power"]])
+    power_x <- reals_to_powers(profile_curves[,1])
+    power_y <- profile_curves[,2]
+    v$profile_power_plot <- ggplot() +
+      geom_line(aes(x = power_x, y = power_y), color = "black") +
+      labs(title = "profile for power",
+           x = "power",
+           y = LIKELIHOOD_LABEL)
+    output$profile_power_plot <- renderPlot(v$profile_power_plot)
+
+    # NEWJEFF: I AM HERE: profile_curves is null
+    # x <- as.matrix(attr(folded_mean_profile$profile,"for_plot")$log_folded_mean)[,1]
+
+    profile_curves <- as.matrix(attr(v$profileCI_folded_mean$profile,"for_plot")[["log_folded_mean"]])
+    folded_means_x <- reals_to_mus(profile_curves[,1])
+    folded_means_y <- profile_curves[,2]
+    v$profile_folded_normal_mu_plot <- ggplot() +
+      geom_line(aes(x = folded_means_x, y = folded_means_y), color = "black") +
+      labs(title = paste("profile for",FOLDED_NORMAL_MEAN_LABEL),
+           x = FOLDED_NORMAL_MEAN_LABEL,
+           y = LIKELIHOOD_LABEL)
+    output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
+
+    profile_curves <- as.matrix(attr(v$profileCI_folded_sd$profile,"for_plot")[["log_folded_sd"]])
+    folded_sd_x <- reals_to_sigmas(profile_curves[,1])
+    folded_sd_y <- profile_curves[,2]
+    v$profile_folded_normal_sigma_plot <- ggplot() +
+      geom_line(aes(x = folded_sd_x, y = folded_sd_y), color = "black") +
+      labs(title = paste("profile for",FOLDED_NORMAL_SD_LABEL),
+           x = FOLDED_NORMAL_SD_LABEL,
+           y = LIKELIHOOD_LABEL)
+    output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
+
+  } # profile_manager
 
   # source("btn_gen_report.R")
   output$btnReport <- downloadHandler(
@@ -170,7 +335,16 @@ server <- function(input, output) {
           cdf_plot = v$cdf_plot,
           n_boot_samples = v$n_boot_samples,
           boot_pct_converged = v$boot_pct_converged,
-          boot_tbl = v$boot_tbl)
+          boot_tbl = v$boot_tbl,
+          profile_analysis = v$profile_analysis,
+          profile_tbl = v$profile_tbl,
+          profile_mu_plot = v$profile_mu_plot,
+          profile_sigma_plot = v$profile_sigma_plot,
+          profile_pi_plot = v$profile_pi_plot,
+          profile_power_plot = v$profile_power_plot,
+          profile_folded_normal_mu_plot = v$profile_folded_normal_mu_plot,
+          profile_folded_normal_sigma_plot = v$profile_folded_normal_sigma_plot
+        )
         rmd_outfile_name <- paste0(output_directory_name, "/",
                                    "pcurveMix_report_", time_stamp, ".docx")
         rmarkdown::render(rmd,
@@ -184,7 +358,7 @@ server <- function(input, output) {
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)
         delay(5000,
-              showNotification("After download finishes, perform another analysis or quit.", duration = 45))
+              showNotification("After download finishes, you can perform another analysis or quit.", duration = 45))
       } # end of else
     },  # end content function
 

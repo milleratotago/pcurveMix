@@ -1,5 +1,61 @@
 # dev_misc.R
 
+devtools::load_all(".")
+
+######### 2026-08-20 to -25: adapt profileCI code from Rolf. I think the code
+#  was from \r\Projects\pcurve_repo\ProfileCI\profileCI_folded_mean_clean.qmd
+# Also see C:\R\Projects\pcurve_repo\Estimation OSF and SCORE Data\ProfileCI_all_six_parameters.*
+
+tails <- 2  # NEWJEFF: folded_mu, sigma only relevant for 2 tails?
+alpha_sig <- 0.05
+
+# ps <- pcurveMix::random(n = 200, mu = 3, sigma = 1, pi = 0.5, alpha = alpha)
+OSC <- read.csv("/R/Projects/pcurve_repo/ProfileCI/OSC_data.csv")
+# alpha <- 0.05   # for ps_orig
+# ps <- OSC$p_orig
+alpha <- 1   # for ps_orig
+ps <- OSC$p_rep  # NOTE LATER p_values
+# NEWJEFF: Assuming unconstrained original fit
+fit_list <- pcurveMix::fit_p_curve(ps, alpha = alpha)
+# rm(alpha)
+# rm(ps)
+
+### developing power profileCI
+
+CI_CONF_LEVEL <- 0.95
+OSC_original <- pcurveMix:::profile_ci_power(
+  OSC$p_orig, alpha = 0.05, alpha_sig = alpha_sig,
+  tails = tails, level = CI_CONF_LEVEL)
+
+print(OSC_original$table)
+profile_curves <- as.matrix(attr(OSC_original$profile,"for_plot")[["logit_relative_power"]])
+profile_curves[,1] <- reals_to_powers(profile_curves[,1])
+plot(profile_curves[,1],profile_curves[,2])
+
+stop("stopped as requested")
+
+
+### developing folded normal profileCI
+
+# target <- "folded_mean"
+# target_folded_mean <- TRUE
+
+folded_mean_profile <- pcurveMix:::compute_profileCI_folded(fit_list, TRUE)
+folded_sd_profile <- pcurveMix:::compute_profileCI_folded(fit_list, FALSE)
+
+print(folded_mean_profile$table)
+print(folded_sd_profile$table)
+
+print( attr(folded_mean_profile$profile,"for_plot")$log_folded_mean )
+profile_curves <- as.matrix(attr(folded_mean_profile$profile,"for_plot")$log_folded_mean) # [["log_folded_mean_values "]])
+plot(profile_curves[,1], profile_curves[,2])
+x <- as.matrix(attr(folded_mean_profile$profile,"for_plot")$log_folded_mean)[,1]
+
+profile_curves2 <- as.matrix(attr(folded_sd_profile$profile,"for_plot")$log_folded_sd)
+
+stop("stopped as requested")
+
+
 ### 2026-08-18 developing profileCI
 
 # library(pcurveMix)  # Must initialize globals
@@ -35,6 +91,16 @@ test_ci <- compute_profileCI(fit_list)
 plot(test_ci$profile_curves$pi[,1],test_ci$profile_curves$pi[,2])
 plot(test_ci$profile_curves$mu[,1],test_ci$profile_curves$mu[,2])
 plot(test_ci$profile_curves$sigma[,1],test_ci$profile_curves$sigma[,2])
+
+# Rerun with new args:
+profileCI_args <- list(parm = "all", profile = FALSE, mult = 1.1, faster = FALSE, flat = 1e-08,
+                       lb = rep(-200,3), ub = rep(200,3))
+set_globals(profileCI_args = profileCI_args)
+test_ci2 <- compute_profileCI(fit_list)
+# No plots with profile false
+# plot(test_ci2$profile_curves$pi[,1],test_ci$profile_curves$pi[,2])
+# plot(test_ci2$profile_curves$mu[,1],test_ci$profile_curves$mu[,2])
+# plot(test_ci2$profile_curves$sigma[,1],test_ci$profile_curves$sigma[,2])
 
 stop("stopped as requested")
 

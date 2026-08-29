@@ -25,6 +25,14 @@ reals_to_sigmas <- function(reals) {
   return( exp(reals) )
 }
 
+reals_to_powers <- function(reals) {
+  return( stats::plogis(reals) )
+}
+
+powers_to_reals <- function(powers) {
+  return( stats::qlogis(powers) )
+}
+
 # Function to convert parameters on their natural scales (i.e., positive or 0-1)
 #  into values across the full -inf/+inf real range for optim to adjust.
 # param parms List with elements of mu>0, sigma>0, and 0<pi<1

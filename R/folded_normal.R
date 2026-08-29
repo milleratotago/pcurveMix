@@ -35,3 +35,9 @@ sd_folded_normal <- function(mu, sigma) {
   val <- sqrt( variance_folded_normal(mu, sigma) )
   return(val)
 }
+
+# Compute folded mu & sigma from unfolded mu & sigma.
+folded_moments <- function(mu, sigma) {
+  c(mean = mean_folded_normal(mu, sigma), sd = sd_folded_normal(mu, sigma) )
+}
+

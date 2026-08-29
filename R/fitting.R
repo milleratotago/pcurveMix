@@ -234,7 +234,7 @@ fit_to_estimates_tbl <- function(fit) {
     folded_normal_mu <- mean_folded_normal(fit$mu, fit$sigma)
     folded_normal_sigma <- sd_folded_normal(fit$mu, fit$sigma)
     folded_normal_cols <- data.frame(
-      parameter = c("folded_normal_mu", "folded_normal_sigma"),
+      parameter = c(FOLDED_NORMAL_MEAN_LABEL, FOLDED_NORMAL_SD_LABEL),
       estimate  = c(folded_normal_mu, folded_normal_sigma),
       Wald_SE   = c(NA, NA),
       Wald_lwr  = c(NA, NA),

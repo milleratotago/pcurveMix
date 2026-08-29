@@ -2,7 +2,7 @@
 % Please edit documentation in R/aaa.R
 \name{set_globals}
 \alias{set_globals}
-\title{Function to override defaults of a few global variables.}
+\title{Function to override defaults of some global variables.}
 \usage{
 set_globals(
   edge_p = NA,
@@ -14,6 +14,7 @@ set_globals(
   MLSEh = NA,
   small_rcond = NA,
   optim_starting_parms = NA,
+  profileCI_args = NA,
   reset_to_defaults = FALSE
 )
 }
@@ -48,12 +49,15 @@ a Fisher information matrix is ill-conditioned (default = 1e-15)}
 \item{optim_starting_parms}{A list or data frame of parameter combinations
 at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
 
+\item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
+
 \item{reset_to_defaults}{Boolean; if true, reset all values to their
 defaults before applying the other arguments}
 }
 \value{
-A list of the values of the global variables, after setting
+A list of the values of the global variables, after changing any
+ of the values as indicated.
 }
 \description{
-Function to override defaults of a few global variables.
+Function to override defaults of some global variables.
 }
