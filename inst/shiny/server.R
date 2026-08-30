@@ -276,7 +276,7 @@ server <- function(input, output) {
     folded_means_y <- profile_curves[,2]
     v$profile_folded_normal_mu_plot <- ggplot() +
       geom_line(aes(x = folded_means_x, y = folded_means_y), color = "black") +
-      labs(title = paste("profile for",FOLDED_NORMAL_MEAN_LABEL),
+      labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MEAN_LABEL),
            x = pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,
            y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
@@ -286,7 +286,7 @@ server <- function(input, output) {
     folded_sd_y <- profile_curves[,2]
     v$profile_folded_normal_sigma_plot <- ggplot() +
       geom_line(aes(x = folded_sd_x, y = folded_sd_y), color = "black") +
-      labs(title = paste("profile for",FOLDED_NORMAL_SD_LABEL),
+      labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SD_LABEL),
            x = pcurveMix:::FOLDED_NORMAL_SD_LABEL,
            y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
