@@ -1,7 +1,7 @@
 # for_profileCI.R
 
 # Code for profile CIs to include in pcurveMix package.
-# This code relies heavily on the 'profileCI' package from NEWJEFF.
+# This code relies heavily on the 'profileCI' CRAN package from Paul J. Northrup.
 # To avoid boundary problems, parameters are considered on the
 # full -Inf to +Inf scale with respect to computations in that package,
 # using the same 'parms_to_reals' and 'reals_to_parms' functions
@@ -24,9 +24,10 @@
 # profCI_model <- structure(list(coefficients <- c(mu = 0, sigma = 0, pi = 0)),
 #                          class = "profCI_model")
 
-# Define S3 methods for coef and vcov for this class.
+# Define two S3 methods for coef and vcov for the profCI_model class.
 # These definitions must be _outside_ of a function so that they
 # are global with the package's NAMESPACE.
+# roxygen2 registers them automatically, so .S3method's are not needed.
 #' @export
 coef.profCI_model <- function(object, ...) object$coefficients
 #' @export
@@ -43,18 +44,15 @@ vcov.profCI_model <- function(object, ...) {
   }
 }
 
-# This is not needed because roxygen2 handles the registration automatically.
-# # Register the class methods safely in R
-# .S3method("coef", "profCI_model", coef.profCI_model)
-# .S3method("vcov", "profCI_model", vcov.profCI_model)
-
-#' Computations for profile-based confidence intervals of
-#'  basic model parameters mu, sigma, and pi (NOT folder).
-#' @param fit_list  NEWJEFF param from elsewhere
-#' @param level NEWJEFF
-#' @returns NEWJEFF
+#' Computations for profile-based confidence intervals of the basic model
+#'  parameters mu, sigma, and pi (NOT the folded normal parameters).
+#' @inheritParams fit_list_to_df
+#' @param level Confidence level for the CI (0-1, default = 0.95)
+#' @returns A list with: bounds_matrix = matrix of CI bounds;
+#'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+#'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI <- function(fit_list, level = 0.95) {  # NEWJEFF: This `level` not used
+compute_profileCI <- function(fit_list, level = 0.95) {
   # print("Start compute_profileCI")
   coefficients <- c(mu = 0, sigma = 0, pi = 0)
   profCI_model <- list(coefficients = coefficients)
@@ -69,6 +67,7 @@ compute_profileCI <- function(fit_list, level = 0.95) {  # NEWJEFF: This `level`
   # Build the list of arguments that will be passed to profileCI
   args1 <- list(object = profCI_model, loglik = pll_profileCI,
                 ps = ps, alpha = fit_list$alpha, tails = fit_list$tails) # profileCI passes these to pll_profileCI()
+  args1 <- c(args1, level = level)
   full_args <- c(args1, pcm_env$profileCI_args)  # append profileCI args in environment, default or set by user
 
   hold <- pcm_env$fit_constrained  # ensure this is false for profileCI because parms are reals
@@ -164,6 +163,18 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_m
   sum(log(density))
 }
 
+#' Computations for profile-based confidence intervals of the derived
+#'  model parameters for the folded normal: mu and sigma.
+#' This function computes the CI for _either_ mu or sigma but not both,
+#'  so you must call it twice to get the CIs for both.
+#' @inheritParams compute_profileCI
+#' @param target_folded_mean Boolean where TRUE requests CI for folded normal mu
+#'  and FALSE requests CI for folded normal sigma.
+#' @returns A list with: NEWJEFF
+#'  bounds_matrix = matrix of CI bounds;
+#'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+#'  profile_fn_output = the output of the profileCI function from the profileCI package.
+#' @export
 compute_profileCI_folded <- function(fit_list, target_folded_mean, level = 0.95) {
 
   alpha <- fit_list$alpha
@@ -262,9 +273,7 @@ compute_profileCI_folded <- function(fit_list, target_folded_mean, level = 0.95)
     ci = ci_natural,
     target_name = target_name
   )
-  #}
-
-} # do_1_profileCI_folded
+} # compute_profileCI_folded
 
 #### END of Special routines for computing profileCIs of folded-normal parameters
 
@@ -564,6 +573,15 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
   )
 }
 
+# NEWJEFF: This routine just calls profile_ci_power, which re-fits the model
+#' Computations for profile-based confidence intervals of the derived
+#'  model parameter power.
+#' @inheritParams compute_profileCI
+#' @returns A list with: NEWJEFF
+#'  bounds_matrix = matrix of CI bounds;
+#'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+#'  profile_fn_output = the output of the profileCI function from the profileCI package.
+#' @export
 compute_profileCI_power <- function(fit_list, level = 0.95) {
   alpha <- fit_list$alpha
   tails <- fit_list$tails

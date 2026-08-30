@@ -353,12 +353,15 @@ server <- function(input, output) {
                           envir = new.env(parent = globalenv()))
 
         all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
+
         removeNotification(id)
 
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)
         delay(5000,
               showNotification("After download finishes, you can perform another analysis or quit.", duration = 45))
+
+        file.remove(all_file_paths)
       } # end of else
     },  # end content function
 
