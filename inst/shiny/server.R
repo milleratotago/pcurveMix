@@ -180,7 +180,7 @@ server <- function(input, output) {
     )
     v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
     showNotification(
-      paste("Profiling",FOLDED_NORMAL_MEAN_LABEL,"..."),
+      paste("Profiling",pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,"..."),
       id = notif_id,
       duration = NULL,
       closeButton = TRUE,
@@ -188,7 +188,7 @@ server <- function(input, output) {
     )
     v$profileCI_folded_mean <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
     showNotification(
-      paste("Profiling",FOLDED_NORMAL_SD_LABEL,"..."),
+      paste("Profiling",pcurveMix:::FOLDED_NORMAL_SD_LABEL,"..."),
       id = notif_id,
       duration = NULL,
       closeButton = TRUE,
