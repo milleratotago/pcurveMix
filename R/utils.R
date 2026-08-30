@@ -6,13 +6,12 @@
 run_shiny_app <- function() {
   # If the shiny app references un-exported definitions that are global to
   # the package, you can either reference them with pcurveMix::: or else
-  # do the following, according to Gemini. I tried it but it did not work
-  # initially.
+  # do the following, according to Gemini. I tried it but it did not work.
   #
-  ui <- source(system.file("shiny/ui.R", package = "pcurveMix"), local = TRUE)$value
-  server <- source(system.file("shiny/server.R", package = "pcurveMix"), local = TRUE)$value
-  # Explicitly bind the package environment to the server function
-  environment(server) <- asNamespace("pcurveMix")
+  # ui <- source(system.file("shiny/ui.R", package = "pcurveMix"), local = TRUE)$value
+  # server <- source(system.file("shiny/server.R", package = "pcurveMix"), local = TRUE)$value
+  # # Explicitly bind the package environment to the server function
+  # environment(server) <- asNamespace("pcurveMix")
   #
   appDir <- system.file("shiny", package = "pcurveMix")
   pcm_env$shiny_running <- TRUE

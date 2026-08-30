@@ -1,8 +1,11 @@
-# server.R: Define server logic required to draw a histogram
+# server.R
 
-# Install pcurveMix from GitHub if necessary
-if (!require("remotes")) install.packages("remotes")
-if (!require(pcurveMix)) remotes::install_github("milleratotago/pcurveMix")
+# Note: This file uses pcurveMix::: references to unexported pcurveMix
+#  constants and functions; the shiny can't see those otherwise.
+
+# # Install pcurveMix from GitHub if necessary
+# if (!require("remotes")) install.packages("remotes")
+# if (!require(pcurveMix)) remotes::install_github("milleratotago/pcurveMix")
 # remotes::install_github("milleratotago/pcurveMix")  # Reinstall if newer version but requires internet connection.
 if (!require(ggplot2)) install.packages('ggplot2')
 if (!require(knitr)) install.packages('knitr')
@@ -259,7 +262,7 @@ server <- function(input, output) {
     output$profile_pi_plot <- renderPlot(v$profile_pi_plot)
 
     profile_curves <- as.matrix(attr(v$profileCI_power$profile,"for_plot")[["logit_relative_power"]])
-    power_x <- reals_to_powers(profile_curves[,1])
+    power_x <- pcurveMix:::reals_to_powers(profile_curves[,1])
     power_y <- profile_curves[,2]
     v$profile_power_plot <- ggplot() +
       geom_line(aes(x = power_x, y = power_y), color = "black") +
@@ -269,7 +272,7 @@ server <- function(input, output) {
     output$profile_power_plot <- renderPlot(v$profile_power_plot)
 
     profile_curves <- as.matrix(attr(v$profileCI_folded_mean$profile,"for_plot")[["log_folded_mean"]])
-    folded_means_x <- reals_to_mus(profile_curves[,1])
+    folded_means_x <- pcurveMix:::reals_to_mus(profile_curves[,1])
     folded_means_y <- profile_curves[,2]
     v$profile_folded_normal_mu_plot <- ggplot() +
       geom_line(aes(x = folded_means_x, y = folded_means_y), color = "black") +
@@ -279,7 +282,7 @@ server <- function(input, output) {
     output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
 
     profile_curves <- as.matrix(attr(v$profileCI_folded_sd$profile,"for_plot")[["log_folded_sd"]])
-    folded_sd_x <- reals_to_sigmas(profile_curves[,1])
+    folded_sd_x <- pcurveMix:::reals_to_sigmas(profile_curves[,1])
     folded_sd_y <- profile_curves[,2]
     v$profile_folded_normal_sigma_plot <- ggplot() +
       geom_line(aes(x = folded_sd_x, y = folded_sd_y), color = "black") +
