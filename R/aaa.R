@@ -1,6 +1,8 @@
 # aaa.R
 
-# Constant strings used as labels
+# Constant strings used as labels.
+# Note that these constants are NOT available to the shiny app
+#  except via references like pcurveMix:::CI_LOWER_BOUND_LABEL
 CI_LOWER_BOUND_LABEL <- "lwr"
 CI_UPPER_BOUND_LABEL <- "upr"
 FOLDED_NORMAL_MEAN_LABEL <- "folded_normal_mu"
