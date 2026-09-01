@@ -167,7 +167,7 @@ These are computed across the indicated number of bootstrap samples, where for e
 ```{r bootstrap_analysis, echo = FALSE, comment = ""}
 n_boot_samples <- 100  # Smaller number for demo, but 2000 recommended minimum for real analyses; more is better
 df <- bootstrap(n_ps, fit_results_list, n_boot_samples,
-                alpha = alpha_cutoff, tails = tails, show_progress_bar = FALSE)
+                show_progress_bar = FALSE)
 boot_list <- make_bootstrap_summary_list(df, estimates_tbl)
 cat("* n bootstrap samples =",n_boot_samples,"\n")
 cat("* percent converged OK =",round(boot_list$pct_converged,2),"\n")

@@ -44,6 +44,8 @@ print(knitr::kable(params$estimates_tbl))
 
 ## Observed/predicted PDFs:
 
+Note: The X/Y pairs for the following plots of predicted PDF, predicted CDF, and (if requested) likelihood profiles were saved in `*.csv` files within the downloaded zip file.
+
 ```{r plot pdf, echo=FALSE}
 plot(params$pdf_plot)
 ```

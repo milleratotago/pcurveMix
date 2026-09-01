@@ -44,6 +44,12 @@ vcov.profCI_model <- function(object, ...) {
   }
 }
 
+# Extract a kx2 matrix of parameter values and likelihood values
+# for the parameter_number'th parameter processed by profileCI
+extract_profile_plot_columns <- function(profileCI_output, param_number) {
+  profile_curves2 <- attr(profileCI_output$profile,"for_plot")[[param_number]]
+}
+
 #' Computations for profile-based confidence intervals of the basic model
 #'  parameters mu, sigma, and pi (NOT the folded normal parameters).
 #' @inheritParams fit_list_to_df
@@ -123,7 +129,7 @@ folded_scale_factors <- function(r) {
 #   z[2] = original MLE pi
 #   z[3] = ratio of original (MLE mu) / (MLE sigma)
 # Output is vector of (pi, mu, sigma) named values
-decode_for_folded <- function(z, target_folded_mean) {
+decode_for_folded <- function(z, target_fn_mu) {
   if (length(z) != 3L || any(!is.finite(z))) {
     return(c(pi = NA_real_, mu = NA_real_, sigma = NA_real_))
   }
@@ -131,7 +137,7 @@ decode_for_folded <- function(z, target_folded_mean) {
   pi_value <- stats::plogis(z[2])
   ratio <- exp(z[3])
   factors <- folded_scale_factors(ratio)
-  scale_factor <- if (target_folded_mean) {
+  scale_factor <- if (target_fn_mu) {
     unname(factors["mean"])
   } else {
     unname(factors["sd"])
@@ -144,8 +150,8 @@ decode_for_folded <- function(z, target_folded_mean) {
   c(pi = unname(pi_value), mu = unname(mu), sigma = unname(sigma))
 }
 
-profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_mean) {
-  pars <- decode_for_folded(z, target_folded_mean = target_folded_mean)
+profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_fn_mu) {
+  pars <- decode_for_folded(z, target_fn_mu = target_fn_mu)
   if (any(!is.finite(pars)) || pars["pi"] <= 0 || pars["pi"] >= 1 ||
       pars["mu"] <= 0 || pars["sigma"] <= 0 ||
       pars["mu"] > 1e4 || pars["sigma"] > 1e4) return(-Inf)
@@ -168,14 +174,14 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_m
 #' This function computes the CI for _either_ mu or sigma but not both,
 #'  so you must call it twice to get the CIs for both.
 #' @inheritParams compute_profileCI
-#' @param target_folded_mean Boolean where TRUE requests CI for folded normal mu
+#' @param target_fn_mu Boolean where TRUE requests CI for folded normal mu
 #'  and FALSE requests CI for folded normal sigma.
 #' @returns A list with: NEWJEFF
 #'  bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_folded <- function(fit_list, target_folded_mean, level = 0.95) {
+compute_profileCI_folded <- function(fit_list, target_fn_mu, level = 0.95) {
 
   alpha <- fit_list$alpha
   tails <- fit_list$tails
@@ -185,12 +191,12 @@ compute_profileCI_folded <- function(fit_list, target_folded_mean, level = 0.95)
   pi_hat <- fit_list$pi
   ratio_hat <- mu_hat / sigma_hat
   folded_hat <- folded_moments(mu_hat, sigma_hat)
-  if (target_folded_mean) {
+  if (target_fn_mu) {
     target_hat <- unname(folded_hat["mean"])
-    target_name <- "log_folded_mean"
+    target_name <- "log_folded_normal_mu"
   } else {
     target_hat <- unname(folded_hat["sd"])
-    target_name <- "log_folded_sd"
+    target_name <- "log_folded_normal_sigma"
   }
 
   # Reparameterized vector:
@@ -205,7 +211,7 @@ compute_profileCI_folded <- function(fit_list, target_folded_mean, level = 0.95)
   hessian <- stats::optimHess(
     coefficients,
     function(z) -profile_loglik_for_folded(
-      z, p_values, alpha, tails, target_folded_mean)  )
+      z, p_values, alpha, tails, target_fn_mu)  )
   vcov_hat <- tryCatch(solve(hessian), error = function(e) NULL)
 
   if (is.null(vcov_hat) || any(!is.finite(vcov_hat)) ||
@@ -232,7 +238,7 @@ compute_profileCI_folded <- function(fit_list, target_folded_mean, level = 0.95)
       p_values = p_values,  # passed to loglik fn
       alpha = alpha,  # passed to loglik fn
       tails = tails,  # passed to loglik fn
-      target_folded_mean = target_folded_mean,  # passed to loglik fn
+      target_fn_mu = target_fn_mu,  # passed to loglik fn
     parm = target_name,  # specifies which parameter to compute profile for (default = "all")
     level = level,
     faster = FALSE,

@@ -3,7 +3,7 @@
 devtools::load_all(".")
 
 ######### 2026-08-20 to -25: adapt profileCI code from Rolf. I think the code
-#  was from \r\Projects\pcurve_repo\ProfileCI\profileCI_folded_mean_clean.qmd
+#  was from \r\Projects\pcurve_repo\ProfileCI\profileCI_folded_normal_mu_clean.qmd
 # Also see C:\R\Projects\pcurve_repo\Estimation OSF and SCORE Data\ProfileCI_all_six_parameters.*
 
 tails <- 2  # NEWJEFF: folded_mu, sigma only relevant for 2 tails?
@@ -20,12 +20,20 @@ fit_list <- pcurveMix::fit_p_curve(ps, alpha = alpha)
 # rm(alpha)
 # rm(ps)
 
+np_bts <- bootstrap_np(fit_list, 10)
 ### developing power profileCI
 
 CI_CONF_LEVEL <- 0.95
 OSC_original <- pcurveMix:::profile_ci_power(
   OSC$p_orig, alpha = 0.05, alpha_sig = alpha_sig,
   tails = tails, level = CI_CONF_LEVEL)
+
+attributes(OSC_original$profile)
+# The "for_plot" attribute is a list, with each element corresponding
+# to one of the estimated parameters.
+profile_curves2 <- attr(OSC_original$profile,"for_plot")[[1]] # First element of list is first parameter
+print( profile_curves2[1:5,1] )  # parameter values
+print( profile_curves2[1:5,2] )  # likelihood values
 
 print(OSC_original$table)
 profile_curves <- as.matrix(attr(OSC_original$profile,"for_plot")[["logit_relative_power"]])
@@ -37,21 +45,21 @@ stop("stopped as requested")
 
 ### developing folded normal profileCI
 
-# target <- "folded_mean"
-# target_folded_mean <- TRUE
+# target <- "folded_normal_mu"
+# target_fn_mu <- TRUE
 
-folded_mean_profile <- pcurveMix:::compute_profileCI_folded(fit_list, TRUE)
-folded_sd_profile <- pcurveMix:::compute_profileCI_folded(fit_list, FALSE)
+folded_normal_mu_profile <- pcurveMix:::compute_profileCI_folded(fit_list, TRUE)
+folded_normal_sigma_profile <- pcurveMix:::compute_profileCI_folded(fit_list, FALSE)
 
-print(folded_mean_profile$table)
-print(folded_sd_profile$table)
+print(folded_normal_mu_profile$table)
+print(folded_normal_sigma_profile$table)
 
-print( attr(folded_mean_profile$profile,"for_plot")$log_folded_mean )
-profile_curves <- as.matrix(attr(folded_mean_profile$profile,"for_plot")$log_folded_mean) # [["log_folded_mean_values "]])
+print( attr(folded_normal_mu_profile$profile,"for_plot")$log_folded_normal_mu )
+profile_curves <- as.matrix(attr(folded_normal_mu_profile$profile,"for_plot")$log_folded_normal_mu) # [["log_folded_normal_mu_values "]])
 plot(profile_curves[,1], profile_curves[,2])
-x <- as.matrix(attr(folded_mean_profile$profile,"for_plot")$log_folded_mean)[,1]
+x <- as.matrix(attr(folded_normal_mu_profile$profile,"for_plot")$log_folded_normal_mu)[,1]
 
-profile_curves2 <- as.matrix(attr(folded_sd_profile$profile,"for_plot")$log_folded_sd)
+profile_curves2 <- as.matrix(attr(folded_normal_sigma_profile$profile,"for_plot")$log_folded_normal_sigma)
 
 stop("stopped as requested")
 

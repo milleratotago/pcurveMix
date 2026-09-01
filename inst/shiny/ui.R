@@ -129,17 +129,20 @@ ui <- tagList(
                    ),
                    hr(style = "border-top: 2px solid #808080;"),
 
-                   h4(),
-                   checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
                    conditionalPanel(
-                     condition = "input.profile_ci == true",
-                     fluidRow(
-                       column(6, numericInput("profile_confidence_level",
-                                              "% confidence (1-100)",
-                                              value = "95", min = 10, max = 100, step = 1)
-                       )
-                     )
-                   ),
+                     h4(),
+                     condition = "input.tails == '2-tailed'",
+                     checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
+                     conditionalPanel(
+                       condition = "input.profile_ci == true",
+                       fluidRow(
+                         column(6, numericInput("profile_confidence_level",
+                                                "% confidence (1-100)",
+                                                value = "95", min = 10, max = 100, step = 1)
+                         )
+                       ) # fluidrow
+                     ) # inner profiles checked
+                   ), # conditionalPanel 2-tails
                    hr(style = "border-top: 2px solid #808080;"),
 
                    h4(),
@@ -228,7 +231,7 @@ ui <- tagList(
                   fluidRow(
                     column(12, tableOutput("bootstrap_tbl"))
                   )
-                  , style = "margin-left: 35px;"  # NEWJEFF: Delete margin
+                  , style = "margin-left: 0px;"
                 ),  # end of div
 
                 # Profile confidence interval results
@@ -260,7 +263,7 @@ ui <- tagList(
                   fluidRow(
                     column(12, plotOutput("profile_folded_normal_sigma_plot"))
                   ),
-                  style = "margin-left: 2px;"  # NEWJEFF: Delete margin
+                  style = "margin-left: 0px;"
                 ),  # end of div
 
                 fluidRow(

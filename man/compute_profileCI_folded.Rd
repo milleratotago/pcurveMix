@@ -7,12 +7,12 @@
 This function computes the CI for _either_ mu or sigma but not both,
  so you must call it twice to get the CIs for both.}
 \usage{
-compute_profileCI_folded(fit_list, target_folded_mean, level = 0.95)
+compute_profileCI_folded(fit_list, target_fn_mu, level = 0.95)
 }
 \arguments{
 \item{fit_list}{A list that was the output of fit_p_curve}
 
-\item{target_folded_mean}{Boolean where TRUE requests CI for folded normal mu
+\item{target_fn_mu}{Boolean where TRUE requests CI for folded normal mu
 and FALSE requests CI for folded normal sigma.}
 
 \item{level}{Confidence level for the CI (0-1, default = 0.95)}

@@ -3,14 +3,18 @@
 #' Function for parametric bootstrapping of fitted model.
 #' @inheritParams random
 #' @inheritParams fit_p_curve
-#' @param fit Fitted model returned by fit_p_curve
+#' @param fit Fitted model returned by fit_p_curve NEWJEFF: fit_list? with alpha/tails/sig?
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
 #' @returns Data frame with 1 row per bootstrap sample & cols for estimated pi, mu, sigma, etc.
 #' @export
-bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2, alpha_sig = 0.05,
+bootstrap <- function(n, fit, n_boot_samples,
+                      # alpha = 1, tails = 2, alpha_sig = 0.05, -- these are taken from "fit"
                       show_progress_bar = TRUE,
                       cond_method = "rejection", tol = 1e-8) {
+  alpha <- fit$alpha
+  tails <- fit$tails
+  alpha_sig <- fit$alpha_sig
   use_fn <- tails == 2  # fn is an abbreviation for folded normal
   cols_to_boot <- c("pi", "mu", "sigma", "power")
   if (use_fn) {
@@ -38,15 +42,6 @@ bootstrap <- function(n, fit, n_boot_samples, alpha = 1, tails = 2, alpha_sig = 
     } else {
       n_cols_produced <- 4
     }
-    # print(fit_list)
-    # opt <- stats::optim(par = start_vec, fn = nll_optim, p = rand_ps, alpha = alpha, tails = tails,
-    #                     method = "L-BFGS-B", lower = lower_vec, upper = upper_vec, hessian = FALSE,
-    #                     control = pcm_env$optim_control)
-    # print(opt)
-    # est <- opt$par; pi <- est[1]; mu <- est[2]; sigma <- est[3]
-    # print("est = ")
-    # print(est)
-    # if (isTRUE(opt$convergence == 0)) {
     if (fit_list$converged) {
       vec <- c(pi, mu, sigma,
                cdf(alpha_sig, mu = mu, sigma = sigma, pi = 1, alpha = 1, tails = tails) )   # power estimated from current mu/sigma/pi
@@ -150,3 +145,32 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
   return( list(pct_converged = pct_converged, boot_tbl = boot_tbl) )
 } # bootstrap_summary.
 
+#### NEWJEFF: Here are two new functions to generate random sets of p values
+# for either parametric or nonparametric bootstrapping. I have not yet
+# written the function(s) to fit the models and generate the result columns.
+
+#' Generate n_subsamples bootstrap subsamples from a set of real_ps,
+#'  with each subsample having n_per_subsample values.
+#' @param n_subsamples Number of bootstrap subsamples to generate
+#' @param n_per_subsample Number of values per bootstrap subsample
+#' @param real_ps p-values in original to-be-bootstrapped sample
+#' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
+#' @export
+generate_nonparm_subsamples <- function(n_subsamples, n_per_subsample, real_ps) {
+  rand_ps <- sample(real_ps, n_subsamples*n_per_subsample, replace = TRUE)
+  rand_ps <- matrix(rand_ps, nrow = n_subsamples)
+}
+
+#' Generate n_subsamples random samples from a set of real_ps,
+#'  with each subsample having n_per_subsample values.
+#' @inheritParams generate_nonparm_subsamples n_subsamples n_per_subsample
+#' @inheritParams random
+#' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
+#' @export
+generate_parm_subsamples <- function(n_subsamples, n_per_subsample,
+                                     mu, sigma, pi, alpha_cutoff, tails,
+                                     cond_method = c("rejection", "inversion"), tol = 1e-8) {
+  rand_ps <- random(n_subsamples*n_per_subsample, mu, sigma, pi = pi, alpha = alpha_cutoff,
+                    tails = tails, cond_method = cond_method, tol = tol)
+  rand_ps <- matrix(rand_ps, nrow = n_subsamples)
+}

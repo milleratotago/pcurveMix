@@ -8,9 +8,6 @@ bootstrap(
   n,
   fit,
   n_boot_samples,
-  alpha = 1,
-  tails = 2,
-  alpha_sig = 0.05,
   show_progress_bar = TRUE,
   cond_method = "rejection",
   tol = 1e-08
@@ -19,16 +16,9 @@ bootstrap(
 \arguments{
 \item{n}{Number of random p values to be generated}
 
-\item{fit}{Fitted model returned by fit_p_curve}
+\item{fit}{Fitted model returned by fit_p_curve NEWJEFF: fit_list? with alpha/tails/sig?}
 
 \item{n_boot_samples}{Number of bootstrap samples to take}
-
-\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
-
-\item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
-
-\item{alpha_sig}{Significance cutoff used in computing the estimated average
-power when H0 is false (default = 0.05)}
 
 \item{show_progress_bar}{Boolean determining whether progress bar is used (default = TRUE)}
 

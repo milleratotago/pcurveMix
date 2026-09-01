@@ -1,7 +1,7 @@
 Type: Package
 Package: pcurveMix
 Title: Computations and Fitting with the P-Curve Mixture Model
-Version: 1.0.9
+Version: 1.0.10
 Authors@R: c(
     person("Rolf", "Ulrich", , "ulrich@uni-tuebingen.de", role = "aut"),
     person("Jeff", "Miller", , "miller@psy.otago.ac.nz", role = c("aut", "cre"))
@@ -16,7 +16,9 @@ Description: Package for computations and fitting with the p-curve mixture
     the model to a set of observed p values by estimating the underlying
     'pi', 'mu', and 'sigma' values, and they can also provide the model's
     true PDF and CDF values of specific p's given particular values of the
-    model's parameters 'pi', 'mu', and 'sigma'.
+    model's parameters 'pi', 'mu', and 'sigma'. Confidence intervals for
+    the parameter values can be obtained by parametric bootstrapping or
+    likelihood profiling.
 License: GPL (>= 3) + file LICENSE
 Depends: 
     R (>= 4.1.0)

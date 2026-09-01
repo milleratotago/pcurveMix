@@ -14,7 +14,14 @@
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
                 small_p_bin_cutoff = pcm_env$small_p_bin_cutoff) {
   # print( paste("nll thinks: mu =",mu, "sigma =",sigma, "pi =",pi) )
-  if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
+  # JEFF: profileCI gets confused if the flat region extends
+  # to the lower bound, and the profile plots have a terrible y-axis
+  # range if we return low likelihood in the flat region,
+  # so I removed the check on mu
+  # if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
+  # NEWJEFF: Parameter checking should be a separate function
+  # used uniformly (eg make sure profiling uses this).
+  if (pi < 0 || pi > 1 || sigma < 0) return(1e12)
   # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
   if (is.null(small_p_bin_cutoff)) {
     # Direct method without censoring

@@ -28,7 +28,7 @@ initialize_globals <- function() {
   pcm_env$optim_starting_parms <- list(mu = 2, sigma = 2, pi = 0.5)
   # pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
   #                          class = "profCI_model")
-  pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 1.1, faster = FALSE, flat = 1e-08,
+  pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08,
                                  lb = rep(-200,3), ub = rep(200,3) )
 }
 

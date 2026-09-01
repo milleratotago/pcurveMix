@@ -68,7 +68,8 @@ server <- function(input, output) {
       full_p_filename <- input$p_file$datapath
     }
     if (is.null(full_p_filename)) {
-      showNotification("You must upload a file of p's before fitting the model.")
+      showNotification("You must upload a file of p's before fitting the model.",
+                       closeButton = TRUE)
     } else {
       df <- read.csv(full_p_filename)
       p_vec_to_fit <- df$p
@@ -106,7 +107,7 @@ server <- function(input, output) {
           closeButton = TRUE,
           type = "message"
         )
-        boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+        boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples) # , alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
         boot_tail_prob <- (1 - v$boot_ci_confidence_level)/2
         boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl,
                                                  boot_ci_limits = c(boot_tail_prob, 1-boot_tail_prob) )
@@ -156,8 +157,7 @@ server <- function(input, output) {
   }) # end observeEvent fit modelbutton
 
   profile_manager <- function(fit_list) {
-    # NEWJEFF: Display "Profiling in progress" message
-    if (!input$profile_ci) {
+    if (!input$profile_ci || !(fit_list$tails == 2)) {
       v$profile_analysis <- 0  # Needed to pass to Rmd
       return(NULL)
     } else {
@@ -189,7 +189,7 @@ server <- function(input, output) {
       closeButton = TRUE,
       type = "message"
     )
-    v$profileCI_folded_mean <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
+    v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
     showNotification(
       paste("Profiling",pcurveMix:::FOLDED_NORMAL_SD_LABEL,"..."),
       id = notif_id,
@@ -197,7 +197,7 @@ server <- function(input, output) {
       closeButton = TRUE,
       type = "message"
     )
-    v$profileCI_folded_sd <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
+    v$profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
     removeNotification(notif_id)
     # Show results in UI mainPanel
     profileCI_title <- paste0("Profile CIs (",
@@ -216,17 +216,17 @@ server <- function(input, output) {
     names(power_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
     ci_tbl <- rbind(ci_tbl, power_row)
 
-    folded_mean_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,
-                            c2 = v$profileCI_folded_mean$table$`95% CI lower`,
-                            c3 = v$profileCI_folded_mean$table$`95% CI upper`)
-    names(folded_mean_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    ci_tbl <- rbind(ci_tbl, folded_mean_row)
+    folded_normal_mu_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,
+                            c2 = v$profileCI_folded_normal_mu$table$`95% CI lower`,
+                            c3 = v$profileCI_folded_normal_mu$table$`95% CI upper`)
+    names(folded_normal_mu_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
 
-    folded_sd_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_SD_LABEL,
-                                  c2 = v$profileCI_folded_sd$table$`95% CI lower`,
-                                  c3 = v$profileCI_folded_sd$table$`95% CI upper`)
-    names(folded_sd_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    ci_tbl <- rbind(ci_tbl, folded_sd_row)
+    folded_normal_sigma_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_SD_LABEL,
+                                  c2 = v$profileCI_folded_normal_sigma$table$`95% CI lower`,
+                                  c3 = v$profileCI_folded_normal_sigma$table$`95% CI upper`)
+    names(folded_normal_sigma_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
     output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE)
 
     # ProfileCI plots
@@ -271,21 +271,21 @@ server <- function(input, output) {
            y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_power_plot <- renderPlot(v$profile_power_plot)
 
-    profile_curves <- as.matrix(attr(v$profileCI_folded_mean$profile,"for_plot")[["log_folded_mean"]])
-    folded_means_x <- pcurveMix:::reals_to_mus(profile_curves[,1])
-    folded_means_y <- profile_curves[,2]
+    profile_curves <- as.matrix(attr(v$profileCI_folded_normal_mu$profile,"for_plot")[["log_folded_normal_mu"]])
+    folded_normal_mus_x <- pcurveMix:::reals_to_mus(profile_curves[,1])
+    folded_normal_mus_y <- profile_curves[,2]
     v$profile_folded_normal_mu_plot <- ggplot() +
-      geom_line(aes(x = folded_means_x, y = folded_means_y), color = "black") +
+      geom_line(aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
       labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MEAN_LABEL),
            x = pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,
            y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
 
-    profile_curves <- as.matrix(attr(v$profileCI_folded_sd$profile,"for_plot")[["log_folded_sd"]])
-    folded_sd_x <- pcurveMix:::reals_to_sigmas(profile_curves[,1])
-    folded_sd_y <- profile_curves[,2]
+    profile_curves <- as.matrix(attr(v$profileCI_folded_normal_sigma$profile,"for_plot")[["log_folded_normal_sigma"]])
+    folded_normal_sigma_x <- pcurveMix:::reals_to_sigmas(profile_curves[,1])
+    folded_normal_sigma_y <- profile_curves[,2]
     v$profile_folded_normal_sigma_plot <- ggplot() +
-      geom_line(aes(x = folded_sd_x, y = folded_sd_y), color = "black") +
+      geom_line(aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
       labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SD_LABEL),
            x = pcurveMix:::FOLDED_NORMAL_SD_LABEL,
            y = pcurveMix:::LIKELIHOOD_LABEL)
@@ -305,7 +305,8 @@ server <- function(input, output) {
     content = function(file) {
       # Check that data have been processed
       if (!v$fit_completed) {
-        showNotification("You must fit the model before downloading the results.")
+        showNotification("You must fit the model before downloading the results.",
+                         closeButton = TRUE)
       } else {
         # Create time stamp to mark output file names
         time_stamp <- timestamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
@@ -324,6 +325,54 @@ server <- function(input, output) {
                                        "pred_cdf_", time_stamp, ".csv")
         pred_cdf <- data.frame(p = v$p_seq_cdf, cdf = v$pred_cdfs)
         write.csv(pred_cdf, csv_cdf_outfile_name, row.names = FALSE)
+
+        # Write CSV files of profile curves if these were requested:
+        if (input$profile_ci) {
+
+          csv_profile_mu_outfile_name <- paste0(output_directory_name, "/",
+                                                "profile_mu_", time_stamp, ".csv")
+          profile_mu <- data.frame(mu = v$profileCI_std$profile_curves$mu[,1],
+                                   likelihood = v$profileCI_std$profile_curves$mu[,2])
+          write.csv(profile_mu, csv_profile_mu_outfile_name, row.names = FALSE)
+
+          csv_profile_sigma_outfile_name <- paste0(output_directory_name, "/",
+                                                "profile_sigma_", time_stamp, ".csv")
+          profile_sigma <- data.frame(sigma = v$profileCI_std$profile_curves$sigma[,1],
+                                   likelihood = v$profileCI_std$profile_curves$sigma[,2])
+          write.csv(profile_sigma, csv_profile_sigma_outfile_name, row.names = FALSE)
+
+          csv_profile_pi_outfile_name <- paste0(output_directory_name, "/",
+                                                   "profile_pi_", time_stamp, ".csv")
+          profile_pi <- data.frame(pi = v$profileCI_std$profile_curves$pi[,1],
+                                      likelihood = v$profileCI_std$profile_curves$pi[,2])
+          write.csv(profile_pi, csv_profile_pi_outfile_name, row.names = FALSE)
+
+          # NEWJEFF: I WANT POWER, FOLDED_MU, FOLDED_SIGMA in natural units
+          # NEWJEFF: No folded normal if 1-tailed
+          csv_profile_power_outfile_name <- paste0(output_directory_name, "/",
+                                                   "profile_power_", time_stamp, ".csv")
+          temp_mat <- extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
+          temp_mat[,1] <- pcurveMix:::reals_to_powers(temp_mat[,1])
+          profile_power <- data.frame(power = temp_mat[,1],
+                                      likelihood = temp_mat[,2])
+          write.csv(profile_power, csv_profile_power_outfile_name, row.names = FALSE)
+
+          csv_profile_folded_normal_mu_outfile_name <- paste0(output_directory_name, "/",
+                                                   "profile_folded_normal_mu_", time_stamp, ".csv")
+          temp_mat <- extract_profile_plot_columns(v$profileCI_folded_normal_mu,1) # 1st profiled parm
+          temp_mat[,1] <- pcurveMix:::reals_to_mus(temp_mat[,1])
+          profile_folded_normal_mu <- data.frame(folded_normal_mu = temp_mat[,1],
+                                      likelihood = temp_mat[,2])
+          write.csv(profile_folded_normal_mu, csv_profile_folded_normal_mu_outfile_name, row.names = FALSE)
+
+          csv_profile_folded_normal_sigma_outfile_name <- paste0(output_directory_name, "/",
+                                                              "profile_folded_normal_sigma_", time_stamp, ".csv")
+          temp_mat <- extract_profile_plot_columns(v$profileCI_folded_normal_sigma,1) # 1st profiled parm
+          temp_mat[,1] <- pcurveMix:::reals_to_sigmas(temp_mat[,1])
+          profile_folded_normal_sigma <- data.frame(folded_normal_sigma = temp_mat[,1],
+                                                 likelihood = temp_mat[,2])
+          write.csv(profile_folded_normal_sigma, csv_profile_folded_normal_sigma_outfile_name, row.names = FALSE)
+        } # if (input$profile_ci)
 
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
@@ -353,15 +402,24 @@ server <- function(input, output) {
                           envir = new.env(parent = globalenv()))
 
         all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
+        if (input$profile_ci) {  # NEWJEFF: No folded normal if 1-tailed
+          all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name,
+                              csv_profile_mu_outfile_name, csv_profile_sigma_outfile_name,
+                              csv_profile_pi_outfile_name, csv_profile_power_outfile_name,
+                              csv_profile_folded_normal_mu_outfile_name, csv_profile_folded_normal_sigma_outfile_name,
+                              rmd_outfile_name)
+        } else {
+          all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
+        }
 
         removeNotification(id)
 
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)
-        delay(5000,
-              showNotification("After download finishes, you can perform another analysis or quit.", duration = 45))
-
         file.remove(all_file_paths)
+        # delay(5000,
+              showNotification("After download finishes, you can perform another analysis or quit.", duration = 45,
+                               closeButton = TRUE) # )
       } # end of else
     },  # end content function
 
