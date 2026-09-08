@@ -81,7 +81,8 @@ bootstrap <- function(n, fit, n_boot_samples,
 
 #' Function to summarize the data frame produced by parametric bootstrapping of fitted model.
 #' @param boot_df Output data frame produced by bootstrap() function
-#' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl()
+#' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
+#'  original MLE estimates used as parameter values for parametric bootstrapping
 #' @param boot_ci_limits A vector with the two limiting proportions
 #'  (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975))
 #' @returns A list with the percent of samples in which the estimation process
@@ -145,32 +146,3 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
   return( list(pct_converged = pct_converged, boot_tbl = boot_tbl) )
 } # bootstrap_summary.
 
-#### NEWJEFF: Here are two new functions to generate random sets of p values
-# for either parametric or nonparametric bootstrapping. I have not yet
-# written the function(s) to fit the models and generate the result columns.
-
-#' Generate n_subsamples bootstrap subsamples from a set of real_ps,
-#'  with each subsample having n_per_subsample values.
-#' @param n_subsamples Number of bootstrap subsamples to generate
-#' @param n_per_subsample Number of values per bootstrap subsample
-#' @param real_ps p-values in original to-be-bootstrapped sample
-#' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
-#' @export
-generate_nonparm_subsamples <- function(n_subsamples, n_per_subsample, real_ps) {
-  rand_ps <- sample(real_ps, n_subsamples*n_per_subsample, replace = TRUE)
-  rand_ps <- matrix(rand_ps, nrow = n_subsamples)
-}
-
-#' Generate n_subsamples random samples from a set of real_ps,
-#'  with each subsample having n_per_subsample values.
-#' @inheritParams generate_nonparm_subsamples n_subsamples n_per_subsample
-#' @inheritParams random
-#' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
-#' @export
-generate_parm_subsamples <- function(n_subsamples, n_per_subsample,
-                                     mu, sigma, pi, alpha_cutoff, tails,
-                                     cond_method = c("rejection", "inversion"), tol = 1e-8) {
-  rand_ps <- random(n_subsamples*n_per_subsample, mu, sigma, pi = pi, alpha = alpha_cutoff,
-                    tails = tails, cond_method = cond_method, tol = tol)
-  rand_ps <- matrix(rand_ps, nrow = n_subsamples)
-}

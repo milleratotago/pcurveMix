@@ -183,7 +183,7 @@ server <- function(input, output) {
     )
     v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
     showNotification(
-      paste("Profiling",pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,"..."),
+      paste("Profiling",pcurveMix:::FOLDED_NORMAL_MU_LABEL,"..."),
       id = notif_id,
       duration = NULL,
       closeButton = TRUE,
@@ -191,7 +191,7 @@ server <- function(input, output) {
     )
     v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
     showNotification(
-      paste("Profiling",pcurveMix:::FOLDED_NORMAL_SD_LABEL,"..."),
+      paste("Profiling",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,"..."),
       id = notif_id,
       duration = NULL,
       closeButton = TRUE,
@@ -216,13 +216,13 @@ server <- function(input, output) {
     names(power_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
     ci_tbl <- rbind(ci_tbl, power_row)
 
-    folded_normal_mu_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,
+    folded_normal_mu_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
                             c2 = v$profileCI_folded_normal_mu$table$`95% CI lower`,
                             c3 = v$profileCI_folded_normal_mu$table$`95% CI upper`)
     names(folded_normal_mu_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
     ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
 
-    folded_normal_sigma_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_SD_LABEL,
+    folded_normal_sigma_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
                                   c2 = v$profileCI_folded_normal_sigma$table$`95% CI lower`,
                                   c3 = v$profileCI_folded_normal_sigma$table$`95% CI upper`)
     names(folded_normal_sigma_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
@@ -276,8 +276,8 @@ server <- function(input, output) {
     folded_normal_mus_y <- profile_curves[,2]
     v$profile_folded_normal_mu_plot <- ggplot() +
       geom_line(aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
-      labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MEAN_LABEL),
-           x = pcurveMix:::FOLDED_NORMAL_MEAN_LABEL,
+      labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MU_LABEL),
+           x = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
            y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
 
@@ -286,8 +286,8 @@ server <- function(input, output) {
     folded_normal_sigma_y <- profile_curves[,2]
     v$profile_folded_normal_sigma_plot <- ggplot() +
       geom_line(aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
-      labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SD_LABEL),
-           x = pcurveMix:::FOLDED_NORMAL_SD_LABEL,
+      labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL),
+           x = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
            y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
 

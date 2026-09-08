@@ -100,3 +100,47 @@ cond_sampler <- function(f, n, mu, sigma, alpha, pi = NULL) {
   return( rands[1:n] )
 }
 
+#### Here are two functions to generate random sets of p values
+# for either parametric or nonparametric bootstrapping.
+
+#' Generate n_subsamples bootstrap subsamples from a set of real_ps,
+#'  with each subsample having n_per_subsample values.
+#' @param n_subsamples Number of bootstrap subsamples to generate
+#' @param n_per_subsample Number of values per bootstrap subsample
+#' @param real_ps p-values in original to-be-bootstrapped sample
+#' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
+#' @export
+generate_nonparametric_subsamples <- function(n_subsamples, n_per_subsample, real_ps) {
+  rand_ps <- sample(real_ps, n_subsamples*n_per_subsample, replace = TRUE)
+  rand_ps <- matrix(rand_ps, nrow = n_subsamples)
+}
+
+#' Generate n_subsamples random samples from a set of real_ps,
+#'  with each subsample having n_per_subsample values.
+#' @inheritParams generate_nonparametric_subsamples n_subsamples n_per_subsample
+#' @inheritParams random
+#' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
+#' @export
+generate_parametric_subsamples <- function(n_subsamples, n_per_subsample,
+                                           mu, sigma, pi, alpha = 1, tails = 2,
+                                           cond_method = c("rejection", "inversion"), tol = 1e-8) {
+  rand_ps <- random(n_subsamples*n_per_subsample, mu, sigma, pi = pi, alpha = alpha,
+                    tails = tails, cond_method = cond_method, tol = tol)
+  rand_ps <- matrix(rand_ps, nrow = n_subsamples)
+}
+
+#' Generate all jackknife subsamples from a set of real_ps
+#'  with each subsample omitting one of the real_ps.
+#' @inheritParams generate_nonparametric_subsamples n_subsamples n_per_subsample real_ps
+#' @inheritParams random
+#' @returns Matrix of p values with n_subsamples rows and n_subsamples-1 columns.
+#' @export
+generate_jackknife_subsamples <- function(real_ps) {
+  n_subsamples <- length(real_ps)
+  jack_ps <- matrix(NA, nrow = n_subsamples, ncol = n_subsamples-1)
+  for (isample in 1:n_subsamples) {
+    jack_ps[isample,] <- real_ps[-isample]
+  }
+  return(jack_ps)
+}
+

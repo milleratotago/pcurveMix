@@ -15,7 +15,6 @@ OSC <- read.csv("/R/Projects/pcurve_repo/ProfileCI/OSC_data.csv")
 # ps <- OSC$p_orig
 alpha <- 1   # for ps_orig
 ps <- OSC$p_rep  # NOTE LATER p_values
-# NEWJEFF: Assuming unconstrained original fit
 fit_list <- pcurveMix::fit_p_curve(ps, alpha = alpha)
 # rm(alpha)
 # rm(ps)

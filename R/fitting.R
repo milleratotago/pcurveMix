@@ -26,8 +26,8 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   if (is.null(small_p_bin_cutoff)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
-# print("NEWJEFF no censoring pdfs:")
-# print(pdfs)
+    # print("NEWJEFF no censoring pdfs:")
+    # print(pdfs)
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
@@ -48,23 +48,16 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
 # param par Vector of the three model parameters pi, mu, sigma (in order)
 # param p Vector of p's for which negative log likelihood is to be computed
 nll_optim <- function(par, p, alpha = 1, tails = 2) {
-  if (pcm_env$fit_constrained) {
-    pi <- par[1]; mu <- par[2]; sigma <- par[3]
-    # print("constrained")
-  } else {
-    # Convert reals to parms so that optim can
-    #  search in unconstrained real space.
-# print(par) # NEWJEFF
-    reals <- list(pi = par[1], mu = par[2], sigma = par[3])
-    parms <- reals_to_parms(reals)
-    pi <- parms$pi
-    mu <- parms$mu
-    sigma <- parms$sigma
-    # print("unconstrained")
-  }
+  # Convert reals to parms so that optim can
+  #  search in unconstrained real space.
+  reals <- list(pi = par[1], mu = par[2], sigma = par[3])
+  parms <- reals_to_parms(reals)
+  pi <- parms$pi
+  mu <- parms$mu
+  sigma <- parms$sigma
   this_nll <- pcurveMix::nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
-# print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
-# readline(prompt="Press [enter] to continue")
+  # print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
+  # readline(prompt="Press [enter] to continue")
   # if (this_nll < 0.01) {
   #   stop("error") # NEWJEFF
   # }
@@ -148,7 +141,7 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                          start = pcm_env$optim_starting_parms,
                          lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
                          upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
-  p <- as.numeric(p);
+  p <- as.numeric(p)
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
   if (!check_ps_list$all_in_bounds) {
     p <- check_ps_list$ps_in_bounds
@@ -160,12 +153,7 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   }
 
   if (!length(p)) stop("No valid p-values in (0,1).")
-  if (pcm_env$fit_constrained) {
-    fit <- optim_fit_constrained(p, alpha, tails, alpha_sig,
-                                 start, want_optim_hessian = want_optim_hessian, lower, upper)
-  } else {
-    fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
-  }
+  fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
   cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
@@ -178,26 +166,26 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   return(fit)
 } # fit_p_curve
 
-# optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
-#                                     want_optim_hessian) {
-#   start_reals <- parms_to_reals(start_list)
-#   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
-#   opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-#                       method = "BFGS", hessian = want_optim_hessian,
-#                       control = pcm_env$optim_control)
-#   est <- opt$par;
-#   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
-#   parms <- reals_to_parms(real_parms)
-#   # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
-#   # est <- c(parms$pi, parms$mu, parms$sigma)
-#   # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
-#   l <- real_to_nat_se_ci(opt$par, opt$hessian)
-#   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
-#               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
-#               se = l$se, ci95 = l$ci, logLik = -opt$value,
-#               converged = (opt$convergence == 0))
-#   return(fit)
-# }
+optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
+                                    want_optim_hessian) {
+  start_reals <- parms_to_reals(start_list)
+  start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
+  opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
+                      method = "BFGS", hessian = want_optim_hessian,
+                      control = pcm_env$optim_control)
+  est <- opt$par;
+  real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
+  parms <- reals_to_parms(real_parms)
+  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
+  # est <- c(parms$pi, parms$mu, parms$sigma)
+  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
+  l <- real_to_nat_se_ci(opt$par, opt$hessian)
+  fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
+              pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
+              se = l$se, ci95 = l$ci, logLik = -opt$value,
+              converged = (opt$convergence == 0))
+  return(fit)
+}
 
 make_se_ci <- function(est, se) {
   if (!any(is.na(se))) {
@@ -241,7 +229,7 @@ fit_to_estimates_tbl <- function(fit) {
     folded_normal_mu <- mean_folded_normal(fit$mu, fit$sigma)
     folded_normal_sigma <- sd_folded_normal(fit$mu, fit$sigma)
     folded_normal_cols <- data.frame(
-      parameter = c(FOLDED_NORMAL_MEAN_LABEL, FOLDED_NORMAL_SD_LABEL),
+      parameter = c(FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL),
       estimate  = c(folded_normal_mu, folded_normal_sigma),
       Wald_SE   = c(NA, NA),
       Wald_lwr  = c(NA, NA),
@@ -292,7 +280,6 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
     descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit$start_parm_set) )
   }
   # descriptor_tbl <- rbind(descriptor_tbl, descriptor("edge_p",as.character(pcm_env$edge_p)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("Parameter ranges", ifelse(pcm_env$fit_constrained,"Constrained","Unconstrained")))
   if (is.null(pcm_env$small_p_bin_cutoff)) {
     descriptor_tbl <- rbind(descriptor_tbl, descriptor("Low p censoring", "Unused"))
   } else {
@@ -327,4 +314,63 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
 descriptor <- function(slabel, svalue) {
   tbl <- data.frame("Property" = slabel, "Value" = svalue)
   return(tbl)
+}
+
+#
+estimate_names <- function(tails) {
+  if (tails == 2) {
+    parm_names <- c("mu", "sigma", "pi", "power", FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL, "converged")
+  } else {
+    parm_names <- c("mu", "sigma", "pi", "power", "converged")
+  }
+  return(parm_names)
+}
+
+#' Function to extract estimated parameter values to a vector.
+#' @inheritParams fit_to_estimates_tbl fit
+#' @param want_names Boolean indicating whether vector elements should be named,
+#'  which is slightly slower (default = TRUE)
+#' @returns Vector of mu, sigma, pi, power, and folded_normal mu/sigma if 2-tails
+#' @export
+fit_to_parms_vec <- function(fit, want_names = TRUE) {
+  # ORDER OF PARMS MUST MATCH IN fit_to_parms_vec() AND estimate_names()
+  parms <- c(fit$mu, fit$sigma, fit$pi, fit$power_hat)
+  if (fit$tails == 2) parms <- c(parms, mean_folded_normal(fit$mu, fit$sigma), sd_folded_normal(fit$mu, fit$sigma))
+  parms <- c(parms, fit$converged)
+  if (want_names) names(parms) <- estimate_names(fit$tails)
+  return(parms)
+}
+
+# NEWJEFF: The following function needs some kind of progress-bar option.
+# NEWJEFF: alpha_sig and sig_cutoff_p are redundant???
+#' Fit p curve separately for each row of a matrix of p values (for simulation)
+#' @inheritParams fit_p_curve
+#' @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
+#' @returns Data frame with rows for samples and columns for parameter estimates
+#' @export
+fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
+                            want_optim_hessian = FALSE,
+                            start_parms = pcm_env$optim_starting_parms,
+                            sig_cutoff_p = 0.05,
+                            lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+                            upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
+  n_samples <- nrow(mat_of_ps)
+  if (tails == 2) {
+    n_parms <- 7
+  } else {
+    n_parms <- 5
+  }
+  estimates <- matrix(NA, nrow = n_samples, ncol = n_parms)
+  for (isample in 1:n_samples) {
+    one_fit <- fit_p_curve(mat_of_ps[isample,], alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                           want_optim_hessian = want_optim_hessian,
+                           start_parms = start_parms,
+                           sig_cutoff_p = sig_cutoff_p,
+                           lower = lower,
+                           upper = upper)
+    estimates[isample,] <- fit_to_parms_vec(one_fit, want_names = FALSE)
+  } # for isample
+  estimates_df <- as.data.frame(estimates)
+  colnames(estimates_df) <- estimate_names(tails)
+  return(estimates_df)
 }

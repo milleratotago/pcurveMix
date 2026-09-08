@@ -13,7 +13,8 @@ make_bootstrap_summary_list(
 \arguments{
 \item{boot_df}{Output data frame produced by bootstrap() function}
 
-\item{mle_estimates_tbl}{Data frame produced by fit_to_estimates_tbl()}
+\item{mle_estimates_tbl}{Data frame produced by fit_to_estimates_tbl() with
+original MLE estimates used as parameter values for parametric bootstrapping}
 
 \item{boot_ci_limits}{A vector with the two limiting proportions
 (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975))}

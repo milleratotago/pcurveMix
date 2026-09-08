@@ -5,8 +5,8 @@
 #  except via references like pcurveMix:::CI_LOWER_BOUND_LABEL
 CI_LOWER_BOUND_LABEL <- "lwr"
 CI_UPPER_BOUND_LABEL <- "upr"
-FOLDED_NORMAL_MEAN_LABEL <- "folded_normal_mu"
-FOLDED_NORMAL_SD_LABEL <- "folded_normal_sigma"
+FOLDED_NORMAL_MU_LABEL <- "folded_normal_mu"
+FOLDED_NORMAL_SIGMA_LABEL <- "folded_normal_sigma"
 LIKELIHOOD_LABEL <- "log likelihood"
 
 # Define an environment to hold settings that
@@ -22,7 +22,6 @@ initialize_globals <- function() {
   pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
   pcm_env$optim_control <- list(maxit = 1000)  # Use other optim defaults
   pcm_env$small_p_bin_cutoff <- NULL
-  pcm_env$fit_constrained <- FALSE
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
   pcm_env$optim_starting_parms <- list(mu = 2, sigma = 2, pi = 0.5)
@@ -63,10 +62,6 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #' @param small_p_bin_cutoff The cutoff point for computing likelihoods with
 #'  censoring (default = NULL, in which case likelihoods are computed without
 #'  censoring)
-#' @param fit_constrained Boolean determining whether optim() is run using
-#'  parameters constrained with limits (e.g., pi = 0-1) or is run with
-#'  unconstrained -inf/+inf real parameters that are artificially transformed
-#'  into the desired limits (default = FALSE, recommended)
 #' @param MLSEh Small +/- increment to parameter values used in computing
 #'  the Fisher information matrix (default = 1e-7)
 #' @param small_rcond The cutoff reciprocal condition number for deciding that
@@ -80,7 +75,8 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #'  of the values as indicated.
 #' @export
 set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
-                        small_p_bin_cutoff = NA, fit_constrained = NA, MLSEh = NA, small_rcond = NA,
+                        small_p_bin_cutoff = NA,
+                        MLSEh = NA, small_rcond = NA,
                         optim_starting_parms = NA, profileCI_args = NA,
                         reset_to_defaults = FALSE) {
   if (reset_to_defaults) initialize_globals()
@@ -89,7 +85,6 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
   if (is.null(optim_control) || !is.na(optim_control)) pcm_env$optim_control <- optim_control
   if (is.null(small_p_bin_cutoff) || !is.na(small_p_bin_cutoff)) pcm_env$small_p_bin_cutoff <- small_p_bin_cutoff
-  if (!is.na(fit_constrained)) pcm_env$fit_constrained <- fit_constrained
   if (!is.na(MLSEh)) pcm_env$MLSEh <- MLSEh
   if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
@@ -97,7 +92,6 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
   l <- list(edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
             p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
             small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
-            fit_constrained = pcm_env$fit_constrained,
             MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond,
             optim_starting_parms = pcm_env$optim_starting_parms,
             profileCI_args = pcm_env$profileCI_args)
