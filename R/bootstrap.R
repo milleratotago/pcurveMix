@@ -22,59 +22,62 @@ bootstrap <- function(n, fit, n_boot_samples,
   }
   boot <- matrix(NA_real_, nrow = n_boot_samples, ncol = length(cols_to_boot))
   colnames(boot) <- cols_to_boot
+  ps_mat <- generate_parametric_subsamples(n_boot_samples, n, fit$mu, fit$sigma,
+                                           pi = fit$pi, alpha = alpha, tails = tails,
+                                           cond_method = cond_method, tol = tol)
+  boot <- fits_for_matrix(ps_mat, alpha = alpha, tails = tails, alpha_sig = alpha_sig, want_optim_hessian = FALSE)
 
-  # Nest function for one sample that is used with console progress bar,
-  # shiny progress bar, or no progress bar
-  one_boot_sample <- function() {
-    rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails,
-                      cond_method = cond_method, tol = tol)
-    # print("rand_ps =")
-    # print(rand_ps[1:4])
-    rand_ps[rand_ps == 0] <- pcm_env$edge_p
-    fit_list <- fit_p_curve(rand_ps, alpha = alpha, tails = tails, want_optim_hessian = FALSE)
-    pi <- fit_list$pi
-    mu <- fit_list$mu
-    sigma <- fit_list$sigma
-    if (use_fn) {
-      folded_normal_mu <- mean_folded_normal(mu, sigma)
-      folded_normal_sigma <- sd_folded_normal(mu, sigma)
-      n_cols_produced <- 6
-    } else {
-      n_cols_produced <- 4
-    }
-    if (fit_list$converged) {
-      vec <- c(pi, mu, sigma,
-               cdf(alpha_sig, mu = mu, sigma = sigma, pi = 1, alpha = 1, tails = tails) )   # power estimated from current mu/sigma/pi
-      if (use_fn) {
-        vec <- c(vec, folded_normal_mu, folded_normal_sigma)
-      }
-    } else {  # not converged
-      vec <- rep(NA,n_cols_produced)
-    }
-    return(vec)
-  } # nested function one_boot_sample
+  # # Nest function for one sample that is used with console progress bar,
+  # # shiny progress bar, or no progress bar
+  # one_boot_sample <- function() {
+  #   # rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails,
+  #   #                   cond_method = cond_method, tol = tol)
+  #   rand_ps <- ps_mat[b,]
+  #   rand_ps[rand_ps == 0] <- pcm_env$edge_p
+  #   fit_list <- fit_p_curve(rand_ps, alpha = alpha, tails = tails, want_optim_hessian = FALSE)
+  #   pi <- fit_list$pi
+  #   mu <- fit_list$mu
+  #   sigma <- fit_list$sigma
+  #   if (use_fn) {
+  #     folded_normal_mu <- mean_folded_normal(mu, sigma)
+  #     folded_normal_sigma <- sd_folded_normal(mu, sigma)
+  #     n_cols_produced <- 6
+  #   } else {
+  #     n_cols_produced <- 4
+  #   }
+  #   if (fit_list$converged) {
+  #     vec <- c(pi, mu, sigma,
+  #              cdf(alpha_sig, mu = mu, sigma = sigma, pi = 1, alpha = 1, tails = tails) )   # power estimated from current mu/sigma/pi
+  #     if (use_fn) {
+  #       vec <- c(vec, folded_normal_mu, folded_normal_sigma)
+  #     }
+  #   } else {  # not converged
+  #     vec <- rep(NA,n_cols_produced)
+  #   }
+  #   return(vec)
+  # } # nested function one_boot_sample
 
-  if (show_progress_bar) {
-    if (pcm_env$shiny_running) {
-      shiny::withProgress(message = 'Bootstrapping in progress', value = 0, {
-        for (b in seq_len(n_boot_samples)) {
-          boot[b,] <- one_boot_sample()
-          shiny::incProgress(1/n_boot_samples)
-        }
-      })
-    } else {
-      pb <- utils::txtProgressBar(min = 0, max = n_boot_samples, style = 3)
-      for (b in seq_len(n_boot_samples)) {
-        boot[b,] <- one_boot_sample()
-        utils::setTxtProgressBar(pb, b)
-      }
-      close(pb)
-    }
-  } else {    # No progress bar
-    for (b in seq_len(n_boot_samples)) {
-      boot[b,] <- one_boot_sample()
-    }
-  } # if show_progress bar
+  # if (show_progress_bar) {
+  #   if (pcm_env$shiny_running) {
+  #     shiny::withProgress(message = 'Bootstrapping in progress', value = 0, {
+  #       for (b in seq_len(n_boot_samples)) {
+  #         boot[b,] <- one_boot_sample()
+  #         shiny::incProgress(1/n_boot_samples)
+  #       }
+  #     })
+  #   } else {
+  #     pb <- utils::txtProgressBar(min = 0, max = n_boot_samples, style = 3)
+  #     for (b in seq_len(n_boot_samples)) {
+  #       boot[b,] <- one_boot_sample()
+  #       utils::setTxtProgressBar(pb, b)
+  #     }
+  #     close(pb)
+  #   }
+  # } else {    # No progress bar
+  #   for (b in seq_len(n_boot_samples)) {
+  #     boot[b,] <- one_boot_sample()
+  #   }
+  # } # if show_progress bar
   boot_df <- as.data.frame(boot)
   return(boot_df)
 }

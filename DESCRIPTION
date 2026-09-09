@@ -27,6 +27,7 @@ Imports:
     EnvStats,
     pracma,
     profileCI,
+    progressr,
     rlang,
     stats
 Suggests: 

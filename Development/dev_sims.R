@@ -1,6 +1,29 @@
 # dev_sims.R
 # development of simulation routines
 
+# 2026-09-10 fits_for_matrix with progress bar
+
+library(progressr)
+
+### PARAMETRIC
+n_subsamples <- 100
+n_per_subsample <- 200
+mu <- 2
+sigma <- 1
+pi <- 0.5
+
+parametric_ps <- generate_parametric_subsamples(n_subsamples, n_per_subsample, mu, sigma, pi = pi, alpha = 1)
+# ps <- parametric_ps[1,]
+# hist(ps)
+# fit_list <- fit_p_curve(ps, alpha = alpha)
+# print(fit_to_parms_vec(fit_list), want_names = TRUE)
+# hist(as.vector(parametric_ps))
+parametric_fits_df <- fits_for_matrix(parametric_ps)
+
+stop("stopped as requested")
+
+
+# ===
 # ps <- pcurveMix::random(n = 200, mu = 3, sigma = 1, pi = 0.5, alpha = alpha)
 OSC <- read.csv("/R/Projects/pcurve_repo/ProfileCI/OSC_data.csv")
 # alpha <- 0.05   # for ps_orig

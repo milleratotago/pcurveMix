@@ -71,11 +71,6 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @param start_parms Either a list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
 #'  and the function tries all combinations (defaults to optim_starting_parms).
-#'  NEWJEFF OBSOLETE start_parms$pi values of NA are replaced with the proportion of to-be-fitted
-#'  p values that are significant (i.e., <= sig_cutoff_p)
-#' @param sig_cutoff_p Significance cutoff used to determine the proportion of
-#'  significant to-be-fitted p values for use in adjusting starting value of pi
-#'  (default = 0.05)
 #' @param lower List of lower bounds for the optim search
 #'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 #' @param upper List of upper bounds for the optim search
@@ -86,13 +81,8 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
                         start_parms = pcm_env$optim_starting_parms,
-                        sig_cutoff_p = 0.05,
                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
-  if (any(is.na(start_parms$pi))) {  # NEWJEFF: No longer supported?
-    pi_est <- mean(p <= sig_cutoff_p)
-    start_parms$pi[is.na(start_parms$pi)] <- pi_est
-  }
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
     best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
@@ -336,16 +326,17 @@ fit_to_parms_vec <- function(fit, want_names = TRUE) {
 }
 
 # NEWJEFF: The following function needs some kind of progress-bar option.
-# NEWJEFF: alpha_sig and sig_cutoff_p are redundant???
 #' Fit p curve separately for each row of a matrix of p values (for simulation)
 #' @inheritParams fit_p_curve
 #' @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
+#' @param n_progress_bar_steps Number of times to update progress bar within
+#'  the total set (default = 20)
 #' @returns Data frame with rows for samples and columns for parameter estimates
 #' @export
 fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                             want_optim_hessian = FALSE,
                             start_parms = pcm_env$optim_starting_parms,
-                            sig_cutoff_p = 0.05,
+                            n_progress_bar_steps = 20,
                             lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
                             upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   n_samples <- nrow(mat_of_ps)
@@ -355,14 +346,21 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
     n_parms <- 5
   }
   estimates <- matrix(NA, nrow = n_samples, ncol = n_parms)
+  progressr::handlers(global = TRUE)  # NEWJEFF: Not sure where this should go
+  p <- progressr::progressor(steps = n_samples)
+  step_size <- round(n_samples / n_progress_bar_steps)
   for (isample in 1:n_samples) {
     one_fit <- fit_p_curve(mat_of_ps[isample,], alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                            want_optim_hessian = want_optim_hessian,
                            start_parms = start_parms,
-                           sig_cutoff_p = sig_cutoff_p,
                            lower = lower,
                            upper = upper)
     estimates[isample,] <- fit_to_parms_vec(one_fit, want_names = FALSE)
+    if (isample %% step_size == 0 || isample == n_samples) {
+      # Calculate how many items were completed since the last update
+      completed <- if (isample %% step_size == 0) step_size else (isample %% step_size)
+      p(sprintf("Processing sample %d", isample), amount = completed)
+    }
   } # for isample
   estimates_df <- as.data.frame(estimates)
   colnames(estimates_df) <- estimate_names(tails)

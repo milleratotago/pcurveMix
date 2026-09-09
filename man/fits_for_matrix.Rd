@@ -11,7 +11,7 @@ fits_for_matrix(
   alpha_sig = 0.05,
   want_optim_hessian = FALSE,
   start_parms = pcm_env$optim_starting_parms,
-  sig_cutoff_p = 0.05,
+  n_progress_bar_steps = 20,
   lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
   upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06)
 )
@@ -32,13 +32,10 @@ hessian is not used)}
 
 \item{start_parms}{Either a list of starting parameter values for the optim search,
 or else a data frame where each row is a combination of starting parameter values
-and the function tries all combinations (defaults to optim_starting_parms).
-NEWJEFF OBSOLETE start_parms$pi values of NA are replaced with the proportion of to-be-fitted
-p values that are significant (i.e., <= sig_cutoff_p)}
+and the function tries all combinations (defaults to optim_starting_parms).}
 
-\item{sig_cutoff_p}{Significance cutoff used to determine the proportion of
-significant to-be-fitted p values for use in adjusting starting value of pi
-(default = 0.05)}
+\item{n_progress_bar_steps}{Number of times to update progress bar within
+the total set (default = 20)}
 
 \item{lower}{List of lower bounds for the optim search
 (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}

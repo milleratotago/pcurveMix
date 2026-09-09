@@ -1,11 +1,10 @@
 
 # Packages required for shiny are all listed under "suggests"
-# in the DESCRIPTION file
+# in the DESCRIPTION file. When the shiny app starts, it checks
+# to make sure these are all present and tells user to install
+# them if they are not.
 
-# if (!require(shiny)) install.packages('shiny')
-# if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
-# if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
-# if (!require(bslib)) install.packages('bslib')  # layout_columns
+# Header ====
 
 # Helper function for ui
 inline_numericInput=function(ni){
@@ -14,10 +13,7 @@ inline_numericInput=function(ni){
 
 button_width <- "250px"
 
-
-#=========================================================================
-# ui
-#=========================================================================
+# ui as tagList ====
 ui <- tagList(
 
   shinyjs::useShinyjs(),
@@ -77,12 +73,17 @@ ui <- tagList(
              )
       )
     ),
+
     sidebarLayout(
 
-      # Setup panel:
+# ... -------------------------------------------
+# Setup sidebarPanel ====
+
       sidebarPanel(width = 4, id = "pcm_sidebar",
                    h2("Setup for Fitting"),
                    h4(),
+
+                   ## Input file ====
                    checkboxInput("use_demo", label = strong("Use demo file of p values"), FALSE),
                    conditionalPanel(
                      condition = "input.use_demo == false",
@@ -113,6 +114,25 @@ ui <- tagList(
                        hr(style = "border-top: 2px solid #808080;"),
                    ), # div(class = "custom-text-input",
 
+                   ## ...-------------------------------------------
+                   ## Jackknifing ====
+
+                   h4(),
+                   checkboxInput("jackknifing", label = strong("Compute jackknife bias correction & confidence interval"), FALSE),
+                   conditionalPanel(
+                     condition = "input.jackknifing == true",
+                     fluidRow(
+                       column(6, numericInput("jack_confidence_level",
+                                              "% confidence (1-100)",
+                                              value = "95", min = 10, max = 100, step = 1)
+                       )
+                     )
+                   ),
+                   hr(style = "border-top: 2px solid #808080;"),
+
+## ...-------------------------------------------
+## Parametric bootstrapping ====
+
                    h4(), # I tried very (!!!) hard to indent the numericInput but never succeeded.
                    # Gemini suggested using bslib & layout_columns but these did not work
                    checkboxInput("parametric_bootstrapping", label = strong("Compute parametric bootstrap confidence intervals"), FALSE),
@@ -131,6 +151,28 @@ ui <- tagList(
                    ),
                    hr(style = "border-top: 2px solid #808080;"),
 
+## ...-------------------------------------------
+## Nonparametric bootstrapping ====
+
+h4(),
+checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), FALSE),
+conditionalPanel(
+  condition = "input.nonparametric_bootstrapping == true",
+  fluidRow(
+    column(6, numericInput("np_boot_confidence_level",
+                           "% confidence (1-100)",
+                           value = "95", min = 10, max = 100, step = 1)
+    ),
+    column(6, numericInput("np_n_boot_samples",
+                           "N bootstrap samples (recommended min 2000 for real analyses):",
+                           value = "100", min = 0, step = 100)
+    )
+  )
+),
+hr(style = "border-top: 2px solid #808080;"),
+
+## ...-------------------------------------------
+## ProfileCI ====
                    h4(),
                    checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
                    conditionalPanel(
@@ -143,6 +185,9 @@ ui <- tagList(
                      ) # fluidrow
                    ), # profiles checked
                    hr(style = "border-top: 2px solid #808080;"),
+
+## ...-------------------------------------------
+## Adjust starting values ====
 
                    h4(),
                    checkboxInput("adjust_starting_values", label = strong("Change default starting parameter values for optim() search:"), FALSE),
@@ -161,6 +206,10 @@ ui <- tagList(
                    # column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
                    # ),
                    hr(),
+
+## -------------------------------------------
+## Action buttons ====
+
                    fluidRow(
                      column(12, actionButton("btnFit","Fit model & compute requested CIs"))
                    ),
@@ -182,7 +231,9 @@ ui <- tagList(
                    )
       ), # end sidebar panel
 
-      # Results panel:
+# ... -------------------------------------------
+# Results mainPanel ====
+
       mainPanel(width = 8,
                 # h2("Model fit:"),
                 fluidRow(
@@ -280,3 +331,5 @@ ui <- tagList(
 
 ) # taglist
 
+
+# ... ====

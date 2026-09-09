@@ -75,6 +75,10 @@ print(knitr::kable(params$boot_tbl))
 ## Profile analysis
 ```
 
+```{r profile_tbl, echo=FALSE, eval = params$profile_analysis > 0}
+print(knitr::kable(params$profile_tbl))
+```
+
 ```{r profile_plots, echo=FALSE, eval = params$profile_analysis > 0}
 plot(params$profile_mu_plot)
 plot(params$profile_sigma_plot)

@@ -100,14 +100,25 @@ server <- function(input, output) {
         notif_id <- "bootstrap_notif_id"
         # NewJeff: It is possible to update the notification by showing one
         # with the same id but a different message reflecting progress.
-        showNotification(
-          "Bootstrapping in progress ...",
-          id = notif_id,
-          duration = NULL,
-          closeButton = TRUE,
-          type = "message"
+
+        ### COMMENTED SECTION FOR PROGRESS BAR TESTING
+        # showNotification(
+        #   "Bootstrapping in progress ...",
+        #   id = notif_id,
+        #   duration = NULL,
+        #   closeButton = TRUE,
+        #   type = "message"
+        # )
+        # boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples) # , alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+        ### END COMMENTED SECTION FOR PROGRESS BAR TESTING
+        withProgressShiny(
+          message = "Parametric bootstrapping in progress...",
+          detail = "Starting...",
+          expr = {
+            boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples) # , alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+          }
         )
-        boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples) # , alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+
         boot_tail_prob <- (1 - v$boot_ci_confidence_level)/2
         boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl,
                                                  boot_ci_limits = c(boot_tail_prob, 1-boot_tail_prob) )

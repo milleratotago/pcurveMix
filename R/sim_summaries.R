@@ -1,6 +1,6 @@
 # sim_summaries.R
 # Functions to analyze results across many sets of parameter estimates
-# produced by fits_for_matrix()
+# produced by fitting.R/fits_for_matrix()
 
 #' Compute a long-format data frame with summaries of each combination of
 #' summary function & estimated value.
@@ -125,15 +125,4 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
   return(jack_df)
 }
 
-# # OBSOLETE JEFF: To-be-removed function to augment fit_list with parameter names used
-# #  by sim_summaries routines.
-# # @param fit_list List produced by fit_p_curves
-# # @returns List with additional elements for renamed parameters
-# # @export
-# parm_naming_cluge <- function(fit_list) {
-#   # fit_list$power <- fit_list$power_hat
-#   # fit_list$folded_normal_mu <- fit_list$noncentrality_mean
-#   # fit_list$folded_normal_sigma <- fit_list$noncentrality_sd
-#   return(fit_list)
-# }
 

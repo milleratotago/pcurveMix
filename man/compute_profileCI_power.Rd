@@ -13,7 +13,7 @@ compute_profileCI_power(fit_list, level = 0.95)
 \item{level}{Confidence level for the CI (0-1, default = 0.95)}
 }
 \value{
-A list with: NEWJEFF
+A list with the following elements:
  bounds_matrix = matrix of CI bounds;
  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
  profile_fn_output = the output of the profileCI function from the profileCI package.
