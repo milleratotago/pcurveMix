@@ -1,9 +1,11 @@
 
+# Packages required for shiny are all listed under "suggests"
+# in the DESCRIPTION file
 
-if (!require(shiny)) install.packages('shiny')
-if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
-if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
-if (!require(bslib)) install.packages('bslib')  # layout_columns
+# if (!require(shiny)) install.packages('shiny')
+# if (!require(shinyjs)) install.packages('shinyjs')  # show & hide, for example.
+# if (!require(shinyFeedback)) install.packages('shinyFeedback')  # showNotification
+# if (!require(bslib)) install.packages('bslib')  # layout_columns
 
 # Helper function for ui
 inline_numericInput=function(ni){
@@ -129,20 +131,17 @@ ui <- tagList(
                    ),
                    hr(style = "border-top: 2px solid #808080;"),
 
+                   h4(),
+                   checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
                    conditionalPanel(
-                     h4(),
-                     condition = "input.tails == '2-tailed'",
-                     checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
-                     conditionalPanel(
-                       condition = "input.profile_ci == true",
-                       fluidRow(
-                         column(6, numericInput("profile_confidence_level",
-                                                "% confidence (1-100)",
-                                                value = "95", min = 10, max = 100, step = 1)
-                         )
-                       ) # fluidrow
-                     ) # inner profiles checked
-                   ), # conditionalPanel 2-tails
+                     condition = "input.profile_ci == true",
+                     fluidRow(
+                       column(6, numericInput("profile_confidence_level",
+                                              "% confidence (1-100)",
+                                              value = "95", min = 10, max = 100, step = 1)
+                       )
+                     ) # fluidrow
+                   ), # profiles checked
                    hr(style = "border-top: 2px solid #808080;"),
 
                    h4(),
@@ -165,10 +164,18 @@ ui <- tagList(
                    fluidRow(
                      column(12, actionButton("btnFit","Fit model & compute requested CIs"))
                    ),
+                   hr(),
                    h4(),
                    fluidRow(
-                     column(12, downloadButton("btnReport","Download results"))
+                     column(6, # User selection for the format
+                            radioButtons("rmd_format", "Select document download format:",
+                                         choices = c("HTML" = "html",
+                                                     "PDF" = "pdf",
+                                                     "Word (DOCX)" = "docx")),
+                     ),
+                     column(4, downloadButton("btnReport","Download results"))
                    ),
+                   hr(),
                    h4(),
                    fluidRow(
                      column(12, actionButton("btnquit","Quit"))

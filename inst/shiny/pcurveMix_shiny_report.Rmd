@@ -6,6 +6,7 @@ output:
     reference_docx: pcurveMix_style.docx
 params:
   p_filename: NA
+  tails : NA
   descriptor_tbl: NA
   estimates_tbl: NA
   pdf_plot: NA
@@ -79,7 +80,12 @@ plot(params$profile_mu_plot)
 plot(params$profile_sigma_plot)
 plot(params$profile_pi_plot)
 plot(params$profile_power_plot)
-plot(params$profile_folded_normal_mu_plot)
-plot(params$profile_folded_normal_sigma_plot)
+if (params$tails == 2) {
+  plot(params$profile_folded_normal_mu_plot)
+  plot(params$profile_folded_normal_sigma_plot)
+}
 ```
 
+## Additional files
+
+In addition to this document, the downloaded `Zip` file also contains `csv` files with the x/y coordinates for the plots shown in this document so that you can conveniently remake the plots.

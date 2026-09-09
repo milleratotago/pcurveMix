@@ -13,10 +13,31 @@ run_shiny_app <- function() {
   #   # Explicitly bind the package environment to the server function
   #   environment(server) <- asNamespace("pcurveMix")
   #
+  check_packages_required_for_shiny()
   appDir <- system.file("shiny", package = "pcurveMix")
   pcm_env$shiny_running <- TRUE
   shiny::runApp(appDir, display.mode = "normal")
   pcm_env$shiny_running <- FALSE
+}
+
+# Function to check whether all packages needed for shiny are available.
+check_packages_required_for_shiny <- function() {
+  # 1. Define all packages required exclusively for the Shiny app
+  shiny_deps <- c("bslib", "ggplot2", "knitr", "rmarkdown", "shiny", "shinyjs",
+                  "shinyFeedback", "testthat (>= 3.0.0)", "zip")
+  # 2. Check which packages are missing
+  missing_deps <- shiny_deps[!sapply(shiny_deps, requireNamespace, quietly = TRUE)]
+
+  # 3. Fail gracefully with an explicit installation message
+  if (length(missing_deps) > 0) {
+    stop(
+      "The following packages are required to run the Shiny app but are not installed:\n",
+      paste("-", missing_deps, collapse = "\n"),
+      "\n\nPlease install them using: install.packages(c(",
+      paste0("'", missing_deps, "'", collapse = ", "), "))",
+      call. = FALSE
+    )
+  }
 }
 
 # Function to compute a case identifier for use in switch statements.
@@ -66,7 +87,10 @@ check_ps <- function(ps, alpha_cutoff) {
   n_equal_zero <- sum(equal_zero)
   n_too_large <- sum(too_large)
   all_in_bounds <- (n_too_small + n_equal_zero + n_too_large == 0)
+  # print("NEWJEFF pcm_env check")
+  # print(pcm_env)
   if (n_equal_zero > 0) ps[equal_zero] <- pcm_env$edge_p
+  # print("NEWJEFF ready to make list")
   l <- list(all_in_bounds = all_in_bounds,
             alpha_cutoff = alpha_cutoff,
             n_too_small = n_too_small,
