@@ -108,12 +108,12 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
   parms_to_summarize <- unique(jackknife_summaries$parm)
   jack_df <- data.frame()
   for (parm in parms_to_summarize) {
-    print(parm)
+    # print(parm)
     parm_est_orig <- ests_orig[[parm]]
-    print(parm_est_orig)
+    # print(parm_est_orig)
     parm_jack_mean <- jackknife_summaries$value[jackknife_summaries$parm == parm
                                                 & jackknife_summaries$summary == "mean"]
-    print(parm_jack_mean)
+    # print(parm_jack_mean)
     parm_jack_sd <- jackknife_summaries$value[jackknife_summaries$parm == parm
                                               & jackknife_summaries$summary == "sd"]
     jack_1_parm <- jackknife_comps1(parm_est_orig, parm_jack_mean, parm_jack_sd,
@@ -125,29 +125,15 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
   return(jack_df)
 }
 
-check_jack_comps <- function() {  # NEWJEFF: Move to tests.
-  ests_orig <- list(sample_var = 11.6)
-  jacksample_ests <- c(9.5, 13.25, 14.1875, 14.1875, 3.25)
-  jackknife_summaries <- data.frame(parm = c("sample_var", "sample_var"),
-                                    summary = c("mean", "sd"),
-                                    value = c(10.875, sd(jacksample_ests)))
-  full_sample_n <- 5
-  answers <- jackknife_computations(ests_orig, jackknife_summaries, full_sample_n,
-                                    t_or_z = 1.96, center_ci_at_est_orig = FALSE)
-  print(answers)
-  # Correct answers: bias = -2.9, estimate_bc = 14.5 jack_se = 8.372201,
-  #  bounds = -1.909514, 30.909514
-}
-
-#' To-be-removed function to augment fit_list with parameter names used
-#'  by sim_summaries routines.
-#' @param fit_list List produced by fit_p_curves
-#' @returns List with additional elements for renamed parameters
-#' @export
-parm_naming_cluge <- function(fit_list) { # NEWJEFF: Super-ugly
-  fit_list$power <- fit_list$power_hat
-  fit_list$folded_normal_mu <- fit_list$noncentrality_mean
-  fit_list$folded_normal_sigma <- fit_list$noncentrality_sd
-  return(fit_list)
-}
+# # OBSOLETE JEFF: To-be-removed function to augment fit_list with parameter names used
+# #  by sim_summaries routines.
+# # @param fit_list List produced by fit_p_curves
+# # @returns List with additional elements for renamed parameters
+# # @export
+# parm_naming_cluge <- function(fit_list) {
+#   # fit_list$power <- fit_list$power_hat
+#   # fit_list$folded_normal_mu <- fit_list$noncentrality_mean
+#   # fit_list$folded_normal_sigma <- fit_list$noncentrality_sd
+#   return(fit_list)
+# }
 

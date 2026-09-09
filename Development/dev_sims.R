@@ -17,7 +17,7 @@ osc_orig_jack_ests_df <- fits_for_matrix(osc_orig_jack_ps)
 osc_orig_jack_summaries <- get_parm_summaries(osc_orig_jack_ests_df)
 # osc_orig_jack_quantiles <- get_parm_quantiles(osc_orig_jack_ests_df)
 full_sample_n <- nrow(osc_orig_jack_ests_df)
-fit_list <- parm_naming_cluge(fit_list)
+# fit_list <- parm_naming_cluge(fit_list)
 osc_orig_jack_final_df <- jackknife_computations(fit_list, osc_orig_jack_summaries, full_sample_n)
 
 stop("stopped as requested")

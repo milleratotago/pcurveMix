@@ -249,9 +249,6 @@ ui <- tagList(
                   fluidRow(
                     column(12, tableOutput("profileCI_tbl"))
                   ),
-                  # fluidRow(
-                  #   column(12, h3(textOutput("profile_mu_title")))  # NEWJEFF: Unused
-                  # ),
                   fluidRow(
                     column(12, plotOutput("profile_mu_plot"))
                   ),

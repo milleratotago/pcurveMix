@@ -87,10 +87,7 @@ check_ps <- function(ps, alpha_cutoff) {
   n_equal_zero <- sum(equal_zero)
   n_too_large <- sum(too_large)
   all_in_bounds <- (n_too_small + n_equal_zero + n_too_large == 0)
-  # print("NEWJEFF pcm_env check")
-  # print(pcm_env)
   if (n_equal_zero > 0) ps[equal_zero] <- pcm_env$edge_p
-  # print("NEWJEFF ready to make list")
   l <- list(all_in_bounds = all_in_bounds,
             alpha_cutoff = alpha_cutoff,
             n_too_small = n_too_small,

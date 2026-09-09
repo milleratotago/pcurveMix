@@ -26,8 +26,7 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   if (is.null(small_p_bin_cutoff)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
-    # print("NEWJEFF no censoring pdfs:")
-    # print(pdfs)
+    # print(pdfs) # NEWJEFF
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
@@ -56,11 +55,6 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
   mu <- parms$mu
   sigma <- parms$sigma
   this_nll <- pcurveMix::nll(p, mu, sigma, pi, alpha = alpha, tails = tails)
-  # print( paste("mu =",mu,"& sigma = ",sigma,"& pi =",pi,"gives nll =",this_nll)) # NEWJEFF
-  # readline(prompt="Press [enter] to continue")
-  # if (this_nll < 0.01) {
-  #   stop("error") # NEWJEFF
-  # }
   return(this_nll)
 }
 
@@ -121,11 +115,11 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
     best_fit$start_parm_set <- start_parms
   }
   if (tails == 1) {
-    best_fit$noncentrality_mean <- best_fit$mu
-    best_fit$noncentrality_sd <- best_fit$sigma
+    best_fit[[FOLDED_NORMAL_MU_LABEL]] <- NA
+    best_fit[[FOLDED_NORMAL_SIGMA_LABEL]] <- NA
   } else {
-    best_fit$noncentrality_mean <- mean_folded_normal(best_fit$mu, best_fit$sigma)
-    best_fit$noncentrality_sd <- sd_folded_normal(best_fit$mu, best_fit$sigma)
+    best_fit[[FOLDED_NORMAL_MU_LABEL]] <- mean_folded_normal(best_fit$mu, best_fit$sigma)
+    best_fit[[FOLDED_NORMAL_SIGMA_LABEL]] <- sd_folded_normal(best_fit$mu, best_fit$sigma)
   }
   return(best_fit)
 }
@@ -155,7 +149,7 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   if (!length(p)) stop("No valid p-values in (0,1).")
   fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
-  fit$power_hat <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
+  fit$power <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
   cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
   fit$ks <- ks_with_cdf(p, cdf_fit)
   fit$n <- length(p)
@@ -219,7 +213,7 @@ ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
 fit_to_estimates_tbl <- function(fit) {
   mle_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
-    estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power_hat),
+    estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power),
     Wald_SE   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
     Wald_lwr  = c(if (!is.null(fit$ci95)) fit$ci95[, "lwr95"] else c(NA,NA,NA), NA),
     Wald_upr  = c(if (!is.null(fit$ci95)) fit$ci95[, "upr95"] else c(NA,NA,NA), NA),
@@ -305,8 +299,8 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("log likelihood",as.character(round(fit$logLik,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s statistic",as.character(round(fit$ks$statistic,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s p value",as.character(round(fit$ks$p.value,5))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("noncentrality mean",as.character(round(fit$noncentrality_mean,3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("noncentrality sd",as.character(round(fit$noncentrality_sd,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_MU_LABEL,as.character(round(fit[[FOLDED_NORMAL_MU_LABEL]],3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_SIGMA_LABEL,as.character(round(fit[[FOLDED_NORMAL_SIGMA_LABEL]],3))))
   rownames(descriptor_tbl) <- NULL
   return(descriptor_tbl)
 }
@@ -334,7 +328,7 @@ estimate_names <- function(tails) {
 #' @export
 fit_to_parms_vec <- function(fit, want_names = TRUE) {
   # ORDER OF PARMS MUST MATCH IN fit_to_parms_vec() AND estimate_names()
-  parms <- c(fit$mu, fit$sigma, fit$pi, fit$power_hat)
+  parms <- c(fit$mu, fit$sigma, fit$pi, fit$power)
   if (fit$tails == 2) parms <- c(parms, mean_folded_normal(fit$mu, fit$sigma), sd_folded_normal(fit$mu, fit$sigma))
   parms <- c(parms, fit$converged)
   if (want_names) names(parms) <- estimate_names(fit$tails)

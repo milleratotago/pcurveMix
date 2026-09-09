@@ -12,21 +12,16 @@
 # returns list with elements se & ci
 real_to_nat_se_ci <- function(par_hat, H) {
 
-  # print(par_hat)  # NEWJEFF: Lots of commented-out prints to delete in this function
   names(par_hat) <- c("logit_pi", "log_mu", "log_sigma")
 
   # Natural-scale parameter estimates.
   mu_hat    <- exp(par_hat["log_mu"])
   sigma_hat <- exp(par_hat["log_sigma"])
   pi_hat    <- stats::plogis(par_hat["logit_pi"])
-  # print(pi_hat)
 
   # Apply numerical safety clipping to pi.
   pi_hat <- pmin(pmax(pi_hat, 1e-10), 1 - 1e-10)
 
-  # print("H")
-  # print(H)
-  #
   # Compute variance-covariance matrix on the transformed scale.
   # This may fail if the Hessian is singular or numerically unstable.
   vcov_par <- tryCatch(
@@ -34,9 +29,6 @@ real_to_nat_se_ci <- function(par_hat, H) {
     error = function(e) NULL
   )
 
-  # print("vcov_par")
-  # print(vcov_par)
-  #
   # Extract standard errors on the transformed scale.
   if (is.null(vcov_par) ||
       any(!is.finite(vcov_par)) ||
@@ -74,8 +66,6 @@ real_to_nat_se_ci <- function(par_hat, H) {
   se_pi <- pi_hat * (1 - pi_hat) * se_par["se_logit_pi"]
 
   se <- c(se_pi, se_mu, se_sigma)
-  # print("NEWJEFF 22")
-  # print(se)
 
   #------------------------------------------------------------
   # Confidence intervals on the transformed scale

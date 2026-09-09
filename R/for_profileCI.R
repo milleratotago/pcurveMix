@@ -59,7 +59,6 @@ extract_profile_plot_columns <- function(profileCI_output, param_number) {
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
 compute_profileCI <- function(fit_list, level = 0.95) {
-  print("Start compute_profileCI")  # NEWJEFF
   coefficients <- c(mu = 0, sigma = 0, pi = 0)
   profCI_model <- list(coefficients = coefficients)
   class(profCI_model) <- "profCI_model"
@@ -76,11 +75,9 @@ compute_profileCI <- function(fit_list, level = 0.95) {
   args1 <- c(args1, level = level)
   full_args <- c(args1, pcm_env$profileCI_args)  # append profileCI args in environment, default or set by user
 
-  print("**************** Call profileCI:")  # NEWJEFF
   profile <- do.call(profileCI::profileCI, full_args)
   # profile <- rlang::exec(profileCI::profileCI, !!!full_args)  # Splice and execute using the !!! operator
 
-  print("**************** passed do.call:")  # NEWJEFF
   # Create a labelled matrix with the bounds on the real scale
   bounds_matrix <- matrix(profile, nrow = nrow(profile), ncol = ncol(profile), dimnames = dimnames(profile))
   # Convert the real values to their natural scales:
@@ -96,7 +93,6 @@ compute_profileCI <- function(fit_list, level = 0.95) {
     if (!is_single_na(profile_curves$sigma)) profile_curves$sigma[,1] <- reals_to_sigmas(profile_curves$sigma[,1])
     if (!is_single_na(profile_curves$pi)) profile_curves$pi[,1] <- reals_to_pis(profile_curves$pi[,1])
   }
-  print("**************** LEAVING compute_profileCI:")  # NEWJEFF
   return( list(bounds_matrix = bounds_matrix, profile_curves = profile_curves, profile_fn_output = profile) )
 }
 
@@ -175,7 +171,7 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
 #' @inheritParams compute_profileCI
 #' @param target_folded_normal_mu Boolean where TRUE requests CI for folded normal mu
 #'  and FALSE requests CI for folded normal sigma.
-#' @returns A list with: NEWJEFF
+#' @returns A list with the following elements:
 #'  bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
@@ -582,7 +578,7 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
 #' Computations for profile-based confidence intervals of the derived
 #'  model parameter power.
 #' @inheritParams compute_profileCI
-#' @returns A list with: NEWJEFF
+#' @returns A list with the following elements:
 #'  bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.

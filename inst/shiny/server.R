@@ -181,7 +181,6 @@ server <- function(input, output) {
       closeButton = TRUE,
       type = "message"
     )
-    print(" ** PASSED v$profileCI_std <- pcurveMix::compute_profileCI") # NEWJEFF
     v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
     if (fit_list$tails == 2) {
       showNotification(
@@ -233,7 +232,6 @@ server <- function(input, output) {
       ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
     } # if tails == 2
     output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE)
-    print(" ** PASSED renderTable(ci_tbl") # NEWJEFF
 
     # ProfileCI plots
     # output$profile_mu_title <- renderText("profile for mu")
@@ -298,7 +296,6 @@ server <- function(input, output) {
              y = pcurveMix:::LIKELIHOOD_LABEL)
       output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
     } # if tails == 2
-    print(" ** LEAVING profile_manager") # NEWJEFF
   } # profile_manager
 
   # source("btn_gen_report.R")
@@ -358,7 +355,6 @@ server <- function(input, output) {
           write.csv(profile_pi, csv_profile_pi_outfile_name, row.names = FALSE)
 
           # NEWJEFF: I WANT POWER, FOLDED_MU, FOLDED_SIGMA in natural units
-          # NEWJEFF: No folded normal if 1-tailed
           csv_profile_power_outfile_name <- paste0(output_directory_name, "/",
                                                    "profile_power_", time_stamp, ".csv")
           temp_mat <- extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
@@ -428,12 +424,12 @@ server <- function(input, output) {
                           envir = new.env(parent = globalenv()))
 
         all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
-        if (input$profile_ci) {  # NEWJEFF: No folded normal if 1-tailed
+        if (input$profile_ci) {
           all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name,
                               csv_profile_mu_outfile_name, csv_profile_sigma_outfile_name,
                               csv_profile_pi_outfile_name, csv_profile_power_outfile_name,
                               rmd_outfile_name)
-          if (tails == 2) {
+          if (tails == 2) {  # folded normal only for 2-tailed
             all_file_paths <- c(all_file_paths, csv_profile_folded_normal_mu_outfile_name, csv_profile_folded_normal_sigma_outfile_name)
           }
         } else {
