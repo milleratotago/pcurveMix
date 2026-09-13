@@ -21,7 +21,7 @@ get_parm_summaries <- function(estimates, parms_to_summarize = "All",
                                summary_fns = list(mean = mean, median = stats::median, sd = stats::sd,
                                                   iqr = EnvStats::iqr, min = min, max = max),
                                summary_fn_names = NULL) {
-  if (parms_to_summarize == "All") {
+  if (length(parms_to_summarize) == 1 && parms_to_summarize == "All") {
     parms_to_summarize <- colnames(estimates)
     parms_to_summarize <- parms_to_summarize[parms_to_summarize != "converged"]
   }
@@ -58,7 +58,7 @@ get_parm_summaries <- function(estimates, parms_to_summarize = "All",
 #' @export
 get_parm_quantiles <- function(estimates, parms_to_summarize = "All",
                                quantiles = c(0.025, 0.975), type = 7) {
-  if (parms_to_summarize == "All") {
+  if (length(parms_to_summarize) == 1 && parms_to_summarize == "All") {
     parms_to_summarize <- colnames(estimates)
     parms_to_summarize <- parms_to_summarize[parms_to_summarize != "converged"]
   }
@@ -104,7 +104,7 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_sd, full_sample_n, t_or_z
 #'  bias, jack_se, lower_bound, and upper_bound
 #' @export
 jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n, t_or_z = 2,
-                                   center_ci_at_est_orig = TRUE) {
+                                   center_ci_at_est_orig = TRUE) { # NEWJEFF: Provide user control over center_ci
   parms_to_summarize <- unique(jackknife_summaries$parm)
   jack_df <- data.frame()
   for (parm in parms_to_summarize) {
@@ -125,4 +125,43 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
   return(jack_df)
 }
 
+#' Function to summarize a set of estimated parameter values across multiple
+#'  samples of p values (e.g., for bootstrap samples).
+#' @param ests_df Data frame with rows for samples and columns for the
+#'  parameters estimated from each sample.
+#' @param confidence_level Confidence level used to find confidence interval
+#'  quantiles. If <= 0, don't compute quantiles.
+#' @param confidence_quantiles A vector with the two limiting proportions
+#'  (lower, upper) for bootstrap confidence intervals (default = NA, in
+#'  whicn case these are determined symmetrically from the confidence level)
+#' @returns Data frame with row for parameters and columns for the mean,
+#'  standard error, and (if requested) lower/upper quantiles of the
+#'  parameter estimates across samples.
+#' @export
+summarize_estimates_mn_sd_quan <- function(ests_df,
+                                           confidence_level = 95,
+                                           confidence_quantiles = NA) {
+  # Determine confidence_quantiles if they were not specified:
+  if (identical(confidence_quantiles,NA) && confidence_level > 0) confidence_quantiles <-
+      symmetric_tail_quantiles_from_confidence(confidence_level)
+  # Remember summaries & quantiles are long-form data frames.
+  summaries <- get_parm_summaries(ests_df, summary_fns = c(mean = mean, sd = sd))
+  tbl <- summaries %>% tidyr::pivot_wider(names_from = summary, values_from = value)
+  if (!identical(confidence_quantiles,NA)) {
+    quantiles <- get_parm_quantiles(ests_df, quantiles = confidence_quantiles)
+    quantiles <- quantiles %>% tidyr::pivot_wider(names_from = quantile, values_from = value)
+    tbl <- cbind(tbl, quantiles[,-1]) # Omit parameter column of quantiles
+  }
+  return( as.data.frame(tbl) )
+}
+
+symmetric_tail_quantiles_from_confidence <- function(confidence_level = 95) {
+  tail_prob <- (1 - confidence_level/100) / 2
+  confidence_quantiles <- c(tail_prob, 1 - tail_prob)
+  return(confidence_quantiles)
+}
+
+compute_bias_corrected_estimates <- function(original_estimates, bootstrap_mean_estimates) {
+  return( 2*original_estimates - bootstrap_mean_estimates )
+}
 

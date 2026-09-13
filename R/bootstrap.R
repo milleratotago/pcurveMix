@@ -27,7 +27,7 @@ bootstrap <- function(n, fit, n_boot_samples,
                                            cond_method = cond_method, tol = tol)
   boot <- fits_for_matrix(ps_mat, alpha = alpha, tails = tails, alpha_sig = alpha_sig, want_optim_hessian = FALSE)
 
-  # # Nest function for one sample that is used with console progress bar,
+  # # Nest function for one sample that is used with console progress bar, OBSOLETE
   # # shiny progress bar, or no progress bar
   # one_boot_sample <- function() {
   #   # rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails,
@@ -82,7 +82,7 @@ bootstrap <- function(n, fit, n_boot_samples,
   return(boot_df)
 }
 
-#' Function to summarize the data frame produced by parametric bootstrapping of fitted model.
+#' Function to summarize the data frame produced by parametric or nonparametric bootstrapping.
 #' @param boot_df Output data frame produced by bootstrap() function
 #' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
 #'  original MLE estimates used as parameter values for parametric bootstrapping
@@ -147,5 +147,5 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
   boot_tbl$BC_est <- 2*original_estimates - boot_tbl$Boot_Mean
 
   return( list(pct_converged = pct_converged, boot_tbl = boot_tbl) )
-} # bootstrap_summary.
+} # bootstrap_summary
 

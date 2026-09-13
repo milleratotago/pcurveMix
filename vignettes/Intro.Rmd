@@ -228,7 +228,7 @@ Typically, users would have their own datasets of $p$ values to which the model 
 
 ### Fit the model to the example dataset
 
-Fit the mixture model to these $p$'s with the default vallues of `alpha` and `tails`.
+Fit the mixture model to these $p$'s with the default values of `alpha` and `tails`.
 The `fit_p_curve` function has a number of other optional arguments (for details, see the `fit_p_curve_details` vignette).
 
 ```{r ref.label = "fit_model", eval = FALSE, echo = TRUE}

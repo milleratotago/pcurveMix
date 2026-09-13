@@ -19,6 +19,7 @@ Description: Package for computations and fitting with the p-curve mixture
     model's parameters 'pi', 'mu', and 'sigma'. Confidence intervals for
     the parameter values can be obtained by parametric bootstrapping or
     likelihood profiling.
+Language: en
 License: GPL (>= 3) + file LICENSE
 Depends: 
     R (>= 4.1.0)

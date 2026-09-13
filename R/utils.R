@@ -14,16 +14,47 @@ run_shiny_app <- function() {
   #   environment(server) <- asNamespace("pcurveMix")
   #
   check_packages_required_for_shiny()
+  l <- capture_progressr_state()
   appDir <- system.file("shiny", package = "pcurveMix")
   pcm_env$shiny_running <- TRUE
   shiny::runApp(appDir, display.mode = "normal")
   pcm_env$shiny_running <- FALSE
+  # Restore progressr stuff safely when the app closes
+  on.exit({
+    # ONLY restore old handlers if they actually existed
+    if (!is.null(l$old_handlers) && length(l$old_handlers) > 0) {
+      progressr::handlers(l$old_handlers)
+    } else {
+      # If it was empty/NULL, clear the package's active handlers
+      progressr::handlers("txtprogressbar")
+    }
+    # Restore the global toggle state
+    progressr::handlers(global = l$old_global_state)
+  }, add = TRUE)
+
 }
+
+# Capture progressr state so that we can return to it
+# when shiny quits
+capture_progressr_state <- function() {
+  old_handlers <- progressr::handlers()
+  old_global_state <- progressr::handlers(global = NA) # Returns TRUE/FALSE/NA
+
+  # 2. Set up the environment safely for your app execution
+  if (is.na(old_global_state) || !old_global_state) {
+    progressr::handlers(global = TRUE)
+  }
+
+  # Ensure it defaults to a clean text progress bar for their console
+  progressr::handlers("txtprogressbar")  # progressr overrides this in withProgressShiny blocks
+
+  return( list(old_handlers = old_handlers, old_global_state = old_global_state) )
+} # capture_progressr_state
 
 # Function to check whether all packages needed for shiny are available.
 check_packages_required_for_shiny <- function() {
   # 1. Define all packages required exclusively for the Shiny app
-  shiny_deps <- c("bslib", "ggplot2", "knitr", "rmarkdown", "shiny", "shinyjs",
+  shiny_deps <- c("bslib", "ggplot2", "knitr", "progressr", "rmarkdown", "shiny", "shinyjs",
                   "shinyFeedback", "testthat (>= 3.0.0)", "zip")
   # 2. Check which packages are missing
   missing_deps <- shiny_deps[!sapply(shiny_deps, requireNamespace, quietly = TRUE)]

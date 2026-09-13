@@ -1,9 +1,17 @@
 # dev_sims.R
 # development of simulation routines
 
-# 2026-09-10 fits_for_matrix with progress bar
-
 library(progressr)
+
+# 2026-09-10 looking for jackknifing bug
+
+OSC <- read.csv("/R/Projects/pcurveMix_pkg/pkg/Development/OSC_data_rep.csv")
+alpha <- 1   # for ps_orig
+ps <- OSC$p_rep  # NOTE LATER p_values
+
+stop("stopped as requested")
+
+# 2026-09-10 fits_for_matrix with progress bar
 
 ### PARAMETRIC
 n_subsamples <- 100
@@ -12,13 +20,19 @@ mu <- 2
 sigma <- 1
 pi <- 0.5
 
-parametric_ps <- generate_parametric_subsamples(n_subsamples, n_per_subsample, mu, sigma, pi = pi, alpha = 1)
-# ps <- parametric_ps[1,]
-# hist(ps)
-# fit_list <- fit_p_curve(ps, alpha = alpha)
-# print(fit_to_parms_vec(fit_list), want_names = TRUE)
-# hist(as.vector(parametric_ps))
-parametric_fits_df <- fits_for_matrix(parametric_ps)
+# parametric_ps <- generate_parametric_subsamples(n_subsamples, n_per_subsample, mu, sigma, pi = pi, alpha = 1)
+# parametric_fits_df <- fits_for_matrix(parametric_ps)
+# # ps <- parametric_ps[1,]
+# # hist(ps)
+# # fit_list <- fit_p_curve(ps, alpha = alpha)
+# # print(fit_to_parms_vec(fit_list), want_names = TRUE)
+# # hist(as.vector(parametric_ps))
+
+alpha <- 1
+real_ps <- generate_parametric_subsamples(1, n_per_subsample, mu, sigma, pi = pi, alpha = alpha)
+jack_ps <- generate_jackknife_subsamples(real_ps)
+jack_fits <- fits_for_matrix(jack_ps, alpha = alpha)
+jack_tbl <- get_parm_summaries(jack_fits)
 
 stop("stopped as requested")
 

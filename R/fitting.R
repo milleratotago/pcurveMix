@@ -26,7 +26,7 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   if (is.null(small_p_bin_cutoff)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
-    # print(pdfs) # NEWJEFF
+    # print(pdfs) # NWJEFF
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
@@ -127,6 +127,7 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                          upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   p <- as.numeric(p)
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
+  ## print(check_ps_list)  # NWJEFF
   if (!check_ps_list$all_in_bounds) {
     p <- check_ps_list$ps_in_bounds
     if (pcm_env$shiny_running) {
@@ -146,9 +147,9 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit$min_p <- min(p)
   fit$max_p <- max(p)
   fit$check_ps_list <- check_ps_list
-  # print( paste(start$mu, start$sigma, start$pi, fit$mu, fit$sigma, fit$pi, fit$logLik) )
+  # print( paste(start$mu, start$sigma, start$pi, fit$mu, fit$sigma, fit$pi, fit$logLik) ) # NWJEFF
   return(fit)
-} # fit_p_curve
+} # fit_p_curve1
 
 optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
                                     want_optim_hessian) {
@@ -160,7 +161,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   est <- opt$par;
   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
   parms <- reals_to_parms(real_parms)
-  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
+  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NWJEFF These look wrong
   # est <- c(parms$pi, parms$mu, parms$sigma)
   # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
   l <- real_to_nat_se_ci(opt$par, opt$hessian)
@@ -171,7 +172,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   return(fit)
 }
 
-make_se_ci <- function(est, se) {
+make_se_ci <- function(est, se) {  # OBSOLETE ???
   if (!any(is.na(se))) {
     z <- 1.96
     ci <- cbind(est - z*se, est + z*se)
@@ -289,8 +290,9 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("log likelihood",as.character(round(fit$logLik,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s statistic",as.character(round(fit$ks$statistic,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s p value",as.character(round(fit$ks$p.value,5))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_MU_LABEL,as.character(round(fit[[FOLDED_NORMAL_MU_LABEL]],3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_SIGMA_LABEL,as.character(round(fit[[FOLDED_NORMAL_SIGMA_LABEL]],3))))
+  # The next two are now considered parameter estimates.
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_MU_LABEL,as.character(round(fit[[FOLDED_NORMAL_MU_LABEL]],3))))
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_SIGMA_LABEL,as.character(round(fit[[FOLDED_NORMAL_SIGMA_LABEL]],3))))
   rownames(descriptor_tbl) <- NULL
   return(descriptor_tbl)
 }
@@ -301,12 +303,13 @@ descriptor <- function(slabel, svalue) {
 }
 
 #
-estimate_names <- function(tails) {
+estimate_names <- function(tails, want_converged = TRUE) {
   if (tails == 2) {
-    parm_names <- c("mu", "sigma", "pi", "power", FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL, "converged")
+    parm_names <- c("mu", "sigma", "pi", "power", FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL)
   } else {
-    parm_names <- c("mu", "sigma", "pi", "power", "converged")
+    parm_names <- c("mu", "sigma", "pi", "power")
   }
+  if (want_converged) parm_names <- c(parm_names, "converged")
   return(parm_names)
 }
 
@@ -316,17 +319,17 @@ estimate_names <- function(tails) {
 #'  which is slightly slower (default = TRUE)
 #' @returns Vector of mu, sigma, pi, power, and folded_normal mu/sigma if 2-tails
 #' @export
-fit_to_parms_vec <- function(fit, want_names = TRUE) {
+fit_to_parms_vec <- function(fit, want_names = TRUE, want_converged = TRUE) {
   # ORDER OF PARMS MUST MATCH IN fit_to_parms_vec() AND estimate_names()
   parms <- c(fit$mu, fit$sigma, fit$pi, fit$power)
   if (fit$tails == 2) parms <- c(parms, mean_folded_normal(fit$mu, fit$sigma), sd_folded_normal(fit$mu, fit$sigma))
-  parms <- c(parms, fit$converged)
-  if (want_names) names(parms) <- estimate_names(fit$tails)
+  if (want_converged)  parms <- c(parms, fit$converged)
+  if (want_names) names(parms) <- estimate_names(fit$tails, want_converged = want_converged)
   return(parms)
 }
 
-# NEWJEFF: The following function needs some kind of progress-bar option.
-#' Fit p curve separately for each row of a matrix of p values (for simulation)
+#' Fit p curve separately for each row of a matrix of p values (for simulation),
+#'  with sample being the p's in all columns of that row.
 #' @inheritParams fit_p_curve
 #' @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
 #' @param n_progress_bar_steps Number of times to update progress bar within
@@ -337,7 +340,7 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                             want_optim_hessian = FALSE,
                             start_parms = pcm_env$optim_starting_parms,
                             n_progress_bar_steps = 20,
-                            lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+                            lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),  # NEWJEFF lower mu can be neg for 1 tail but lower not used anyway, right?
                             upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   n_samples <- nrow(mat_of_ps)
   if (tails == 2) {
@@ -346,9 +349,9 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
     n_parms <- 5
   }
   estimates <- matrix(NA, nrow = n_samples, ncol = n_parms)
-  progressr::handlers(global = TRUE)  # NEWJEFF: Not sure where this should go
+  # progressr::handlers(global = TRUE)  # NEWJEFF: Not sure where this should go
   p <- progressr::progressor(steps = n_samples)
-  step_size <- round(n_samples / n_progress_bar_steps)
+  step_size <- max(1,round(n_samples / n_progress_bar_steps))
   for (isample in 1:n_samples) {
     one_fit <- fit_p_curve(mat_of_ps[isample,], alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                            want_optim_hessian = want_optim_hessian,
@@ -356,6 +359,7 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                            lower = lower,
                            upper = upper)
     estimates[isample,] <- fit_to_parms_vec(one_fit, want_names = FALSE)
+    # print( paste(isample, step_size, n_samples) )
     if (isample %% step_size == 0 || isample == n_samples) {
       # Calculate how many items were completed since the last update
       completed <- if (isample %% step_size == 0) step_size else (isample %% step_size)

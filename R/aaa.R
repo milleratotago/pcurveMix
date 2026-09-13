@@ -8,6 +8,15 @@ CI_UPPER_BOUND_LABEL <- "upr"
 FOLDED_NORMAL_MU_LABEL <- "folded_normal_mu"
 FOLDED_NORMAL_SIGMA_LABEL <- "folded_normal_sigma"
 LIKELIHOOD_LABEL <- "log likelihood"
+BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL <- "bias_corrected_estimate"
+START_MU_DEFAULT <- 2
+START_SIGMA_DEFAULT <- 1
+START_PI_DEFAULT <- 0.5
+
+# This is not allowed here.
+# # Set up default console handler state for interactive work
+# progressr::handlers(global = TRUE)
+# progressr::handlers("txtprogressbar") # Forces standard text console output
 
 # Define an environment to hold settings that
 # are global within the package
@@ -24,7 +33,7 @@ initialize_globals <- function() {
   pcm_env$small_p_bin_cutoff <- NULL
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
-  pcm_env$optim_starting_parms <- list(mu = 2, sigma = 2, pi = 0.5)
+  pcm_env$optim_starting_parms <- list(mu = START_MU_DEFAULT, sigma = START_SIGMA_DEFAULT, pi = START_PI_DEFAULT) #make_optim_starting_parms_df() # list(mu = 2, sigma = 2, pi = 0.5)
   # pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
   #                          class = "profCI_model")
   pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08,
@@ -108,15 +117,27 @@ utils::globalVariables(c("density"))
 # library(pcurveMix, warn.conflicts = FALSE)
 
 .onAttach <- function(libname, pkgname) {
+  initialize_globals()
+  if (!interactive()) return()
   s <- utils::packageVersion(pkgname)
   s <- paste("Package",pkgname,"version",s)
-  packageStartupMessage(s)
+  packageStartupMessage(s) # NEWJEFF combine strings into one call and export it in a separate function available to users with just a short note here to call that function for help
   packageStartupMessage('Get help with these RStudio console commands:')
-  packageStartupMessage(' ?',pkgname,'    # shows a summary of the package.')
-  packageStartupMessage(' vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
-  packageStartupMessage(' browseVignettes(',pkgname,')    # shows a catalog of all vignettes.')
-  packageStartupMessage(' help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
-  packageStartupMessage(' run_shiny_app()  # starts the shiny app')
-  initialize_globals()
+  packageStartupMessage('  ?',pkgname,'    # shows a summary of the package.')
+  packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
+  packageStartupMessage('  browseVignettes(',pkgname,')    # shows a catalog of all vignettes.')
+  packageStartupMessage('  help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
+  packageStartupMessage('  run_shiny_app()  # starts the shiny app')
+
+  # Check progressr global state (returns TRUE, FALSE, or NA if never set)
+  is_global_active <- progressr::handlers(global = NA)
+  # If it is turned off or unconfigured, print a polite tip
+  # \u2139\ufe0f produces a non-ascii information source emoji,
+  # use "\u2139" for the standard information icon
+  if (is.na(is_global_active) || !is_global_active) {
+    packageStartupMessage(
+      "\u2139 [", pkgname, "] This package supports real-time progress bars!\n",
+      "   To enable them, run: progressr::handlers(global = TRUE)"  )
+  }
 } # .onAttach
 

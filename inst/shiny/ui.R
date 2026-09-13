@@ -76,8 +76,9 @@ ui <- tagList(
 
     sidebarLayout(
 
-# ... -------------------------------------------
-# Setup sidebarPanel ====
+      # ... -------------------------------------------
+
+      # Setup sidebarPanel ====
 
       sidebarPanel(width = 4, id = "pcm_sidebar",
                    h2("Setup for Fitting"),
@@ -118,7 +119,7 @@ ui <- tagList(
                    ## Jackknifing ====
 
                    h4(),
-                   checkboxInput("jackknifing", label = strong("Compute jackknife bias correction & confidence interval"), FALSE),
+                   checkboxInput("jackknifing", label = strong("Compute jackknifing for bias correction & confidence interval"), FALSE),
                    conditionalPanel(
                      condition = "input.jackknifing == true",
                      fluidRow(
@@ -129,9 +130,9 @@ ui <- tagList(
                      )
                    ),
                    hr(style = "border-top: 2px solid #808080;"),
+                   ## ...-------------------------------------------
 
-## ...-------------------------------------------
-## Parametric bootstrapping ====
+                   ## Parametric bootstrapping ====
 
                    h4(), # I tried very (!!!) hard to indent the numericInput but never succeeded.
                    # Gemini suggested using bslib & layout_columns but these did not work
@@ -151,28 +152,29 @@ ui <- tagList(
                    ),
                    hr(style = "border-top: 2px solid #808080;"),
 
-## ...-------------------------------------------
-## Nonparametric bootstrapping ====
+                   ## ...-------------------------------------------
 
-h4(),
-checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), FALSE),
-conditionalPanel(
-  condition = "input.nonparametric_bootstrapping == true",
-  fluidRow(
-    column(6, numericInput("np_boot_confidence_level",
-                           "% confidence (1-100)",
-                           value = "95", min = 10, max = 100, step = 1)
-    ),
-    column(6, numericInput("np_n_boot_samples",
-                           "N bootstrap samples (recommended min 2000 for real analyses):",
-                           value = "100", min = 0, step = 100)
-    )
-  )
-),
-hr(style = "border-top: 2px solid #808080;"),
+                   ## Nonparametric bootstrapping ====
 
-## ...-------------------------------------------
-## ProfileCI ====
+                   h4(),
+                   checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), FALSE),
+                   conditionalPanel(
+                     condition = "input.nonparametric_bootstrapping == true",
+                     fluidRow(
+                       column(6, numericInput("np_boot_confidence_level",
+                                              "% confidence (1-100)",
+                                              value = "95", min = 10, max = 100, step = 1)
+                       ),
+                       column(6, numericInput("np_n_boot_samples",
+                                              "N bootstrap samples (recommended min 2000 for real analyses):",
+                                              value = "100", min = 0, step = 100)
+                       )
+                     )
+                   ),
+                   hr(style = "border-top: 2px solid #808080;"),
+
+                   ## ...-------------------------------------------
+                   ## ProfileCI ====
                    h4(),
                    checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
                    conditionalPanel(
@@ -186,29 +188,23 @@ hr(style = "border-top: 2px solid #808080;"),
                    ), # profiles checked
                    hr(style = "border-top: 2px solid #808080;"),
 
-## ...-------------------------------------------
-## Adjust starting values ====
+                   ## ...-------------------------------------------
+                   ## Adjust starting values ====
 
                    h4(),
                    checkboxInput("adjust_starting_values", label = strong("Change default starting parameter values for optim() search:"), FALSE),
                    conditionalPanel(
                      condition = "input.adjust_starting_values == true",
                      fluidRow(
-                       column(4, numericInput("start_mu","mu",2, min = 0, max = 20, step = 0.1)),
-                       column(4, numericInput("start_sigma","sigma",2, min = 1e-6, max = 20, step = 0.1)),
-                       column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
+                       column(4, numericInput("start_mu","mu",START_MU_DEFAULT, min = 0, max = 20, step = 0.1)),
+                       column(4, numericInput("start_sigma","sigma",START_SIGMA_DEFAULT, min = 1e-6, max = 20, step = 0.1)),
+                       column(4, numericInput(inputId = "start_pi", label = "pi", value = START_PI_DEFAULT, min = 0, max = 20, step = 0.1))
                      ),
                    ),
-                   # h5("Starting parameter values for optim() search:", style = "font-weight: bold;"),
-                   # fluidRow(
-                   # column(4, numericInput("start_mu","mu",2, min = 0, max = 20, step = 0.1)),
-                   # column(4, numericInput("start_sigma","sigma",2, min = 1e-6, max = 20, step = 0.1)),
-                   # column(4, numericInput(inputId = "start_pi", label = "pi", value = 0.5, min = 0, max = 20, step = 0.1))
-                   # ),
                    hr(),
 
-## -------------------------------------------
-## Action buttons ====
+                   ## -------------------------------------------
+                   ## Action buttons ====
 
                    fluidRow(
                      column(12, actionButton("btnFit","Fit model & compute requested CIs"))
@@ -231,10 +227,12 @@ hr(style = "border-top: 2px solid #808080;"),
                    )
       ), # end sidebar panel
 
-# ... -------------------------------------------
-# Results mainPanel ====
+      # ... -------------------------------------------
+      # Results mainPanel ====
 
       mainPanel(width = 8,
+
+                ## Basic model fit ====
                 # h2("Model fit:"),
                 fluidRow(
                   column(12, h1(textOutput("model_fit_title")))
@@ -242,18 +240,15 @@ hr(style = "border-top: 2px solid #808080;"),
                 fluidRow(
                   column(12, tableOutput("descriptor_tbl"))
                 ),
-                # fluidRow(
-                #   column(12, tableOutput("bootstrap_convergence_tbl"))
-                # ),
-                # h2("Parameter estimates:"),
                 fluidRow(
                   column(12, h3(textOutput("parameter_estimates_title")))
                 ),
                 fluidRow(
                   column(12, tableOutput("estimates_tbl"))
                 ),
+                ## ... ====
 
-                ##### Obs/pred PDF/CDF plots
+                ## Obs/pred PDF/CDF plots ====
                 fluidRow(
                   column(12, h3(textOutput("predicted_pdfs_title")))
                 ),
@@ -267,8 +262,34 @@ hr(style = "border-top: 2px solid #808080;"),
                 fluidRow(
                   column(12, plotOutput("cdf_plot"))
                 ),
+                ## ... ====
 
-                #### Bootstrap results
+                ## Jackknife results ====
+                div(
+                  fluidRow(
+                    column(12, h3(textOutput("jackknife_title")))
+                  ),
+                  fluidRow(
+                    column(12,
+                           h5(
+                             div(
+                               textOutput("n_jack_samples"),
+                               style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                             )
+                           )
+                    )
+                  ),
+                  fluidRow(
+                    column(12, h5(textOutput("jack_pct_converged")))
+                  ),
+                  fluidRow(
+                    column(12, tableOutput("jackknife_tbl"))
+                  )
+                  , style = "margin-left: 0px;"
+                ),  # end of div
+                ## ... ====
+
+                ## Bootstrap results (parametric) ====
                 div(
                   fluidRow(
                     column(12, h3(textOutput("bootstrap_title")))
@@ -291,8 +312,34 @@ hr(style = "border-top: 2px solid #808080;"),
                   )
                   , style = "margin-left: 0px;"
                 ),  # end of div
+                ## ... ====
 
-                # Profile confidence interval results
+                ## Bootstrap results (nonparametric) ====
+                div(
+                  fluidRow(
+                    column(12, h3(textOutput("np_bootstrap_title")))
+                  ),
+                  fluidRow(
+                    column(12,
+                           h5(
+                             div(
+                               textOutput("np_n_boot_samples"),
+                               style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                             )
+                           )
+                    )
+                  ),
+                  fluidRow(
+                    column(12, h5(textOutput("np_boot_pct_converged")))
+                  ),
+                  fluidRow(
+                    column(12, tableOutput("np_bootstrap_tbl"))
+                  )
+                  , style = "margin-left: 0px;"
+                ),  # end of div
+                ## ... ====
+
+                ## Profile confidence interval results ====
                 div(
                   fluidRow(
                     column(12, h3(textOutput("profileCI_title")))
@@ -320,6 +367,7 @@ hr(style = "border-top: 2px solid #808080;"),
                   ),
                   style = "margin-left: 0px;"
                 ),  # end of div
+                ## ... ====
 
                 fluidRow(
                   column(12, h3(verbatimTextOutput("optim_failed_output")))
