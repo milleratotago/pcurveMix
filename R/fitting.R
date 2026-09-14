@@ -71,35 +71,35 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @param start_parms Either a list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
 #'  and the function tries all combinations (defaults to optim_starting_parms).
-#' @param lower List of lower bounds for the optim search
-#'  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
-#' @param upper List of upper bounds for the optim search
-#'  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
-                        start_parms = pcm_env$optim_starting_parms,
-                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
-                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
+                        start_parms = pcm_env$optim_starting_parms) {
+# @param lower List of lower bounds for the optim search
+#  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
+# @param upper List of upper bounds for the optim search
+#  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)
+#                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+#                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
     best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
-                             start = start_parms, lower = lower, upper = upper)
+                             start = start_parms) #, lower = lower, upper = upper)
     best_fit$start_parm_set <- NA
   } else {
     n_starting_points <- nrow(start_parms)
     start_parms1 <- as.list(start_parms[1,])
     best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
-                             start = start_parms1, lower = lower, upper = upper)
+                             start = start_parms1) # , lower = lower, upper = upper)
     for (i_row in 2:n_starting_points) {
       start_parms1 <- as.list(start_parms[i_row,])
       one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                               want_optim_hessian = want_optim_hessian,
-                              start = start_parms1, lower = lower, upper = upper)
+                              start = start_parms1) #, lower = lower, upper = upper)
       if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
     }
     best_fit$start_parm_set <- start_parms
@@ -122,9 +122,9 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
 #' @export
 fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                          want_optim_hessian = TRUE,
-                         start = pcm_env$optim_starting_parms,
-                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
-                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
+                         start = pcm_env$optim_starting_parms) {
+#                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
+#                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   p <- as.numeric(p)
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
   ## print(check_ps_list)  # NWJEFF
@@ -172,23 +172,23 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   return(fit)
 }
 
-make_se_ci <- function(est, se) {  # OBSOLETE ???
-  if (!any(is.na(se))) {
-    z <- 1.96
-    ci <- cbind(est - z*se, est + z*se)
-    rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
-    ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
-    ci["mu",]    <- pmax(ci["mu",], 0)
-    ci["sigma",] <- pmax(ci["sigma",], 1e-6)
-  } else {
-    # Ensure that there is _something_ in these positions.
-    se <- c(NA, NA, NA);
-    ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
-    rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
-  }
-  names(se) <- c("pi","mu","sigma")
-  return( list(se = se, ci = ci) )
-}
+# make_se_ci <- function(est, se) {  # OBSOLETE ???
+#   if (!any(is.na(se))) {
+#     z <- 1.96
+#     ci <- cbind(est - z*se, est + z*se)
+#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+#     ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
+#     ci["mu",]    <- pmax(ci["mu",], 0)
+#     ci["sigma",] <- pmax(ci["sigma",], 1e-6)
+#   } else {
+#     # Ensure that there is _something_ in these positions.
+#     se <- c(NA, NA, NA);
+#     ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
+#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+#   }
+#   names(se) <- c("pi","mu","sigma")
+#   return( list(se = se, ci = ci) )
+# }
 
 # Helper: KS with tiny jitter to avoid ties warnings
 ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
@@ -317,6 +317,8 @@ estimate_names <- function(tails, want_converged = TRUE) {
 #' @inheritParams fit_to_estimates_tbl fit
 #' @param want_names Boolean indicating whether vector elements should be named,
 #'  which is slightly slower (default = TRUE)
+#' @param want_converged Boolean with default TRUE indicating that the boolean
+#'  value of converged should be included in the output vector
 #' @returns Vector of mu, sigma, pi, power, and folded_normal mu/sigma if 2-tails
 #' @export
 fit_to_parms_vec <- function(fit, want_names = TRUE, want_converged = TRUE) {
@@ -339,9 +341,9 @@ fit_to_parms_vec <- function(fit, want_names = TRUE, want_converged = TRUE) {
 fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                             want_optim_hessian = FALSE,
                             start_parms = pcm_env$optim_starting_parms,
-                            n_progress_bar_steps = 20,
-                            lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),  # NEWJEFF lower mu can be neg for 1 tail but lower not used anyway, right?
-                            upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
+                            n_progress_bar_steps = 20 ) {
+                            # lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),  # NEWJEFF lower mu can be neg for 1 tail but lower not used anyway, right?
+                            # upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   n_samples <- nrow(mat_of_ps)
   if (tails == 2) {
     n_parms <- 7
@@ -349,15 +351,14 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
     n_parms <- 5
   }
   estimates <- matrix(NA, nrow = n_samples, ncol = n_parms)
-  # progressr::handlers(global = TRUE)  # NEWJEFF: Not sure where this should go
   p <- progressr::progressor(steps = n_samples)
   step_size <- max(1,round(n_samples / n_progress_bar_steps))
   for (isample in 1:n_samples) {
     one_fit <- fit_p_curve(mat_of_ps[isample,], alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                            want_optim_hessian = want_optim_hessian,
-                           start_parms = start_parms,
-                           lower = lower,
-                           upper = upper)
+                           start_parms = start_parms)
+                           # lower = lower,
+                           # upper = upper)
     estimates[isample,] <- fit_to_parms_vec(one_fit, want_names = FALSE)
     # print( paste(isample, step_size, n_samples) )
     if (isample %% step_size == 0 || isample == n_samples) {

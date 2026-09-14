@@ -4,7 +4,7 @@
 \alias{fit_p_curve}
 \title{Fit estimates of the model parameters pi, mu, sigma to a vector of p values.
 Repeatedly fit model with multiple starting points,
- saving at the end the best fit.}
+saving at the end the best fit.}
 \usage{
 fit_p_curve(
   p,
@@ -12,9 +12,7 @@ fit_p_curve(
   tails = 2,
   alpha_sig = 0.05,
   want_optim_hessian = TRUE,
-  start_parms = pcm_env$optim_starting_parms,
-  lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
-  upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06)
+  start_parms = pcm_env$optim_starting_parms
 )
 }
 \arguments{
@@ -34,20 +32,14 @@ hessian is not used)}
 \item{start_parms}{Either a list of starting parameter values for the optim search,
 or else a data frame where each row is a combination of starting parameter values
 and the function tries all combinations (defaults to optim_starting_parms).}
-
-\item{lower}{List of lower bounds for the optim search
-(defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
-
-\item{upper}{List of upper bounds for the optim search
-(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
 }
 \value{
 List including estimated parameter values, their standard errors
- and 95% confidence limits, an estimate of the average power to reject
- H0 when it is false, and more
+and 95\% confidence limits, an estimate of the average power to reject
+H0 when it is false, and more
 }
 \description{
 Fit estimates of the model parameters pi, mu, sigma to a vector of p values.
 Repeatedly fit model with multiple starting points,
- saving at the end the best fit.
+saving at the end the best fit.
 }

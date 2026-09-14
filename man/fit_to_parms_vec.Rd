@@ -4,13 +4,16 @@
 \alias{fit_to_parms_vec}
 \title{Function to extract estimated parameter values to a vector.}
 \usage{
-fit_to_parms_vec(fit, want_names = TRUE)
+fit_to_parms_vec(fit, want_names = TRUE, want_converged = TRUE)
 }
 \arguments{
 \item{fit}{Output list from fit_p_curve}
 
 \item{want_names}{Boolean indicating whether vector elements should be named,
 which is slightly slower (default = TRUE)}
+
+\item{want_converged}{Boolean with default TRUE indicating that the boolean
+value of converged should be included in the output vector}
 }
 \value{
 Vector of mu, sigma, pi, power, and folded_normal mu/sigma if 2-tails

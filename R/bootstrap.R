@@ -25,59 +25,13 @@ bootstrap <- function(n, fit, n_boot_samples,
   ps_mat <- generate_parametric_subsamples(n_boot_samples, n, fit$mu, fit$sigma,
                                            pi = fit$pi, alpha = alpha, tails = tails,
                                            cond_method = cond_method, tol = tol)
-  boot <- fits_for_matrix(ps_mat, alpha = alpha, tails = tails, alpha_sig = alpha_sig, want_optim_hessian = FALSE)
-
-  # # Nest function for one sample that is used with console progress bar, OBSOLETE
-  # # shiny progress bar, or no progress bar
-  # one_boot_sample <- function() {
-  #   # rand_ps <- random(n, fit$mu, fit$sigma, pi = fit$pi, alpha = alpha, tails = tails,
-  #   #                   cond_method = cond_method, tol = tol)
-  #   rand_ps <- ps_mat[b,]
-  #   rand_ps[rand_ps == 0] <- pcm_env$edge_p
-  #   fit_list <- fit_p_curve(rand_ps, alpha = alpha, tails = tails, want_optim_hessian = FALSE)
-  #   pi <- fit_list$pi
-  #   mu <- fit_list$mu
-  #   sigma <- fit_list$sigma
-  #   if (use_fn) {
-  #     folded_normal_mu <- mean_folded_normal(mu, sigma)
-  #     folded_normal_sigma <- sd_folded_normal(mu, sigma)
-  #     n_cols_produced <- 6
-  #   } else {
-  #     n_cols_produced <- 4
-  #   }
-  #   if (fit_list$converged) {
-  #     vec <- c(pi, mu, sigma,
-  #              cdf(alpha_sig, mu = mu, sigma = sigma, pi = 1, alpha = 1, tails = tails) )   # power estimated from current mu/sigma/pi
-  #     if (use_fn) {
-  #       vec <- c(vec, folded_normal_mu, folded_normal_sigma)
-  #     }
-  #   } else {  # not converged
-  #     vec <- rep(NA,n_cols_produced)
-  #   }
-  #   return(vec)
-  # } # nested function one_boot_sample
-
-  # if (show_progress_bar) {
-  #   if (pcm_env$shiny_running) {
-  #     shiny::withProgress(message = 'Bootstrapping in progress', value = 0, {
-  #       for (b in seq_len(n_boot_samples)) {
-  #         boot[b,] <- one_boot_sample()
-  #         shiny::incProgress(1/n_boot_samples)
-  #       }
-  #     })
-  #   } else {
-  #     pb <- utils::txtProgressBar(min = 0, max = n_boot_samples, style = 3)
-  #     for (b in seq_len(n_boot_samples)) {
-  #       boot[b,] <- one_boot_sample()
-  #       utils::setTxtProgressBar(pb, b)
-  #     }
-  #     close(pb)
-  #   }
-  # } else {    # No progress bar
-  #   for (b in seq_len(n_boot_samples)) {
-  #     boot[b,] <- one_boot_sample()
-  #   }
-  # } # if show_progress bar
+  if (pcm_env$fast_boot_jack) {
+    start_list <- list(mu = fit$mu, sigma = fit$sigma, pi = fit$pi)
+  } else {
+    start_list <- pcm_env$optim_starting_parms
+  }
+  boot <- fits_for_matrix(ps_mat, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+                          want_optim_hessian = FALSE, start_parms = start_list)
   boot_df <- as.data.frame(boot)
   return(boot_df)
 }
@@ -102,7 +56,7 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
   boot_df <- boot_df[boot_ok,]
   n_ok <- nrow(boot_df)
   if (n_ok == 0) {
-    problem_string <- "No successful bootstrap refits; try adjusting start/lower/upper of fit_p_curve()."
+    problem_string <- "No successful bootstrap refits; try adjusting fit_p_curve() starting parameter values."
     if (pcm_env$shiny_running) {
       shiny::showNotification(problem_string, type = "warning", duration = 45)
       return( list(pct_converged = NULL, boot_tbl = NULL) )

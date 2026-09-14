@@ -64,13 +64,13 @@ plot(params$cdf_plot)
 ```
 
 
-```{asis, echo = params$n_boot_samples > 0}
+```{asis, echo = params$n_jack_samples > 0}
 ## Jackknifing analysis
 ```
 
 ```{r echo=FALSE, results='asis', eval = params$n_jack_samples > 0}
 cat(paste0("* n jackknife samples = ",params$n_jack_samples,"\n"))
-cat(paste0("* percent converged OK = ",params$jack_pct_converged,"\n"))
+cat(paste0("* percent converged = ",params$jack_pct_converged,"\n"))
 ```
 
 ```{r print_jack_tbl, echo=FALSE, results='asis', eval = params$n_jack_samples > 0}
@@ -84,7 +84,7 @@ print(knitr::kable(params$jack_tbl))
 
 ```{r echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
 cat(paste0("* n bootstrap samples = ",params$n_boot_samples,"\n"))
-cat(paste0("* percent converged OK = ",params$boot_pct_converged,"\n"))
+cat(paste0("* percent converged = ",params$boot_pct_converged,"\n"))
 ```
 
 ```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
@@ -98,10 +98,10 @@ print(knitr::kable(params$boot_tbl))
 
 ```{r echo=FALSE, results='asis', eval = params$np_n_boot_samples > 0}
 cat(paste0("* n bootstrap samples = ",params$np_n_boot_samples,"\n"))
-cat(paste0("* percent converged OK = ",params$np_boot_pct_converged,"\n"))
+cat(paste0("* percent converged = ",params$np_boot_pct_converged,"\n"))
 ```
 
-```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$np_n_boot_samples > 0}
+```{r print_np_boot_tbl, echo=FALSE, results='asis', eval = params$np_n_boot_samples > 0}
 print(knitr::kable(params$np_boot_tbl))
 ```
 

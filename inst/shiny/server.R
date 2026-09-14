@@ -49,9 +49,19 @@ server <- function(input, output) {
   } # restart
 
   do_jackknifing <- function() {
+    if (!input$jackknifing) {
+      v$n_jack_samples <- 0
+      return()
+    }
     real_ps <- v$fit_results_list$check_ps$ps_in_bound
     full_sample_n <- length(real_ps)
     mat_of_ps <- generate_jackknife_subsamples(real_ps)
+    if (pcm_env$fast_boot_jack) {
+      start_list <- list(mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi)
+    } else {
+      start_list <- pcm_env$optim_starting_parms
+    }
+    # print( paste("do_jackknifing start_list:", start_list))
     progressr::withProgressShiny(
       message = "Jackknifing in progress...",
       detail = "Starting...",
@@ -61,10 +71,11 @@ server <- function(input, output) {
                                     tails = v$fit_results_list$tails,
                                     alpha_sig = v$fit_results_list$alpha_sig,
                                     want_optim_hessian = FALSE,
-                                    start_parms = pcm_env$optim_starting_parms,
+                                    start_parms = start_list,
                                     n_progress_bar_steps = 20)
       }
     )
+    v$n_jack_samples <- full_sample_n
     v$jack_pct_converged <- 100 * mean(ests_tbl$converged)
     v$jack_confidence_level <- input$jack_confidence_level / 100
     summaries <- get_parm_summaries(ests_tbl)
@@ -81,10 +92,19 @@ server <- function(input, output) {
   } # do_jackknifing
 
   do_npbootstrapping <- function() {  # Nonparametric bootstrapping
+    if (!input$nonparametric_bootstrapping) {
+      v$np_n_boot_samples <- 0
+      return()
+     }
     real_ps <- v$fit_results_list$check_ps$ps_in_bound
     full_sample_n <- length(real_ps)
-    n_subsamples <- input$np_n_boot_samples
-    mat_of_ps <- generate_nonparametric_subsamples(n_subsamples, full_sample_n, real_ps)
+    v$np_n_boot_samples <- input$np_n_boot_samples
+    mat_of_ps <- generate_nonparametric_subsamples(v$np_n_boot_samples, full_sample_n, real_ps)
+    if (pcm_env$fast_boot_jack) {
+      start_list <- list(mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi)
+    } else {
+      start_list <- pcm_env$optim_starting_parms
+    }
     progressr::withProgressShiny(
       message = "Nonparametric bootstrapping in progress...",
       detail = "Starting...",
@@ -94,7 +114,7 @@ server <- function(input, output) {
                                     tails = v$fit_results_list$tails,
                                     alpha_sig = v$fit_results_list$alpha_sig,
                                     want_optim_hessian = FALSE,
-                                    start_parms = pcm_env$optim_starting_parms,
+                                    start_parms = start_list,
                                     n_progress_bar_steps = 20)
       }
     )
@@ -107,7 +127,7 @@ server <- function(input, output) {
                            round(100*v$np_boot_confidence_level,2),
                            "% confidence)")
     output$np_bootstrap_title <- renderText(npboot_title)
-    s1 <- paste0("* n nonparametric boot samples = ",n_subsamples)
+    s1 <- paste0("* n nonparametric boot samples = ",v$np_n_boot_samples)
     output$np_n_boot_samples <- renderText(s1)
     s2 <- paste0("* percent converged OK = ",round(v$np_boot_pct_converged,2))
     output$np_boot_pct_converged <- renderText(s2)
@@ -139,7 +159,11 @@ server <- function(input, output) {
       tails <- get_tails()
       alpha_cutoff <- input$custom_cutoff
       alpha_sig <- input$alpha_sig
-      start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
+      if (input$specify_starting_values) {
+        start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
+      } else {
+        start_list <- pcm_env$optim_starting_parms
+      }
 
       v$fit_results_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start_parms = start_list)
       ps_in_bounds <- v$fit_results_list$check_ps_list$ps_in_bounds
@@ -147,12 +171,8 @@ server <- function(input, output) {
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_results_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
-      if (input$jackknifing) {
-        do_jackknifing()
-      }
-      if (input$nonparametric_bootstrapping) {
-        do_npbootstrapping()
-      }
+      do_jackknifing()
+      do_npbootstrapping()
       if (input$parametric_bootstrapping) {
         v$n_boot_samples <- input$n_boot_samples
         v$boot_ci_confidence_level <- input$boot_confidence_level / 100
@@ -199,8 +219,8 @@ server <- function(input, output) {
         ggplot2::geom_histogram(ggplot2::aes(x = ps_in_bounds, y = ggplot2::after_stat(density)), binwidth = 0.02) +
         ggplot2::geom_line(ggplot2::aes(x = v$p_seq_pdf, y = v$pred_pdfs), color = "red") +
         ggplot2::labs(title = "Observed (black) vs predicted (red) PDFs",
-             x = "p value",
-             y = "density")
+                      x = "p value",
+                      y = "density")
       output$pdf_plot <- renderPlot(v$pdf_plot)
 
       df2 <- data.frame(p = ps_in_bounds)
@@ -208,8 +228,8 @@ server <- function(input, output) {
         ggplot2::stat_ecdf(data = df2, ggplot2::aes(x = p), geom = "step") +
         ggplot2::geom_line(ggplot2::aes(x = v$p_seq_cdf, y = v$pred_cdfs), color = "red") +
         ggplot2::labs(title = "Observed (black) vs predicted (red) CDFs",
-             x = "p value",
-             y = "cumulative proportion")
+                      x = "p value",
+                      y = "cumulative proportion")
       output$cdf_plot <- renderPlot(v$cdf_plot)
       v$fit_completed <- TRUE
     } # end else (file name not null)
@@ -302,8 +322,8 @@ server <- function(input, output) {
     v$profile_mu_plot <- ggplot2::ggplot() +
       ggplot2::geom_line(ggplot2::aes(x = mu_x, y = mu_y), color = "black") +
       ggplot2::labs(title = "profile for mu",
-           x = "mu",
-           y = pcurveMix:::LIKELIHOOD_LABEL)
+                    x = "mu",
+                    y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_mu_plot <- renderPlot(v$profile_mu_plot)
 
     sigma_x <- v$profileCI_std$profile_curves$sigma[,1]
@@ -311,8 +331,8 @@ server <- function(input, output) {
     v$profile_sigma_plot <- ggplot2::ggplot() +
       ggplot2::geom_line(ggplot2::aes(x = sigma_x, y = sigma_y), color = "black") +
       ggplot2::labs(title = "profile for sigma",
-           x = "sigma",
-           y = pcurveMix:::LIKELIHOOD_LABEL)
+                    x = "sigma",
+                    y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_sigma_plot <- renderPlot(v$profile_sigma_plot)
 
     pi_x <- v$profileCI_std$profile_curves$pi[,1]
@@ -320,8 +340,8 @@ server <- function(input, output) {
     v$profile_pi_plot <- ggplot2::ggplot() +
       ggplot2::geom_line(ggplot2::aes(x = pi_x, y = pi_y), color = "black") +
       ggplot2::labs(title = "profile for pi",
-           x = "pi",
-           y = pcurveMix:::LIKELIHOOD_LABEL)
+                    x = "pi",
+                    y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_pi_plot <- renderPlot(v$profile_pi_plot)
 
     profile_curves <- as.matrix(attr(v$profileCI_power$profile,"for_plot")[["logit_relative_power"]])
@@ -330,8 +350,8 @@ server <- function(input, output) {
     v$profile_power_plot <- ggplot2::ggplot() +
       ggplot2::geom_line(ggplot2::aes(x = power_x, y = power_y), color = "black") +
       ggplot2::labs(title = "profile for power",
-           x = "power",
-           y = pcurveMix:::LIKELIHOOD_LABEL)
+                    x = "power",
+                    y = pcurveMix:::LIKELIHOOD_LABEL)
     output$profile_power_plot <- renderPlot(v$profile_power_plot)
 
     if (fit_list$tails == 2) {
@@ -341,8 +361,8 @@ server <- function(input, output) {
       v$profile_folded_normal_mu_plot <- ggplot2::ggplot() +
         ggplot2::geom_line(ggplot2::aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
         ggplot2::labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MU_LABEL),
-             x = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
-             y = pcurveMix:::LIKELIHOOD_LABEL)
+                      x = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
+                      y = pcurveMix:::LIKELIHOOD_LABEL)
       output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
 
       profile_curves <- as.matrix(attr(v$profileCI_folded_normal_sigma$profile,"for_plot")[["log_folded_normal_sigma"]])
@@ -351,8 +371,8 @@ server <- function(input, output) {
       v$profile_folded_normal_sigma_plot <- ggplot2::ggplot() +
         ggplot2::geom_line(ggplot2::aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
         ggplot2::labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL),
-             x = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
-             y = pcurveMix:::LIKELIHOOD_LABEL)
+                      x = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
+                      y = pcurveMix:::LIKELIHOOD_LABEL)
       output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
     } # if tails == 2
   } # profile_manager
@@ -450,9 +470,15 @@ server <- function(input, output) {
           estimates_tbl = v$estimates_tbl,
           pdf_plot = v$pdf_plot,
           cdf_plot = v$cdf_plot,
+          n_jack_samples = v$n_jack_samples,
+          jack_pct_converged = v$jack_pct_converged,
+          jack_tbl = v$jack_tbl,
           n_boot_samples = v$n_boot_samples,
           boot_pct_converged = v$boot_pct_converged,
           boot_tbl = v$boot_tbl,
+          np_n_boot_samples = v$np_n_boot_samples,
+          np_boot_pct_converged = v$np_boot_pct_converged,
+          np_boot_tbl = v$np_boot_tbl,
           profile_analysis = v$profile_analysis,
           profile_tbl = v$profile_tbl,
           profile_mu_plot = v$profile_mu_plot,

@@ -3,7 +3,7 @@
 \name{generate_jackknife_subsamples}
 \alias{generate_jackknife_subsamples}
 \title{Generate all jackknife subsamples from a set of real_ps
- with each subsample omitting one of the real_ps.}
+with each subsample omitting one of the real_ps.}
 \usage{
 generate_jackknife_subsamples(real_ps)
 }
@@ -15,5 +15,5 @@ Matrix of p values with n_subsamples rows and n_subsamples-1 columns.
 }
 \description{
 Generate all jackknife subsamples from a set of real_ps
- with each subsample omitting one of the real_ps.
+with each subsample omitting one of the real_ps.
 }

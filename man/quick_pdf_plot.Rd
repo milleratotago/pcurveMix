@@ -3,7 +3,7 @@
 \name{quick_pdf_plot}
 \alias{quick_pdf_plot}
 \title{Make a simple plot of observed p histogram and
-  predicted pdf density}
+predicted pdf density}
 \usage{
 quick_pdf_plot(fit, p_seq = pcm_env$p_seq_pdf, show_plot = TRUE)
 }
@@ -19,5 +19,5 @@ Figure object made by ggplot
 }
 \description{
 Make a simple plot of observed p histogram and
-  predicted pdf density
+predicted pdf density
 }

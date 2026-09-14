@@ -3,7 +3,7 @@
 \name{generate_nonparametric_subsamples}
 \alias{generate_nonparametric_subsamples}
 \title{Generate n_subsamples bootstrap subsamples from a set of real_ps,
- with each subsample having n_per_subsample values.}
+with each subsample having n_per_subsample values.}
 \usage{
 generate_nonparametric_subsamples(n_subsamples, n_per_subsample, real_ps)
 }
@@ -19,5 +19,5 @@ Matrix of p values with n_subsamples rows and n_per_subsample columns.
 }
 \description{
 Generate n_subsamples bootstrap subsamples from a set of real_ps,
- with each subsample having n_per_subsample values.
+with each subsample having n_per_subsample values.
 }

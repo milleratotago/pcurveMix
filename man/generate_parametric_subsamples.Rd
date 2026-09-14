@@ -3,7 +3,7 @@
 \name{generate_parametric_subsamples}
 \alias{generate_parametric_subsamples}
 \title{Generate n_subsamples random samples from a set of real_ps,
- with each subsample having n_per_subsample values.}
+with each subsample having n_per_subsample values.}
 \usage{
 generate_parametric_subsamples(
   n_subsamples,
@@ -44,5 +44,5 @@ Matrix of p values with n_subsamples rows and n_per_subsample columns.
 }
 \description{
 Generate n_subsamples random samples from a set of real_ps,
- with each subsample having n_per_subsample values.
+with each subsample having n_per_subsample values.
 }

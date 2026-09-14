@@ -3,7 +3,7 @@
 \name{fit_list_to_df}
 \alias{fit_list_to_df}
 \title{Convert a fit_list (output of fit_p_curve) to a data frame with a single row
- for convenient accumulation of multiple fit results via rbind}
+for convenient accumulation of multiple fit results via rbind}
 \usage{
 fit_list_to_df(fit_list)
 }
@@ -15,5 +15,5 @@ A data frame with a single row
 }
 \description{
 Convert a fit_list (output of fit_p_curve) to a data frame with a single row
- for convenient accumulation of multiple fit results via rbind
+for convenient accumulation of multiple fit results via rbind
 }

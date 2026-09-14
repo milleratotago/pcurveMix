@@ -33,11 +33,13 @@ initialize_globals <- function() {
   pcm_env$small_p_bin_cutoff <- NULL
   pcm_env$MLSEh <- 1e-7
   pcm_env$small_rcond <- 1e-15
-  pcm_env$optim_starting_parms <- list(mu = START_MU_DEFAULT, sigma = START_SIGMA_DEFAULT, pi = START_PI_DEFAULT) #make_optim_starting_parms_df() # list(mu = 2, sigma = 2, pi = 0.5)
+  # pcm_env$optim_starting_parms <- list(mu = START_MU_DEFAULT, sigma = START_SIGMA_DEFAULT, pi = START_PI_DEFAULT)
+  pcm_env$optim_starting_parms <- make_optim_starting_parms_df()
   # pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
   #                          class = "profCI_model")
   pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08,
                                  lb = rep(-200,3), ub = rep(200,3) )
+  pcm_env$fast_boot_jack <- TRUE
 }
 
 #' Function to construct a grid of parameter values to use as starting points
@@ -78,6 +80,10 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #' @param optim_starting_parms A list or data frame of parameter combinations
 #'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
 #' @param profileCI_args A list of optional arguments to be passed to profileCI.
+#' @param fast_boot_jack Boolean with default TRUE indicating that bootstrapping
+#'  and jackknifing should always run optim() starting from the maximum likelihood
+#'  parameter values, which is faster than running it from the starting value
+#'  grid given by optim_starting_parms,
 #' @param reset_to_defaults Boolean; if true, reset all values to their
 #'  defaults before applying the other arguments
 #' @returns A list of the values of the global variables, after changing any
@@ -87,6 +93,7 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
                         small_p_bin_cutoff = NA,
                         MLSEh = NA, small_rcond = NA,
                         optim_starting_parms = NA, profileCI_args = NA,
+                        fast_boot_jack = NA,  # NEWJEFF: added env variable
                         reset_to_defaults = FALSE) {
   if (reset_to_defaults) initialize_globals()
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
@@ -98,12 +105,14 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
   if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
   if (any(!is.na(profileCI_args))) pcm_env$profileCI_args <- profileCI_args
+  if (!is.na(fast_boot_jack)) pcm_env$fast_boot_jack <- fast_boot_jack
   l <- list(edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
             p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
             small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
             MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond,
             optim_starting_parms = pcm_env$optim_starting_parms,
-            profileCI_args = pcm_env$profileCI_args)
+            profileCI_args = pcm_env$profileCI_args,
+            fast_boot_jack = fast_boot_jack)
   invisible(l)
 }
 

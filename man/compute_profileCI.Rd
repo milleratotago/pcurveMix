@@ -3,7 +3,7 @@
 \name{compute_profileCI}
 \alias{compute_profileCI}
 \title{Computations for profile-based confidence intervals of the basic model
- parameters mu, sigma, and pi (NOT the folded normal parameters).}
+parameters mu, sigma, and pi (NOT the folded normal parameters).}
 \usage{
 compute_profileCI(fit_list, level = 0.95)
 }
@@ -14,10 +14,10 @@ compute_profileCI(fit_list, level = 0.95)
 }
 \value{
 A list with: bounds_matrix = matrix of CI bounds;
- profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
- profile_fn_output = the output of the profileCI function from the profileCI package.
+profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+profile_fn_output = the output of the profileCI function from the profileCI package.
 }
 \description{
 Computations for profile-based confidence intervals of the basic model
- parameters mu, sigma, and pi (NOT the folded normal parameters).
+parameters mu, sigma, and pi (NOT the folded normal parameters).
 }

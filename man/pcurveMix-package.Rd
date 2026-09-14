@@ -10,11 +10,11 @@ Package for computations and fitting with the p-curve mixture model of Ulrich & 
 }
 \details{
 Look at the vignette 'Intro' for instructions on how to fit the model
- to a set of observed p values.
+to a set of observed p values.
 }
 \references{
 Ulrich and Miller (2026). "On the Power and Limitations of P-Curve Analysis:
- A Mixture-model Approach"
+A Mixture-model Approach"
 }
 \author{
 \strong{Maintainer}: Jeff Miller \email{miller@psy.otago.ac.nz}

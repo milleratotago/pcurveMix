@@ -7,6 +7,8 @@ sample_csv <- read.csv("C:/R/Projects/pcurveMix_pkg/pkg/inst/extdata/sample_ps.c
 ps <- sample_csv$p
 
 fit_list <- fit_p_curve(ps)
+extended_starts <- make_optim_starting_parms_df()
+fit_list_ext <- fit_p_curve(ps, start_parms = extended_starts)
 ps_mat <- generate_jackknife_subsamples(ps)
 progressr::handlers(global = TRUE)
 # Jackknife estimates vary widely when using default start_parms,

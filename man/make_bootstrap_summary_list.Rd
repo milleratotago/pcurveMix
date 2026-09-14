@@ -2,7 +2,7 @@
 % Please edit documentation in R/bootstrap.R
 \name{make_bootstrap_summary_list}
 \alias{make_bootstrap_summary_list}
-\title{Function to summarize the data frame produced by parametric bootstrapping of fitted model.}
+\title{Function to summarize the data frame produced by parametric or nonparametric bootstrapping.}
 \usage{
 make_bootstrap_summary_list(
   boot_df,
@@ -21,9 +21,9 @@ original MLE estimates used as parameter values for parametric bootstrapping}
 }
 \value{
 A list with the percent of samples in which the estimation process
- converged OK and a data frame with the bootstrap
- means, SEs, CIs, & bootstrap-corrected estimates of the model parameters
+converged OK and a data frame with the bootstrap
+means, SEs, CIs, & bootstrap-corrected estimates of the model parameters
 }
 \description{
-Function to summarize the data frame produced by parametric bootstrapping of fitted model.
+Function to summarize the data frame produced by parametric or nonparametric bootstrapping.
 }

@@ -3,7 +3,7 @@
 \name{quick_cdf_plot}
 \alias{quick_cdf_plot}
 \title{Make a simple plot of observed p cumulative histogram and
-  predicted cdf}
+predicted cdf}
 \usage{
 quick_cdf_plot(fit, p_seq = pcm_env$p_seq_cdf, show_plot = TRUE)
 }
@@ -19,5 +19,5 @@ Figure object made by ggplot
 }
 \description{
 Make a simple plot of observed p cumulative histogram and
-  predicted cdf
+predicted cdf
 }

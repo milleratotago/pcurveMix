@@ -3,9 +3,9 @@
 \name{compute_profileCI_folded}
 \alias{compute_profileCI_folded}
 \title{Computations for profile-based confidence intervals of the derived
- model parameters for the folded normal: mu and sigma.
-This function computes the CI for _either_ mu or sigma but not both,
- so you must call it twice to get the CIs for both.}
+model parameters for the folded normal: mu and sigma.
+This function computes the CI for \emph{either} mu or sigma but not both,
+so you must call it twice to get the CIs for both.}
 \usage{
 compute_profileCI_folded(fit_list, target_folded_normal_mu, level = 0.95)
 }
@@ -19,13 +19,13 @@ and FALSE requests CI for folded normal sigma.}
 }
 \value{
 A list with the following elements:
- bounds_matrix = matrix of CI bounds;
- profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
- profile_fn_output = the output of the profileCI function from the profileCI package.
+bounds_matrix = matrix of CI bounds;
+profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+profile_fn_output = the output of the profileCI function from the profileCI package.
 }
 \description{
 Computations for profile-based confidence intervals of the derived
- model parameters for the folded normal: mu and sigma.
-This function computes the CI for _either_ mu or sigma but not both,
- so you must call it twice to get the CIs for both.
+model parameters for the folded normal: mu and sigma.
+This function computes the CI for \emph{either} mu or sigma but not both,
+so you must call it twice to get the CIs for both.
 }

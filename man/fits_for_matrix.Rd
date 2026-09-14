@@ -2,7 +2,8 @@
 % Please edit documentation in R/fitting.R
 \name{fits_for_matrix}
 \alias{fits_for_matrix}
-\title{Fit p curve separately for each row of a matrix of p values (for simulation)}
+\title{Fit p curve separately for each row of a matrix of p values (for simulation),
+with sample being the p's in all columns of that row.}
 \usage{
 fits_for_matrix(
   mat_of_ps,
@@ -11,9 +12,7 @@ fits_for_matrix(
   alpha_sig = 0.05,
   want_optim_hessian = FALSE,
   start_parms = pcm_env$optim_starting_parms,
-  n_progress_bar_steps = 20,
-  lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
-  upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06)
+  n_progress_bar_steps = 20
 )
 }
 \arguments{
@@ -36,16 +35,11 @@ and the function tries all combinations (defaults to optim_starting_parms).}
 
 \item{n_progress_bar_steps}{Number of times to update progress bar within
 the total set (default = 20)}
-
-\item{lower}{List of lower bounds for the optim search
-(defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
-
-\item{upper}{List of upper bounds for the optim search
-(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
 }
 \value{
 Data frame with rows for samples and columns for parameter estimates
 }
 \description{
-Fit p curve separately for each row of a matrix of p values (for simulation)
+Fit p curve separately for each row of a matrix of p values (for simulation),
+with sample being the p's in all columns of that row.
 }

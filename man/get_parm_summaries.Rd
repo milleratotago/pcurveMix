@@ -22,7 +22,7 @@ with rows for datasets and cols for parameters}
 
 \item{summary_fns}{List of the functions to be computed across the different
 estimates of each parameter (default = mean = mean, median = median,
- sd = sd, iqr, min = min, max = max))}
+sd = sd, iqr, min = min, max = max))}
 
 \item{summary_fn_names}{Optional list of names for the summary function
 values (default = NULL, in which case string function name is used)}

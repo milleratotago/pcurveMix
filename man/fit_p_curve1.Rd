@@ -3,7 +3,7 @@
 \name{fit_p_curve1}
 \alias{fit_p_curve1}
 \title{Fit estimates of model pi, mu, sigma to a vector of p values starting from
- a single combination of parameter values.}
+a single combination of parameter values.}
 \usage{
 fit_p_curve1(
   p,
@@ -11,9 +11,7 @@ fit_p_curve1(
   tails = 2,
   alpha_sig = 0.05,
   want_optim_hessian = TRUE,
-  start = pcm_env$optim_starting_parms,
-  lower = list(mu = 0, sigma = 1e-06, pi = 1e-06),
-  upper = list(mu = 20, sigma = 10, pi = 1 - 1e-06)
+  start = pcm_env$optim_starting_parms
 )
 }
 \arguments{
@@ -31,14 +29,8 @@ the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 hessian is not used)}
 
 \item{start}{A list of starting parameter values for mu, sigma, and pi.}
-
-\item{lower}{List of lower bounds for the optim search
-(defaults: mu = 0, sigma = 1e-6, pi = 1e-6)}
-
-\item{upper}{List of upper bounds for the optim search
-(defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)}
 }
 \description{
 Fit estimates of model pi, mu, sigma to a vector of p values starting from
- a single combination of parameter values.
+a single combination of parameter values.
 }

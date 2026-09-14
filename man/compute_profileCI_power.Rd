@@ -3,7 +3,7 @@
 \name{compute_profileCI_power}
 \alias{compute_profileCI_power}
 \title{Computations for profile-based confidence intervals of the derived
- model parameter power.}
+model parameter power.}
 \usage{
 compute_profileCI_power(fit_list, level = 0.95)
 }
@@ -14,11 +14,11 @@ compute_profileCI_power(fit_list, level = 0.95)
 }
 \value{
 A list with the following elements:
- bounds_matrix = matrix of CI bounds;
- profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
- profile_fn_output = the output of the profileCI function from the profileCI package.
+bounds_matrix = matrix of CI bounds;
+profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+profile_fn_output = the output of the profileCI function from the profileCI package.
 }
 \description{
 Computations for profile-based confidence intervals of the derived
- model parameter power.
+model parameter power.
 }

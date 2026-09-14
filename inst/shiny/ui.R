@@ -192,9 +192,9 @@ ui <- tagList(
                    ## Adjust starting values ====
 
                    h4(),
-                   checkboxInput("adjust_starting_values", label = strong("Change default starting parameter values for optim() search:"), FALSE),
+                   checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),
                    conditionalPanel(
-                     condition = "input.adjust_starting_values == true",
+                     condition = "input.specify_starting_values == true",
                      fluidRow(
                        column(4, numericInput("start_mu","mu",START_MU_DEFAULT, min = 0, max = 20, step = 0.1)),
                        column(4, numericInput("start_sigma","sigma",START_SIGMA_DEFAULT, min = 1e-6, max = 20, step = 0.1)),
@@ -265,57 +265,65 @@ ui <- tagList(
                 ## ... ====
 
                 ## Jackknife results ====
-                div(
-                  fluidRow(
-                    column(12, h3(textOutput("jackknife_title")))
-                  ),
-                  fluidRow(
-                    column(12,
-                           h5(
-                             div(
-                               textOutput("n_jack_samples"),
-                               style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                conditionalPanel(
+                  condition = "input.jackknifing == true",
+                  div(
+                    fluidRow(
+                      column(12, h3(textOutput("jackknife_title")))
+                    ),
+                    fluidRow(
+                      column(12,
+                             h5(
+                               div(
+                                 textOutput("n_jack_samples"),
+                                 style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                               )
                              )
-                           )
+                      )
+                    ),
+                    fluidRow(
+                      column(12, h5(textOutput("jack_pct_converged")))
+                    ),
+                    fluidRow(
+                      column(12, tableOutput("jackknife_tbl"))
                     )
-                  ),
-                  fluidRow(
-                    column(12, h5(textOutput("jack_pct_converged")))
-                  ),
-                  fluidRow(
-                    column(12, tableOutput("jackknife_tbl"))
-                  )
-                  , style = "margin-left: 0px;"
-                ),  # end of div
+                    , style = "margin-left: 0px;"
+                  )  # end of div
+                ),  # end of conditionalPanel
                 ## ... ====
 
                 ## Bootstrap results (parametric) ====
-                div(
-                  fluidRow(
-                    column(12, h3(textOutput("bootstrap_title")))
-                  ),
-                  fluidRow(
-                    column(12,
-                           h5(
-                             div(
-                               textOutput("n_boot_samples"),
-                               style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                conditionalPanel(
+                  condition = "input.parametric_bootstrapping == true",
+                  div(
+                    fluidRow(
+                      column(12, h3(textOutput("bootstrap_title")))
+                    ),
+                    fluidRow(
+                      column(12,
+                             h5(
+                               div(
+                                 textOutput("n_boot_samples"),
+                                 style =  "margin-top: -6px; margin-bottom: -20px; padding: 0;"
+                               )
                              )
-                           )
+                      )
+                    ),
+                    fluidRow(
+                      column(12, h5(textOutput("boot_pct_converged")))
+                    ),
+                    fluidRow(
+                      column(12, tableOutput("bootstrap_tbl"))
                     )
-                  ),
-                  fluidRow(
-                    column(12, h5(textOutput("boot_pct_converged")))
-                  ),
-                  fluidRow(
-                    column(12, tableOutput("bootstrap_tbl"))
-                  )
-                  , style = "margin-left: 0px;"
-                ),  # end of div
+                    , style = "margin-left: 0px;"
+                  )  # end of div
+                ), # end of conditionalPanel
                 ## ... ====
 
                 ## Bootstrap results (nonparametric) ====
-                div(
+                conditionalPanel(
+                  condition = "input.nonparametric_bootstrapping == true",
+                  div(
                   fluidRow(
                     column(12, h3(textOutput("np_bootstrap_title")))
                   ),
@@ -336,10 +344,13 @@ ui <- tagList(
                     column(12, tableOutput("np_bootstrap_tbl"))
                   )
                   , style = "margin-left: 0px;"
-                ),  # end of div
+                )  # end of div
+                ), # end of conditionalPanel
                 ## ... ====
 
                 ## Profile confidence interval results ====
+                conditionalPanel(
+                  condition = "input.profile_ci",
                 div(
                   fluidRow(
                     column(12, h3(textOutput("profileCI_title")))
@@ -366,7 +377,8 @@ ui <- tagList(
                     column(12, plotOutput("profile_folded_normal_sigma_plot"))
                   ),
                   style = "margin-left: 0px;"
-                ),  # end of div
+                )  # end of div
+                ), # end conditionalPanel
                 ## ... ====
 
                 fluidRow(

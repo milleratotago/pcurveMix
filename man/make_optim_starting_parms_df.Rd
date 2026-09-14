@@ -3,8 +3,8 @@
 \name{make_optim_starting_parms_df}
 \alias{make_optim_starting_parms_df}
 \title{Function to construct a grid of parameter values to use as starting points
- for fitting the model using fit_p_curve. The grid df has rows
- for all possible combinations of the values in the vectors mu, sigma, and pi.}
+for fitting the model using fit_p_curve. The grid df has rows
+for all possible combinations of the values in the vectors mu, sigma, and pi.}
 \usage{
 make_optim_starting_parms_df(
   mu = c(0.25, 1, 2),
@@ -26,6 +26,6 @@ results in the vector of p's that is to be fit.}
 }
 \description{
 Function to construct a grid of parameter values to use as starting points
- for fitting the model using fit_p_curve. The grid df has rows
- for all possible combinations of the values in the vectors mu, sigma, and pi.
+for fitting the model using fit_p_curve. The grid df has rows
+for all possible combinations of the values in the vectors mu, sigma, and pi.
 }

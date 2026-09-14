@@ -23,14 +23,17 @@ Language: en
 License: GPL (>= 3) + file LICENSE
 Depends: 
     R (>= 4.1.0)
+Roxygen: list(markdown = TRUE)
 Imports:
     dplyr,
     EnvStats,
+    magrittr,
     pracma,
     profileCI,
     progressr,
     rlang,
-    stats
+    stats,
+    tidyr
 Suggests: 
     bslib,
     ggplot2,
@@ -46,3 +49,4 @@ VignetteBuilder:
 Config/testthat/edition: 3
 Encoding: UTF-8
 Config/roxygen2/version: 8.0.0
+RoxygenNote: 8.0.0

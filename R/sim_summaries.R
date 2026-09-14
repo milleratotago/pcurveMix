@@ -137,6 +137,7 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
 #' @returns Data frame with row for parameters and columns for the mean,
 #'  standard error, and (if requested) lower/upper quantiles of the
 #'  parameter estimates across samples.
+#' @importFrom rlang .data
 #' @export
 summarize_estimates_mn_sd_quan <- function(ests_df,
                                            confidence_level = 95,
@@ -146,10 +147,10 @@ summarize_estimates_mn_sd_quan <- function(ests_df,
       symmetric_tail_quantiles_from_confidence(confidence_level)
   # Remember summaries & quantiles are long-form data frames.
   summaries <- get_parm_summaries(ests_df, summary_fns = c(mean = mean, sd = sd))
-  tbl <- summaries %>% tidyr::pivot_wider(names_from = summary, values_from = value)
+  tbl <- summaries %>% tidyr::pivot_wider(names_from = .data$summary, values_from = .data$value)
   if (!identical(confidence_quantiles,NA)) {
     quantiles <- get_parm_quantiles(ests_df, quantiles = confidence_quantiles)
-    quantiles <- quantiles %>% tidyr::pivot_wider(names_from = quantile, values_from = value)
+    quantiles <- quantiles %>% tidyr::pivot_wider(names_from = .data$quantile, values_from = .data$value)
     tbl <- cbind(tbl, quantiles[,-1]) # Omit parameter column of quantiles
   }
   return( as.data.frame(tbl) )

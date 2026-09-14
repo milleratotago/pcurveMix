@@ -14,6 +14,7 @@ set_globals(
   small_rcond = NA,
   optim_starting_parms = NA,
   profileCI_args = NA,
+  fast_boot_jack = NA,
   reset_to_defaults = FALSE
 )
 }
@@ -45,12 +46,17 @@ at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5)
 
 \item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
 
+\item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
+and jackknifing should always run optim() starting from the maximum likelihood
+parameter values, which is faster than running it from the starting value
+grid given by optim_starting_parms,}
+
 \item{reset_to_defaults}{Boolean; if true, reset all values to their
 defaults before applying the other arguments}
 }
 \value{
 A list of the values of the global variables, after changing any
- of the values as indicated.
+of the values as indicated.
 }
 \description{
 Function to override defaults of some global variables.
