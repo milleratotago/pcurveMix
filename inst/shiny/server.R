@@ -91,11 +91,61 @@ server <- function(input, output) {
     output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE)
   } # do_jackknifing
 
+  do_bootstrapping <- function() {  # Parametric bootstrapping
+    if (!input$parametric_bootstrapping) {
+      v$n_boot_samples <- 0
+      return()
+    }
+    mu <- v$fit_results_list$mu
+    sigma <- v$fit_results_list$sigma
+    pi <- v$fit_results_list$pi
+    alpha <- v$fit_results_list$alpha
+    tails <- v$fit_results_list$tails
+    n_ps <- length(v$fit_results_list$check_ps$ps_in_bound)
+    v$n_boot_samples <- input$n_boot_samples
+    # NEWJEFF: cond_method & tol cannot be changed in next line; should be settable in environment
+    mat_of_ps <- generate_parametric_subsamples(v$n_boot_samples, n_ps, mu, sigma, pi, alpha, tails)
+    if (pcm_env$fast_boot_jack) {
+      start_list <- list(mu = v$fit_results_list$mu, sigma = v$fit_results_list$sigma, pi = v$fit_results_list$pi)
+    } else {
+      start_list <- pcm_env$optim_starting_parms
+    }
+    progressr::withProgressShiny(
+      message = "Parametric bootstrapping in progress...",
+      detail = "Starting...",
+      expr = {
+        ests_tbl <- fits_for_matrix(mat_of_ps,
+                                    alpha = v$fit_results_list$alpha,
+                                    tails = v$fit_results_list$tails,
+                                    alpha_sig = v$fit_results_list$alpha_sig,
+                                    want_optim_hessian = FALSE,
+                                    start_parms = start_list,
+                                    n_progress_bar_steps = 20)
+      }
+    )
+    v$boot_pct_converged <- 100 * mean(ests_tbl$converged)
+    v$boot_confidence_level <- input$boot_confidence_level / 100
+    v$boot_tbl <- summarize_estimates_mn_sd_quan(ests_tbl,
+                                                 confidence_level = input$boot_confidence_level)
+    original_ests <- fit_to_parms_vec(v$fit_results_list, want_converged = FALSE)
+    v$boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$boot_tbl$mean)
+    boot_title <- paste0("Parametric bootstrap analysis (",
+                         round(100*v$boot_confidence_level,2),
+                         "% confidence)")
+    output$bootstrap_title <- renderText(boot_title)
+    s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
+    output$n_boot_samples <- renderText(s1)
+    s2 <- paste0("* percent converged OK = ",round(v$boot_pct_converged,2))
+    output$boot_pct_converged <- renderText(s2)
+    output$bootstrap_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
+    # output$bootstrap_notes <- renderText(pcurveMix:::BOOTSTRAP_TABLE_NOTE)  # NEWJEFF
+  } # do_bootstrapping
+
   do_npbootstrapping <- function() {  # Nonparametric bootstrapping
     if (!input$nonparametric_bootstrapping) {
       v$np_n_boot_samples <- 0
       return()
-     }
+    }
     real_ps <- v$fit_results_list$check_ps$ps_in_bound
     full_sample_n <- length(real_ps)
     v$np_n_boot_samples <- input$np_n_boot_samples
@@ -120,14 +170,15 @@ server <- function(input, output) {
     )
     v$np_boot_pct_converged <- 100 * mean(ests_tbl$converged)
     v$np_boot_confidence_level <- input$np_boot_confidence_level / 100
-    v$np_boot_tbl <- summarize_estimates_mn_sd_quan(ests_tbl, confidence_level = input$np_boot_confidence_level)
+    v$np_boot_tbl <- summarize_estimates_mn_sd_quan(ests_tbl,
+                                                    confidence_level = input$np_boot_confidence_level)
     original_ests <- fit_to_parms_vec(v$fit_results_list, want_converged = FALSE)
     v$np_boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$np_boot_tbl$mean)
-    npboot_title <- paste0("Nonparametric bootstrapping analysis (",
+    npboot_title <- paste0("Nonparametric bootstrap analysis (",
                            round(100*v$np_boot_confidence_level,2),
                            "% confidence)")
     output$np_bootstrap_title <- renderText(npboot_title)
-    s1 <- paste0("* n nonparametric boot samples = ",v$np_n_boot_samples)
+    s1 <- paste0("* n bootstrap samples = ",v$np_n_boot_samples)
     output$np_n_boot_samples <- renderText(s1)
     s2 <- paste0("* percent converged OK = ",round(v$np_boot_pct_converged,2))
     output$np_boot_pct_converged <- renderText(s2)
@@ -172,38 +223,41 @@ server <- function(input, output) {
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_results_list)
       do_jackknifing()
+      do_bootstrapping()
       do_npbootstrapping()
-      if (input$parametric_bootstrapping) {
-        v$n_boot_samples <- input$n_boot_samples
-        v$boot_ci_confidence_level <- input$boot_confidence_level / 100
-      } else {
-        v$n_boot_samples <- 0
-      }
-      if (v$n_boot_samples > 0) {
-        progressr::withProgressShiny(
-          message = "Parametric bootstrapping in progress...",
-          detail = "Starting...",
-          expr = {
-            boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples) # , alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
-          }
-        )
 
-        boot_tail_prob <- (1 - v$boot_ci_confidence_level)/2
-        boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl,
-                                                 boot_ci_limits = c(boot_tail_prob, 1-boot_tail_prob) )
-        v$boot_pct_converged <- boot_list$pct_converged
-        v$boot_tbl <- boot_list$boot_tbl
-        v$boot_tbl[,-1] <- round(v$boot_tbl[,-1],3) # Round numeric columns to avoid line wrapping
-        boot_title <- paste0("Parametric bootstrapping analysis (",
-                             round(100*v$boot_ci_confidence_level,2),
-                             "% confidence)")
-        output$bootstrap_title <- renderText(boot_title)
-        s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
-        output$n_boot_samples <- renderText(s1)
-        s2 <- paste0("* percent converged OK = ",round(v$boot_pct_converged,2))
-        output$boot_pct_converged <- renderText(s2)
-        output$bootstrap_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
-      }
+      # if (input$parametric_bootstrapping) {  OBSOLETE
+      #   v$n_boot_samples <- input$n_boot_samples
+      #   v$boot_ci_confidence_level <- input$boot_confidence_level / 100
+      # } else {
+      #   v$n_boot_samples <- 0
+      # }
+      # if (v$n_boot_samples > 0) {
+      #   progressr::withProgressShiny(
+      #     message = "Parametric bootstrapping in progress...",
+      #     detail = "Starting...",
+      #     expr = {
+      #       boot_df <- pcurveMix::bootstrap(n_ps, v$fit_results_list, v$n_boot_samples) # , alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig)
+      #     }
+      #   )
+      #
+      #   boot_tail_prob <- (1 - v$boot_ci_confidence_level)/2
+      #   boot_list <- make_bootstrap_summary_list(boot_df, v$estimates_tbl,
+      #                                            boot_ci_limits = c(boot_tail_prob, 1-boot_tail_prob) )
+      #   v$boot_pct_converged <- boot_list$pct_converged
+      #   v$boot_tbl <- boot_list$boot_tbl
+      #   v$boot_tbl[,-1] <- round(v$boot_tbl[,-1],3) # Round numeric columns to avoid line wrapping
+      #   boot_title <- paste0("Parametric bootstrapping analysis (",
+      #                        round(100*v$boot_ci_confidence_level,2),
+      #                        "% confidence)")
+      #   output$bootstrap_title <- renderText(boot_title)
+      #   s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
+      #   output$n_boot_samples <- renderText(s1)
+      #   s2 <- paste0("* percent converged OK = ",round(v$boot_pct_converged,2))
+      #   output$boot_pct_converged <- renderText(s2)
+      #   output$bootstrap_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
+      # }
+
       profile_manager(v$fit_results_list)
       v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
       output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
@@ -287,27 +341,27 @@ server <- function(input, output) {
     output$profileCI_title <- renderText(profileCI_title)
     # tbl <- v$profileCI_std$tabl
     # v$profileCI_tbl <- tbl
-    ci_tbl <- data.frame(Parameter = c("mu", "sigma", "pi"))
+    ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"))
     ci_tbl <- cbind(ci_tbl,v$profileCI_std$bounds_matrix)
-    names(ci_tbl) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    names(ci_tbl) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
 
-    power_row <- data.frame(Parameter = "power",
+    power_row <- data.frame(parameter = "power",
                             c2 = v$profileCI_power$table$`95% CI lower`,
                             c3 = v$profileCI_power$table$`95% CI upper`)
-    names(power_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    names(power_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
     ci_tbl <- rbind(ci_tbl, power_row)
 
     if (fit_list$tails == 2) {
-      folded_normal_mu_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
+      folded_normal_mu_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
                                          c2 = v$profileCI_folded_normal_mu$table$`95% CI lower`,
                                          c3 = v$profileCI_folded_normal_mu$table$`95% CI upper`)
-      names(folded_normal_mu_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+      names(folded_normal_mu_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
       ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
 
-      folded_normal_sigma_row <- data.frame(Parameter = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
+      folded_normal_sigma_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
                                             c2 = v$profileCI_folded_normal_sigma$table$`95% CI lower`,
                                             c3 = v$profileCI_folded_normal_sigma$table$`95% CI upper`)
-      names(folded_normal_sigma_row) <- c("Parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+      names(folded_normal_sigma_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
       ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
     } # if tails == 2
     output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE)

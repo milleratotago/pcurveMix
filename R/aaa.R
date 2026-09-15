@@ -3,15 +3,24 @@
 # Constant strings used as labels.
 # Note that these constants are NOT available to the shiny app
 #  except via references like pcurveMix:::CI_LOWER_BOUND_LABEL
-CI_LOWER_BOUND_LABEL <- "lwr"
-CI_UPPER_BOUND_LABEL <- "upr"
+CI_LOWER_BOUND_LABEL <- "lower"
+CI_UPPER_BOUND_LABEL <- "upper"
 FOLDED_NORMAL_MU_LABEL <- "folded_normal_mu"
 FOLDED_NORMAL_SIGMA_LABEL <- "folded_normal_sigma"
 LIKELIHOOD_LABEL <- "log likelihood"
-BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL <- "bias_corrected_estimate"
+BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL <- "bc_estimate"
 START_MU_DEFAULT <- 2
 START_SIGMA_DEFAULT <- 1
 START_PI_DEFAULT <- 0.5
+# PARAMETER_ESTIMATES_NOTE <- paste("Wald_lower and Wald_upper", sep = "\n")  NEWJEFF: Did I handle confidence_level?
+# Be sure to "cat" rather than "print" this to console
+BOOTSTRAP_TABLE_NOTE <- paste("TABLE NOTES:",
+                              "- mean & sd are summaries of parameter estimates across bootstrap samples.",
+                              paste("- bias &",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"are estimated bias & bias-corrected parameter value"),
+                              paste0("- hw, ", CI_LOWER_BOUND_LABEL, ", & ", CI_UPPER_BOUND_LABEL,
+                                     " are half-width and bounds of t confidence interval for ",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"."),
+                              "- quantiles of bootstrap parameter estimates are bias-corrected.",
+                              sep = "\n")
 
 # This is not allowed here.
 # # Set up default console handler state for interactive work

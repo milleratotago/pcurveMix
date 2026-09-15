@@ -36,6 +36,7 @@ bootstrap <- function(n, fit, n_boot_samples,
   return(boot_df)
 }
 
+# NEWJEFF: OBSOLETE? BETTER TO USE SHINY VERSION
 #' Function to summarize the data frame produced by parametric or nonparametric bootstrapping.
 #' @param boot_df Output data frame produced by bootstrap() function
 #' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with

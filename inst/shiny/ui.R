@@ -119,7 +119,7 @@ ui <- tagList(
                    ## Jackknifing ====
 
                    h4(),
-                   checkboxInput("jackknifing", label = strong("Compute jackknifing for bias correction & confidence interval"), FALSE),
+                   checkboxInput("jackknifing", label = strong("Compute jackknifing for bias correction & confidence interval"), TRUE),
                    conditionalPanel(
                      condition = "input.jackknifing == true",
                      fluidRow(
@@ -136,7 +136,7 @@ ui <- tagList(
 
                    h4(), # I tried very (!!!) hard to indent the numericInput but never succeeded.
                    # Gemini suggested using bslib & layout_columns but these did not work
-                   checkboxInput("parametric_bootstrapping", label = strong("Compute parametric bootstrap confidence intervals"), FALSE),
+                   checkboxInput("parametric_bootstrapping", label = strong("Compute parametric bootstrap confidence intervals"), TRUE),
                    conditionalPanel(
                      condition = "input.parametric_bootstrapping == true",
                      fluidRow(
@@ -157,7 +157,7 @@ ui <- tagList(
                    ## Nonparametric bootstrapping ====
 
                    h4(),
-                   checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), FALSE),
+                   checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), TRUE),
                    conditionalPanel(
                      condition = "input.nonparametric_bootstrapping == true",
                      fluidRow(
@@ -176,7 +176,7 @@ ui <- tagList(
                    ## ...-------------------------------------------
                    ## ProfileCI ====
                    h4(),
-                   checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), FALSE),
+                   checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), TRUE),
                    conditionalPanel(
                      condition = "input.profile_ci == true",
                      fluidRow(
@@ -314,6 +314,9 @@ ui <- tagList(
                     ),
                     fluidRow(
                       column(12, tableOutput("bootstrap_tbl"))
+                    ),
+                    fluidRow(
+                      column(12,verbatimTextOutput("bootstrap_notes"))
                     )
                     , style = "margin-left: 0px;"
                   )  # end of div
