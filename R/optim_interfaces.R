@@ -32,7 +32,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   l <- real_to_nat_se_ci(opt$par, opt$hessian)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
-              se = l$se, ci95 = l$ci, logLik = -opt$value,
+              se = l$se, conf_int = l$ci, logLik = -opt$value,
               converged = (opt$convergence == 0))
   return(fit)
 }

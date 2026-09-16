@@ -167,7 +167,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   l <- real_to_nat_se_ci(opt$par, opt$hessian)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
-              se = l$se, ci95 = l$ci, logLik = -opt$value,
+              se = l$se, conf_int = l$ci, logLik = -opt$value,
               converged = (opt$convergence == 0))
   return(fit)
 }
@@ -176,7 +176,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
 #   if (!any(is.na(se))) {
 #     z <- 1.96
 #     ci <- cbind(est - z*se, est + z*se)
-#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c(CI_LOWER_BOUND_LABEL,CI_UPPER_BOUND_LABEL)
 #     ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
 #     ci["mu",]    <- pmax(ci["mu",], 0)
 #     ci["sigma",] <- pmax(ci["sigma",], 1e-6)
@@ -184,7 +184,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
 #     # Ensure that there is _something_ in these positions.
 #     se <- c(NA, NA, NA);
 #     ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
-#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c(CI_LOWER_BOUND_LABEL,CI_UPPER_BOUND_LABEL)
 #   }
 #   names(se) <- c("pi","mu","sigma")
 #   return( list(se = se, ci = ci) )
@@ -205,9 +205,9 @@ fit_to_estimates_tbl <- function(fit) {
   mle_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
     estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power),
-    Wald_SE   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
-    Wald_lwr  = c(if (!is.null(fit$ci95)) fit$ci95[, "lwr95"] else c(NA,NA,NA), NA),
-    Wald_upr  = c(if (!is.null(fit$ci95)) fit$ci95[, "upr95"] else c(NA,NA,NA), NA),
+    Wald_se   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
+    Wald_lwr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_LOWER_BOUND_LABEL] else c(NA,NA,NA), NA),
+    Wald_upr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_UPPER_BOUND_LABEL] else c(NA,NA,NA), NA),
     row.names = NULL
   )
   if (fit$tails == 2) {
@@ -216,13 +216,15 @@ fit_to_estimates_tbl <- function(fit) {
     folded_normal_cols <- data.frame(
       parameter = c(FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL),
       estimate  = c(folded_normal_mu, folded_normal_sigma),
-      Wald_SE   = c(NA, NA),
+      Wald_se   = c(NA, NA),
       Wald_lwr  = c(NA, NA),
       Wald_upr  = c(NA, NA),
       row.names = NULL
     )
     mle_tbl <- rbind(mle_tbl, folded_normal_cols)
   }
+  names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- paste0("Wald_",CI_LOWER_BOUND_LABEL)
+  names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- paste0("Wald_",CI_UPPER_BOUND_LABEL)
   mle_tbl <- mle_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
   return(mle_tbl)
 }

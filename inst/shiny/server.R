@@ -77,7 +77,7 @@ server <- function(input, output) {
     )
     v$n_jack_samples <- full_sample_n
     v$jack_pct_converged <- 100 * mean(ests_tbl$converged)
-    v$jack_confidence_level <- input$jack_confidence_level / 100
+    v$jack_confidence_level <- get_globals("confidence_level") / 100  # NEWJEFF: inconsistent to use 0-1 here
     summaries <- get_parm_summaries(ests_tbl)
     v$jack_tbl <- jackknife_computations(v$fit_results_list, summaries, full_sample_n)
     jack_title <- paste0("Jackknifing analysis (",
@@ -89,6 +89,8 @@ server <- function(input, output) {
     s2 <- paste0("* percent converged OK = ",round(v$jack_pct_converged,2))
     output$jack_pct_converged <- renderText(s2)
     output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE)
+    my_strings <- c("Hello", "there")
+    output$jackknife_notes <- renderUI( tags$ul( lapply(my_strings, tags$li) ) )
   } # do_jackknifing
 
   do_bootstrapping <- function() {  # Parametric bootstrapping
@@ -124,9 +126,9 @@ server <- function(input, output) {
       }
     )
     v$boot_pct_converged <- 100 * mean(ests_tbl$converged)
-    v$boot_confidence_level <- input$boot_confidence_level / 100
+    v$boot_confidence_level <- get_globals("confidence_level") / 100  # NEWJEFF: inconsistent to use 0-1 here
     v$boot_tbl <- summarize_estimates_mn_sd_quan(ests_tbl,
-                                                 confidence_level = input$boot_confidence_level)
+                                                 confidence_level = v$boot_confidence_level)
     original_ests <- fit_to_parms_vec(v$fit_results_list, want_converged = FALSE)
     v$boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$boot_tbl$mean)
     boot_title <- paste0("Parametric bootstrap analysis (",
@@ -169,9 +171,9 @@ server <- function(input, output) {
       }
     )
     v$np_boot_pct_converged <- 100 * mean(ests_tbl$converged)
-    v$np_boot_confidence_level <- input$np_boot_confidence_level / 100
+    v$np_boot_confidence_level <- get_globals("confidence_level") / 100  # NEWJEFF: inconsistent to use 0-1 here
     v$np_boot_tbl <- summarize_estimates_mn_sd_quan(ests_tbl,
-                                                    confidence_level = input$np_boot_confidence_level)
+                                                    confidence_level = v$np_boot_confidence_level)
     original_ests <- fit_to_parms_vec(v$fit_results_list, want_converged = FALSE)
     v$np_boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$np_boot_tbl$mean)
     npboot_title <- paste0("Nonparametric bootstrap analysis (",
@@ -297,7 +299,7 @@ server <- function(input, output) {
       v$profile_analysis <- 1
     }
     # Computations:
-    v$profile_ci_confidence_level <- input$profile_confidence_level / 100
+    v$profile_ci_confidence_level <- get_globals("confidence_level") / 100  # NEWJEFF: inconsistent to use 0-1 here
     notif_id <- "profileCI_std_notif_id"
     showNotification(
       "Profiling mu, sigma, and pi ...",

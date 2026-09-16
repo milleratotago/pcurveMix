@@ -1,5 +1,8 @@
 # aaa.R
 
+# Notes:
+#  "parameter" is used as a literal in many places; dangerous to change.
+
 # Constant strings used as labels.
 # Note that these constants are NOT available to the shiny app
 #  except via references like pcurveMix:::CI_LOWER_BOUND_LABEL
@@ -12,14 +15,14 @@ BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL <- "bc_estimate"
 START_MU_DEFAULT <- 2
 START_SIGMA_DEFAULT <- 1
 START_PI_DEFAULT <- 0.5
-# PARAMETER_ESTIMATES_NOTE <- paste("Wald_lower and Wald_upper", sep = "\n")  NEWJEFF: Did I handle confidence_level?
+# OBSOLETE PARAMETER_ESTIMATES_NOTE <- paste("Wald_lower and Wald_upper", sep = "\n")  NEWJEFF: Did I handle confidence_level?
 # Be sure to "cat" rather than "print" this to console
 BOOTSTRAP_TABLE_NOTE <- paste("TABLE NOTES:",
                               "- mean & sd are summaries of parameter estimates across bootstrap samples.",
-                              paste("- bias &",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"are estimated bias & bias-corrected parameter value"),
+                              paste("- bias &",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"are estimated bias & bias-corrected parameter value."),
                               paste0("- hw, ", CI_LOWER_BOUND_LABEL, ", & ", CI_UPPER_BOUND_LABEL,
                                      " are half-width and bounds of t confidence interval for ",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"."),
-                              "- quantiles of bootstrap parameter estimates are bias-corrected.",
+                              "- bias-corrected quantiles of bootstrap parameter estimates.",
                               sep = "\n")
 
 # This is not allowed here.
@@ -49,6 +52,7 @@ initialize_globals <- function() {
   pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08,
                                  lb = rep(-200,3), ub = rep(200,3) )
   pcm_env$fast_boot_jack <- TRUE
+  pcm_env$confidence_level <- 95
 }
 
 #' Function to construct a grid of parameter values to use as starting points
@@ -71,6 +75,7 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 }
 
 #' Function to override defaults of some global variables.
+#' @param confidence_level Used in computing confidence intervals (default = 95)
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-12)
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
@@ -98,13 +103,17 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #' @returns A list of the values of the global variables, after changing any
 #'  of the values as indicated.
 #' @export
-set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
+#' @examples
+#' set_globals(confidence_level = 99, fast_boot_jack = FALSE)
+set_globals <- function(confidence_level = NA,
+                        edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_control = NA,
                         small_p_bin_cutoff = NA,
                         MLSEh = NA, small_rcond = NA,
                         optim_starting_parms = NA, profileCI_args = NA,
-                        fast_boot_jack = NA,  # NEWJEFF: added env variable
+                        fast_boot_jack = NA,
                         reset_to_defaults = FALSE) {
   if (reset_to_defaults) initialize_globals()
+  if (!is.na(confidence_level)) pcm_env$confidence_level <- confidence_level
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
@@ -115,14 +124,31 @@ set_globals <- function(edge_p = NA, p_seq_pdf = NA, p_seq_cdf = NA, optim_contr
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
   if (any(!is.na(profileCI_args))) pcm_env$profileCI_args <- profileCI_args
   if (!is.na(fast_boot_jack)) pcm_env$fast_boot_jack <- fast_boot_jack
-  l <- list(edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
+  l <- list(confidence_level = pcm_env$confidence_level,
+            edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
             p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
             small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
             MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond,
             optim_starting_parms = pcm_env$optim_starting_parms,
             profileCI_args = pcm_env$profileCI_args,
-            fast_boot_jack = fast_boot_jack)
+            fast_boot_jack = pcm_env$fast_boot_jack)
   invisible(l)
+}
+
+#' Return the value of a single environment variable or a
+#'  list with the values of multiple variables.
+#' @param variable_names A string or vector of strings indicating the variables
+#'  whose values are to be returned
+#' @returns The value or list of values for the named variable(s)
+#' @export
+#' @examples
+#' # current_confidence_level <- get_globals("confidence_level")
+get_globals <- function(variable_names = c() ) {
+  n_vars <- length(variable_names)
+  if (n_vars == 0) return( set_globals() )
+  if (n_vars == 1) { return(pcm_env[[variable_names]]) }
+  l <- pcm_env[variable_names]
+  return(l)
 }
 
 # Next line suppresses package check warning about "density"
@@ -142,7 +168,7 @@ utils::globalVariables(c("density"))
   packageStartupMessage(s) # NEWJEFF combine strings into one call and export it in a separate function available to users with just a short note here to call that function for help
   packageStartupMessage('Get help with these RStudio console commands:')
   packageStartupMessage('  ?',pkgname,'    # shows a summary of the package.')
-  packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
+  # NEWJEFF packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
   packageStartupMessage('  browseVignettes(',pkgname,')    # shows a catalog of all vignettes.')
   packageStartupMessage('  help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
   packageStartupMessage('  run_shiny_app()  # starts the shiny app')

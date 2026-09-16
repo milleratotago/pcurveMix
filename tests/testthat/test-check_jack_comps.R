@@ -1,7 +1,7 @@
 test_that("jackknife computations are correct", {
   ests_orig <- list(sample_var = 11.6)
   jacksample_ests <- c(9.5, 13.25, 14.1875, 14.1875, 3.25)
-  jackknife_summaries <- data.frame(parm = c("sample_var", "sample_var"),
+  jackknife_summaries <- data.frame(parameter = c("sample_var", "sample_var"),
                                     summary = c("mean", "sd"),
                                     value = c(10.875, sd(jacksample_ests)))
   full_sample_n <- 5
@@ -12,6 +12,6 @@ test_that("jackknife computations are correct", {
   expect_equal(answers$bias, -2.9, tolerance = 0.001)
   expect_equal(answers$bias_corrected_estimate, 14.5, tolerance = 0.001)
   expect_equal(answers$jack_se, 8.3722, tolerance = 0.0001)
-  expect_equal(answers$lower_bound, -1.9095, tolerance = 0.0001)
-  expect_equal(answers$upper_bound, 30.9095, tolerance = 0.0001)
+  expect_equal(answers[[CI_LOWER_BOUND_LABEL]], -1.9095, tolerance = 0.0001)
+  expect_equal(answers[[CI_UPPER_BOUND_LABEL]], 30.9095, tolerance = 0.0001)
 })

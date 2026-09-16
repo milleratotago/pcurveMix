@@ -83,7 +83,8 @@ real_to_nat_se_ci <- function(par_hat, H) {
   # As a result, the CIs for mu, sigma, and pi are generally asymmetric.
   # They also automatically respect the parameter boundaries.
 
-  z <- stats::qnorm(0.975)
+  upper_q_for_ci <- 1 - (1 - pcm_env$confidence_level/100) / 2
+  z <- stats::qnorm(upper_q_for_ci)
 
   # CI for log(mu).
   ci_log_mu <- c(
@@ -109,7 +110,7 @@ real_to_nat_se_ci <- function(par_hat, H) {
   ci_pi    <- stats::plogis(ci_logit_pi)
 
   ci <- rbind(ci_pi, ci_mu, ci_sigma)
-  rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c("lwr95","upr95")
+  rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c(CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
 
   names(se) <- c("pi", "mu", "sigma")
 

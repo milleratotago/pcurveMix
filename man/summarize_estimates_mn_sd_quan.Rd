@@ -15,12 +15,12 @@ summarize_estimates_mn_sd_quan(
 \item{ests_df}{Data frame with rows for samples and columns for the
 parameters estimated from each sample.}
 
-\item{confidence_level}{Confidence level used to find confidence interval
-quantiles. If <= 0, don't compute quantiles.}
+\item{confidence_level}{Confidence level used to find t confidence interval
+bounds & quantile bounds. If <= 0, don't compute bounds}
 
 \item{confidence_quantiles}{A vector with the two limiting proportions
 (lower, upper) for bootstrap confidence intervals (default = NA, in
-whicn case these are determined symmetrically from the confidence level)}
+which case these are determined symmetrically from the confidence level)}
 }
 \value{
 Data frame with row for parameters and columns for the mean,

@@ -5,6 +5,7 @@
 \title{Function to override defaults of some global variables.}
 \usage{
 set_globals(
+  confidence_level = NA,
   edge_p = NA,
   p_seq_pdf = NA,
   p_seq_cdf = NA,
@@ -19,6 +20,8 @@ set_globals(
 )
 }
 \arguments{
+\item{confidence_level}{Used in computing confidence intervals (default = 95)}
+
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-12)}
 
@@ -60,4 +63,7 @@ of the values as indicated.
 }
 \description{
 Function to override defaults of some global variables.
+}
+\examples{
+set_globals(confidence_level = 99, fast_boot_jack = FALSE)
 }

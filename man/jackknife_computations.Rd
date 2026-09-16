@@ -3,7 +3,7 @@
 \name{jackknife_computations}
 \alias{jackknife_computations}
 \title{Function to make a data frame with rows for parms and cols
-for jackknife stats associated with each parm.}
+for jackknife stats associated with each parameter.}
 \usage{
 jackknife_computations(
   ests_orig,
@@ -36,5 +36,5 @@ bias, jack_se, lower_bound, and upper_bound
 }
 \description{
 Function to make a data frame with rows for parms and cols
-for jackknife stats associated with each parm.
+for jackknife stats associated with each parameter.
 }

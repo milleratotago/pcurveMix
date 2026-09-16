@@ -70,7 +70,7 @@ make_bootstrap_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limi
   boot_mn <- sapply(boot_df, mean)
   boot_se <- sapply(boot_df, stats::sd)
   boot_ci <- t(sapply(boot_df, stats::quantile, probs = boot_ci_limits))
-  colnames(boot_ci) <- c("lwr","upr")
+  colnames(boot_ci) <- c(CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
 
   use_fn <- "folded_normal_mu" %in% names(boot_df)
   parameters <- c("pi","mu","sigma","power")
