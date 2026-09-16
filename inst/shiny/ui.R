@@ -221,7 +221,15 @@ ui <- tagList(
                                       "PDF" = "pdf",
                                       "Word (DOCX)" = "docx")),
       ),
-      column(4, downloadButton("btnReport","Download results"))
+
+      # This was previously a fluidRow with 2 4-column buttons
+      # but they appeared above/below rather than left/right;
+      # I don't know why.
+      div(
+        style = "display: flex; gap: 20px;",
+        downloadButton("btnReport","Download results"),
+        actionButton("btnquit","Quit")
+      ) # div
       ## end Document download button ====
 
     ) # wellPanel

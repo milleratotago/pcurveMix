@@ -111,7 +111,7 @@ print(knitr::kable(params$np_boot_tbl))
 ## Profile analysis
 ```
 
-```{r profile_tbl, echo=FALSE, eval = params$profile_analysis > 0}
+```{r profile_tbl, echo=FALSE, results='asis', eval = params$profile_analysis > 0}
 print(knitr::kable(params$profile_tbl))
 ```
 
