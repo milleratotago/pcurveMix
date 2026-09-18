@@ -7,6 +7,7 @@
 get_parm_quantiles(
   estimates,
   parms_to_summarize = "All",
+  wide_table_output = TRUE,
   quantiles = c(0.025, 0.975),
   type = 7
 )
@@ -18,6 +19,8 @@ with rows for datasets and cols for parameters}
 \item{parms_to_summarize}{String vector with names of parameters to estimate
 (default = "All")}
 
+\item{wide_table_output}{Produce wide table by default TRUE, otherwise long}
+
 \item{quantiles}{Vector of 0-1 quantile values to be returned
 (default = c(0.025, 0.975))}
 
@@ -25,7 +28,7 @@ with rows for datasets and cols for parameters}
 (see quantile function; default = 7)}
 }
 \value{
-long-format data frame with cols for quantile & parameter
+wide- or long-format data frame with cols for quantile & parameter
 }
 \description{
 Compute a long-format data frame with quantile values for each parameter

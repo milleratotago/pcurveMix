@@ -9,17 +9,18 @@ params:
   tails : NA
   descriptor_tbl: NA
   estimates_tbl: NA
+  estimates_notes: NA
   pdf_plot: NA
   cdf_plot: NA
   n_jack_samples: NA
-  jack_pct_converged: NA
   jack_tbl: NA
+  jack_notes: NA
   n_boot_samples: NA
-  boot_pct_converged: NA
   boot_tbl: NA
+  boot_notes: NA
   np_n_boot_samples: NA
-  np_boot_pct_converged: NA
   np_boot_tbl: NA
+  np_boot_notes: NA
   profile_analysis: NA
   profile_tbl: NA
   profile_mu_plot: NA
@@ -48,6 +49,10 @@ print(knitr::kable(params$descriptor_tbl))
 ```{r print_parameter_estimates, echo=FALSE, results='asis'}
 print(knitr::kable(params$estimates_tbl))
 ```
+```{r echo = FALSE}
+bullet_list <- paste("-", params$estimates_notes, collapse = "\n")  # paste adds space after "-"
+knitr::asis_output(bullet_list)
+```
 
 ## Observed/predicted PDFs:
 
@@ -67,28 +72,24 @@ plot(params$cdf_plot)
 ```{asis, echo = params$n_jack_samples > 0}
 ## Jackknifing analysis
 ```
-
-```{r echo=FALSE, results='asis', eval = params$n_jack_samples > 0}
-cat(paste0("* n jackknife samples = ",params$n_jack_samples,"\n"))
-cat(paste0("* percent converged = ",params$jack_pct_converged,"\n"))
-```
-
 ```{r print_jack_tbl, echo=FALSE, results='asis', eval = params$n_jack_samples > 0}
 print(knitr::kable(params$jack_tbl))
+```
+```{r echo = FALSE}
+bullet_list <- paste("-", params$jack_notes, collapse = "\n")  # paste adds space after "-"
+knitr::asis_output(bullet_list)
 ```
 
 
 ```{asis, echo = params$n_boot_samples > 0}
 ## Parametric bootstrapping analysis
 ```
-
-```{r echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
-cat(paste0("* n bootstrap samples = ",params$n_boot_samples,"\n"))
-cat(paste0("* percent converged = ",params$boot_pct_converged,"\n"))
-```
-
 ```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
 print(knitr::kable(params$boot_tbl))
+```
+```{r echo = FALSE}
+bullet_list <- paste("-", params$boot_notes, collapse = "\n")  # paste adds space after "-"
+knitr::asis_output(bullet_list)
 ```
 
 
@@ -96,13 +97,12 @@ print(knitr::kable(params$boot_tbl))
 ## Nonparametric bootstrapping analysis
 ```
 
-```{r echo=FALSE, results='asis', eval = params$np_n_boot_samples > 0}
-cat(paste0("* n bootstrap samples = ",params$np_n_boot_samples,"\n"))
-cat(paste0("* percent converged = ",params$np_boot_pct_converged,"\n"))
-```
-
 ```{r print_np_boot_tbl, echo=FALSE, results='asis', eval = params$np_n_boot_samples > 0}
 print(knitr::kable(params$np_boot_tbl))
+```
+```{r echo = FALSE}
+bullet_list <- paste("-", params$np_boot_notes, collapse = "\n")  # paste adds space after "-"
+knitr::asis_output(bullet_list)
 ```
 
 

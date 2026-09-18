@@ -174,3 +174,10 @@ fit_list_to_df <- function(fit_list) {
   return(df)
 }
 
+bias_corrected_name <- function(s) {
+  return(paste0("bc_",s))
+}
+
+quantile_name <- function(base_name) {
+  q_name <- paste0("q_", base_name)
+}

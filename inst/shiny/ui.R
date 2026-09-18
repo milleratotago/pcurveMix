@@ -11,10 +11,9 @@ inline_numericInput=function(ni){
   tags$div( class="form-inline",ni)
 }
 
-button_width <- "250px"
-
-# Reusable helper function for accepting horizontal numeric inputs ====
-inlineNumericInput <- function(inputId, label, value, min = NA, max = NA, step = NA, width = "70px", label_width = "120px") {
+# Reusable helper function for accepting horizontal numeric inputs
+inlineNumericInput <- function(inputId, label, value, min = NA, max = NA,
+                               step = NA, width = "70px", label_width = "120px") {
   div(
     style = "display: flex; align-items: center; margin-bottom: 10px;",
     tags$label(
@@ -34,7 +33,6 @@ inlineNumericInput <- function(inputId, label, value, min = NA, max = NA, step =
   )
 }
 
-# ui as tagList ====
 ui <- tagList(
 
   shinyjs::useShinyjs(),
@@ -84,6 +82,8 @@ ui <- tagList(
       )
     ), # fluidRow
 
+
+    # wellPanel: Specify p values ====
     wellPanel(
       h2("p values to be fit:"),
       ## Input file ====
@@ -145,62 +145,70 @@ ui <- tagList(
       ), # conditionalPanel
       ## end Adjust starting values ====
 
-      ## -------------------------------------------
+    # end Specify p values panel
       actionButton("btnFit","Fit model & compute requested CIs")
     ), # wellPanel Analysis options
-
-    # Results panel ====
+    #                                                                ====
+    # wellPanel: Results ====
     wellPanel(
+      #                                                              ====
 
-      ## ML estimates table & predicted/observed pdfs/cdfs ====
+      # ML estimates table & predicted/observed pdfs/cdfs ====
       h1(textOutput("model_fit_title")),
       tableOutput("descriptor_tbl"),
       h3(textOutput("parameter_estimates_title")),
       tableOutput("estimates_tbl"),
+      uiOutput("estimates_notes"),
+
       h3(textOutput("predicted_pdfs_title")),
       plotOutput("pdf_plot"),
       h3(textOutput("predicted_cdfs_title")),
       plotOutput("cdf_plot"),
-      ## end ML estimates table & predicted/observed pdfs/cdfs ====
+      # end ML estimates table & predicted/observed pdfs/cdfs ====
 
-      ## Jackknife results ====
+
+      #                                                              ====
+      # Jackknife results ====
       conditionalPanel(
+        hr(),
         condition = "input.jackknifing == true",
         h3(textOutput("jackknife_title")),
-        h5(textOutput("n_jack_samples")),
-        h5(textOutput("jack_pct_converged")),
         tableOutput("jackknife_tbl"),
         uiOutput("jackknife_notes")
       ),  # end of conditionalPanel
-      ## end Jackknife results ====
+      # end Jackknife results ====
 
-      ## Bootstrap results (parametric) results ====
+      #                                                              ====
+      # Bootstrap results (parametric) results ====
       conditionalPanel(
         condition = "input.parametric_bootstrapping == true",
-        h3(textOutput("bootstrap_title")),
-        h5(textOutput("n_boot_samples")),
-        h5(textOutput("boot_pct_converged")),
-        tableOutput("bootstrap_tbl"),
-        uiOutput("bootstrap_notes")
+        h3(textOutput("boot_title")),
+        # h5(textOutput("n_boot_samples")),
+        # h5(textOutput("boot_pct_converged")),
+        tableOutput("boot_tbl"),
+        uiOutput("boot_notes")
       ),  # end of conditionalPanel
-      ## end Bootstrap results (parametric) ====
+      # end Bootstrap results (parametric) ====
 
-      ## Bootstrap results (nonparametric) results ====
+      #                                                              ====
+      # Bootstrap results (nonparametric) results ====
       conditionalPanel(
         condition = "input.nonparametric_bootstrapping == true",
-        h3(textOutput("np_bootstrap_title")),
-        h5(textOutput("np_n_boot_samples")),
-        h5(textOutput("np_boot_pct_converged")),
-        tableOutput("np_bootstrap_tbl"),
-        uiOutput("np_bootstrap_notes")
+        h3(textOutput("np_boot_title")),
+        # h5(textOutput("np_n_boot_samples")),
+        # h5(textOutput("np_boot_pct_converged")),
+        tableOutput("np_boot_tbl"),
+        uiOutput("np_boot_notes")
       ),  # end of conditionalPanel
-      ## end Bootstrap results (nonparametric) ====
+      # end Bootstrap results (nonparametric) ====
 
-      ## Profile confidence interval results ====
+      #                                                              ====
+      # Profile confidence interval results ====
       conditionalPanel(
         condition = "input.profile_ci",
         h3(textOutput("profileCI_title")),
         tableOutput("profileCI_tbl"),
+        uiOutput("profile_notes"),
         plotOutput("profile_mu_plot"),
         plotOutput("profile_sigma_plot"),
         plotOutput("profile_pi_plot"),
@@ -208,11 +216,12 @@ ui <- tagList(
         plotOutput("profile_folded_normal_mu_plot"),
         plotOutput("profile_folded_normal_sigma_plot")
       ),
-      ## ... ====
+      # end Profile confidence interval results ====
 
       h3(verbatimTextOutput("optim_failed_output")), # NEWJEFF: Replace with showmessage
 
-      ## Document download button ====
+      #                                                              ====
+      # Download & Quit buttons ====
       hr(),
       h4(),
       column(6, # User selection for the format
@@ -230,7 +239,7 @@ ui <- tagList(
         downloadButton("btnReport","Download results"),
         actionButton("btnquit","Quit")
       ) # div
-      ## end Document download button ====
+      # end Download & Quit buttons ====
 
     ) # wellPanel
     # end Results panel ====

@@ -25,7 +25,7 @@ test_that("one-tailed pdf & cdf", {
   f_alt_pdf <- function(p, mu, sigma) {
     # p: one-sided p-values (upper tail), p = 1 - Phi(Z)
     p <- pmin(pmax(as.numeric(p), 1e-12), 1 - 1e-12)
-    z <- qnorm(1 - p)                # Z = Phi^{-1}(1 - p)
+    z <- stats::qnorm(1 - p)                # Z = Phi^{-1}(1 - p)
     s1 <- sqrt(1 + sigma^2)
 
     # f_P(p) = (1/s1) * phi((z-mu)/s1) / phi(z)
@@ -38,7 +38,7 @@ test_that("one-tailed pdf & cdf", {
     # CDF von p unter H1: F_P(p) = P(p_val <= p)
     # p = 1 - Phi(Z), p klein <-> Z groß (rechter Rand)
     p <- pmin(pmax(as.numeric(p), 1e-12), 1 - 1e-12)
-    z_thr <- qnorm(1 - p)                # Schwelle in Z-Skala
+    z_thr <- stats::qnorm(1 - p)                # Schwelle in Z-Skala
     s1 <- sqrt(1 + sigma^2)
     # P(Z >= z_thr) = 1 - Phi((z_thr - mu)/s1)
     1 - pnorm((z_thr - mu) / s1)

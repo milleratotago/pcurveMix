@@ -6,6 +6,7 @@
 \usage{
 set_globals(
   confidence_level = NA,
+  bias_correct_ci_bounds = NA,
   edge_p = NA,
   p_seq_pdf = NA,
   p_seq_cdf = NA,
@@ -21,6 +22,9 @@ set_globals(
 }
 \arguments{
 \item{confidence_level}{Used in computing confidence intervals (default = 95)}
+
+\item{bias_correct_ci_bounds}{Boolean; if true (default), confidence interval bounds
+are adjusted to correct for estimated bias.}
 
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-12)}

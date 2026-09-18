@@ -6,7 +6,7 @@
 \usage{
 bootstrap(
   n,
-  fit,
+  fit_list,
   n_boot_samples,
   show_progress_bar = TRUE,
   cond_method = "rejection",
@@ -16,7 +16,7 @@ bootstrap(
 \arguments{
 \item{n}{Number of random p values to be generated}
 
-\item{fit}{Fitted model returned by fit_p_curve NEWJEFF: fit_list? with alpha/tails/sig?}
+\item{fit_list}{Fitted model list returned by fit_p_curve}
 
 \item{n_boot_samples}{Number of bootstrap samples to take}
 

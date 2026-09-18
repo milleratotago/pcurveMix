@@ -163,7 +163,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   parms <- reals_to_parms(real_parms)
   # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NWJEFF These look wrong
   # est <- c(parms$pi, parms$mu, parms$sigma)
-  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
+  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: OBSOLETE make_se_ci no longer used
   l <- real_to_nat_se_ci(opt$par, opt$hessian)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
@@ -223,8 +223,9 @@ fit_to_estimates_tbl <- function(fit) {
     )
     mle_tbl <- rbind(mle_tbl, folded_normal_cols)
   }
-  names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- paste0("Wald_",CI_LOWER_BOUND_LABEL)
-  names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- paste0("Wald_",CI_UPPER_BOUND_LABEL)
+  names(mle_tbl)[names(mle_tbl) == "Wald_se"] <- "se"
+  names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- CI_LOWER_BOUND_LABEL # paste0("Wald_",CI_LOWER_BOUND_LABEL)
+  names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- CI_UPPER_BOUND_LABEL # paste0("Wald_",CI_UPPER_BOUND_LABEL)
   mle_tbl <- mle_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
   return(mle_tbl)
 }

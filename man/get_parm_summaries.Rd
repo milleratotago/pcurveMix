@@ -10,7 +10,8 @@ get_parm_summaries(
   parms_to_summarize = "All",
   summary_fns = list(mean = mean, median = stats::median, sd = stats::sd, iqr =
     EnvStats::iqr, min = min, max = max),
-  summary_fn_names = NULL
+  summary_fn_names = NULL,
+  wide_table_output = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ sd = sd, iqr, min = min, max = max))}
 
 \item{summary_fn_names}{Optional list of names for the summary function
 values (default = NULL, in which case string function name is used)}
+
+\item{wide_table_output}{Produce wide table by default TRUE, otherwise long}
 }
 \value{
 long-format data frame with cols for parameter, summary type & value

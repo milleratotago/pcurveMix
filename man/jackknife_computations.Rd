@@ -10,7 +10,7 @@ jackknife_computations(
   jackknife_summaries,
   full_sample_n,
   t_or_z = 2,
-  center_ci_at_est_orig = TRUE
+  center_ci_at_est_orig = FALSE
 )
 }
 \arguments{
