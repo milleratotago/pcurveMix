@@ -40,7 +40,7 @@ bootstrap <- function(n, fit_list, n_boot_samples,
 # # Compute named vector of boot_mean, boot_sd, bias, bc_estimate,
 # #  not_bc_lower, not_bc_upplower
 # boot_comps1 <- function(est_orig, boot_mean, boot_sd, full_sample_n, t_or_z = 2,
-#                              center_ci_at_est_orig = FALSE) {
+#                              bias_correct_ci_bounds = TRUE) {
 #    tbl$bias <- 999
 #    tbl$bc_estimate <- est_orig - tbl$bias
 #    # compute CI bounds relative to est_orig
@@ -52,7 +52,7 @@ bootstrap <- function(n, fit_list, n_boot_samples,
 #    upper_name <- CI_UPPER_BOUND_LABEL
 #    q_lower_name <- quantile_name(CI_LOWER_BOUND_LABEL)
 #    q_upper_name <- quantile_name(CI_UPPER_BOUND_LABEL)
-#    if (!center_ci_at_est_orig) {
+#    if (bias_correct_ci_bounds) {
 #      # subtract bias
 #      lower <- lower - bias
 #      upper <- upper - bias
@@ -155,10 +155,10 @@ make_boot_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limits = 
   }
   boot_tbl <- data.frame(
     parameter = parameters,
-    Boot_Mean = round(boot_mn[parameters], 6),
-    Boot_SE   = round(boot_se[parameters], 6),
-    Boot_lwr  = round(boot_ci[parameters, CI_LOWER_BOUND_LABEL], 6),
-    Boot_upr  = round(boot_ci[parameters, CI_UPPER_BOUND_LABEL], 6),
+    Boot_Mean = round(boot_mn[parameters], pcm_env$round_to),
+    Boot_SE   = round(boot_se[parameters], pcm_env$round_to),
+    Boot_lwr  = round(boot_ci[parameters, CI_LOWER_BOUND_LABEL], pcm_env$round_to),
+    Boot_upr  = round(boot_ci[parameters, CI_UPPER_BOUND_LABEL], pcm_env$round_to),
     row.names = NULL
   )
 

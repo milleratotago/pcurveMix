@@ -54,6 +54,7 @@ initialize_globals <- function() {
   pcm_env$fast_boot_jack <- TRUE
   pcm_env$confidence_level <- 95  # NOTE ALWAYS ON 0-100 scale
   pcm_env$bias_correct_ci_bounds <- TRUE
+  pcm_env$round_to <- 3
 }
 
 #' Function to construct a grid of parameter values to use as starting points
@@ -77,6 +78,7 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 
 #' Function to override defaults of some global variables.
 #' @param confidence_level Used in computing confidence intervals (default = 95)
+#' @param round_to Number of decimal places to display (default = 3)
 #' @param bias_correct_ci_bounds Boolean; if true (default), confidence interval bounds
 #'  are adjusted to correct for estimated bias.
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
@@ -109,6 +111,7 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #' @examples
 #' set_globals(confidence_level = 99, fast_boot_jack = FALSE)
 set_globals <- function(confidence_level = NA,
+                        round_to = NA,
                         bias_correct_ci_bounds = NA,
                         edge_p = NA, p_seq_pdf = NA,
                         p_seq_cdf = NA, optim_control = NA,
@@ -119,6 +122,7 @@ set_globals <- function(confidence_level = NA,
                         reset_to_defaults = FALSE) {
   if (reset_to_defaults) initialize_globals()
   if (!is.na(confidence_level)) pcm_env$confidence_level <- confidence_level
+  if (!is.na(round_to)) pcm_env$round_to <- round_to
   if (!is.na(bias_correct_ci_bounds)) pcm_env$bias_correct_ci_bounds <- bias_correct_ci_bounds
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf

@@ -85,13 +85,13 @@ get_parm_quantiles <- function(estimates, parms_to_summarize = "All",
 }
 
 jackknife_comps1 <- function(est_orig, jack_mean, jack_sd, full_sample_n, t_or_z = 2,
-                             center_ci_at_est_orig = FALSE) {  # NEWJEFF: bias_corrected though not boot
+                             bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds) {
   bias <- (full_sample_n - 1) * (jack_mean - est_orig)
   bias_corrected_estimate <- est_orig - bias
-  if (center_ci_at_est_orig) {
-    center_ci <- est_orig
-  } else {
+  if (bias_correct_ci_bounds) {
     center_ci <- bias_corrected_estimate
+  } else {
+    center_ci <- est_orig
   }
   jack_se <- jack_sd * (full_sample_n - 1) /  sqrt(full_sample_n)
   lower_bound <- center_ci - t_or_z * jack_se
@@ -114,14 +114,13 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_sd, full_sample_n, t_or_z
 #'  which est_orig values were computed
 #' @param t_or_z Multiplier of the jackknife standard error used to compute
 #'  confidence interval halfwidth
-#' @param center_ci_at_est_orig Boolean indicating whether CI is centered
-#'  at original estimate (default = TRUE) or at the mean of the jackknife
-#'  estimates (when FALSE)
+#' @param bias_correct_ci_bounds Boolean indicating whether confidence interval
+#'  bounds are corrected for the bias in the original estimate (default = TRUE)
 #' @returns data frame with rows for parms and cols for bias_corrected_estimate,
 #'  bias, jack_se, lower_bound, and upper_bound
 #' @export
 jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n, t_or_z = 2,
-                                   center_ci_at_est_orig = FALSE) { # NEWJEFF: Provide user control over center_ci;  bias_corrected though not boot
+                                   bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds) {
   parms_to_summarize <- unique(jackknife_summaries$parameter)
   jack_df <- data.frame()
   for (parm in parms_to_summarize) {
@@ -131,7 +130,7 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
     parm_jack_sd <- jackknife_summaries$sd[jackknife_summary_row]
     jack_1_parm <- jackknife_comps1(parm_est_orig, parm_jack_mean, parm_jack_sd,
                                     full_sample_n, t_or_z = t_or_z,
-                                    center_ci_at_est_orig = center_ci_at_est_orig)
+                                    bias_correct_ci_bounds = bias_correct_ci_bounds)
     jack1_df <- cbind( data.frame(parameter = parm), jack_1_parm)
     jack_df <- rbind(jack_df, jack1_df)
   }

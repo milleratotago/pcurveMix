@@ -3,7 +3,19 @@
 # Note: This file uses pcurveMix::: references to unexported pcurveMix
 #  constants and functions; the shiny can't see those otherwise.
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+
+  # Import some analysis parameters from the package environment
+  # and save them as "entry" variables so that they can be restored
+  # when the shiny app finishes.
+  entry_confidence_level <- pcm_env$confidence_level
+  entry_round_to <- pcm_env$round_to
+  entry_fast_boot_jack <- pcm_env$fast_boot_jack
+  entry_bias_correct_ci_bounds <- pcm_env$bias_correct_ci_bounds
+  updateNumericInput(session = session, inputId = "confidence_level", value = pcm_env$confidence_level)
+  updateNumericInput(session = session, inputId = "round_to", value = pcm_env$round_to)
+  updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = pcm_env$fast_boot_jack)
+  updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = pcm_env$bias_correct_ci_bounds)
 
   v <- reactiveValues(fit_completed = FALSE,
                       p_filename = NULL,
@@ -85,14 +97,10 @@ server <- function(input, output) {
     summaries <- get_parm_summaries(ests_tbl)
     v$jack_tbl <- jackknife_computations(v$fit_list, summaries, full_sample_n)  # NEWJEFF: superfluous?
     jack_title <- paste0("Jackknife analysis (",
-                         round(v$jack_confidence_level,2),
+                         round(v$jack_confidence_level,pcm_env$round_to),
                          "% confidence)")
     output$jackknife_title <- renderText(jack_title)
-    # s1 <- paste0("* n jackknife samples = ",full_sample_n)
-    # output$n_jack_samples <- renderText(s1)
-    # s2 <- paste0("* percent converged OK = ",round(v$jack_pct_converged,2))
-    # output$jack_pct_converged <- renderText(s2)
-    output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE)
+    output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE, digits = pcm_env$round_to)
     v$jack_notes <- jackknife_table_notes(full_sample_n,v$jack_pct_converged)
     output$jackknife_notes <- render_strings_as_bullets(v$jack_notes)
   } # do_jackknifing
@@ -136,19 +144,15 @@ server <- function(input, output) {
     # original_ests <- fit_to_parms_vec(v$fit_list, want_converged = FALSE)
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
-                                             confidence_level = pcm_env$confidence_level,
-                                             bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds)
+                                        confidence_level = pcm_env$confidence_level,
+                                        bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds)
 
     # v$boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$boot_tbl$mean)
     boot_title <- paste0("Parametric bootstrap analysis (",
                          round(v$boot_confidence_level,2),
                          "% confidence)")
     output$boot_title <- renderText(boot_title)
-    # s1 <- paste0("* n bootstrap samples = ",v$n_boot_samples)
-    # output$n_boot_samples <- renderText(s1)
-    # s2 <- paste0("* percent converged OK = ",round(v$boot_pct_converged,2))
-    # output$boot_pct_converged <- renderText(s2)
-    output$boot_tbl <- renderTable(v$boot_tbl, rownames = FALSE)
+    output$boot_tbl <- renderTable(v$boot_tbl, rownames = FALSE, digits = pcm_env$round_to)
     v$boot_notes <- boot_table_notes(v$n_boot_samples,v$boot_pct_converged)
     output$boot_notes <- render_strings_as_bullets(v$boot_notes)
   } # do_bootstrapping
@@ -187,24 +191,26 @@ server <- function(input, output) {
     # original_ests <- fit_to_parms_vec(v$fit_list, want_converged = FALSE)
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$np_boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
-                                             confidence_level = pcm_env$confidence_level,
-                                             bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds)
+                                           confidence_level = pcm_env$confidence_level,
+                                           bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds)
     # v$np_boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$np_boot_tbl$mean)
     npboot_title <- paste0("Nonparametric bootstrap analysis (",
                            round(v$np_boot_confidence_level,2),
                            "% confidence)")
     output$np_boot_title <- renderText(npboot_title)
-    # s1 <- paste0("* n bootstrap samples = ",v$np_n_boot_samples)
-    # output$np_n_boot_samples <- renderText(s1)
-    # s2 <- paste0("* percent converged OK = ",round(v$np_boot_pct_converged,2))
-    # output$np_boot_pct_converged <- renderText(s2)
-    output$np_boot_tbl <- renderTable(v$np_boot_tbl, rownames = FALSE)
+    output$np_boot_tbl <- renderTable(v$np_boot_tbl, rownames = FALSE, digits = pcm_env$round_to)
     v$np_boot_notes <- boot_table_notes(v$np_n_boot_samples,v$boot_pct_converged)
     output$np_boot_notes <- render_strings_as_bullets(v$np_boot_notes)
   } # do_npbootstrapping
 
+  assign_input_globals <- function() {
+    pcm_env$confidence_level <- input$confidence_level
+    pcm_env$round_to <- input$round_to
+    pcm_env$fast_boot_jack <- input$fast_boot_jack
+    pcm_env$bias_correct_ci_bounds <- input$bias_correct_ci_bounds
+  }
+
   observeEvent(input$btnFit, {
-    restart()
 
     # l <- get_p_vec_to_fit() # NEWJEFF: Modularize here
     if (input$use_demo) {
@@ -216,13 +222,31 @@ server <- function(input, output) {
       full_p_filename <- input$p_file$datapath
     }
     if (is.null(full_p_filename)) {
-      showNotification("You must upload a file of p's before fitting the model.",
-                       closeButton = TRUE)
+      shinyalert::shinyalert(
+        title = "",
+        text = "You must upload a file of p's before fitting the model.",
+        type = "error",
+        size = "xs",
+        showConfirmButton = TRUE,
+        confirmButtonText = "OK")
     } else {
+      restart()
+      assign_input_globals()
+      show("results_panel")
       df <- read.csv(full_p_filename)
+      if (!"p" %in% names(df)) {  # NEWJEFF: This should really be checked at the upload button.
+        shinyalert::shinyalert(
+          title = "",
+          text = "Cancelling computation because no column named 'p' was found in the file.",
+          type = "error",
+          size = "xs",
+          showConfirmButton = TRUE,
+          confirmButtonText = "OK")
+        return()
+      }
       p_vec_to_fit <- df$p
 
-      output$model_fit_title <- renderText("Maximum-likelihood Fitting Summary")
+      # output$model_fit_title <- renderText("Maximum-likelihood Fitting Summary")
       output$parameter_estimates_title <- renderText("Parameter estimates:")
       output$predicted_pdfs_title <- renderText("Observed/predicted PDFs:")
       output$predicted_cdfs_title <- renderText("Observed/predicted CDFs:")
@@ -242,8 +266,8 @@ server <- function(input, output) {
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_list)
-      v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],3) # Round numeric columns to avoid line wrapping
-      output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE)
+      v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],pcm_env$round_to) # Round numeric columns to avoid line wrapping
+      output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE, digits = pcm_env$round_to)
       v$estimates_notes <- pcurveMix:::estimates_table_notes()
       output$estimates_notes <- render_strings_as_bullets(v$estimates_notes)
 
@@ -288,7 +312,7 @@ server <- function(input, output) {
       v$profile_analysis <- 1
     }
     # Computations:
-    v$profile_ci_confidence_level <- get_globals("confidence_level") / 100 # was NEWJEFF: inconsistent to use 0-1 here
+    v$profile_ci_confidence_level <- pcm_env$confidence_level / 100  # profileCI package wants 0-1 confidence level
     notif_id <- "profileCI_std_notif_id"
     showNotification(
       "Profiling mu, sigma, and pi ...",
@@ -327,7 +351,7 @@ server <- function(input, output) {
     # Show results in UI mainPanel
     removeNotification(notif_id)
     profileCI_title <- paste0("Profile CIs (",
-                              round(100*v$profile_ci_confidence_level,2),
+                              round(100*v$profile_ci_confidence_level,pcm_env$round_to),
                               "% confidence)")
     output$profileCI_title <- renderText(profileCI_title)
     # tbl <- v$profileCI_std$tabl
@@ -357,11 +381,8 @@ server <- function(input, output) {
     } # if tails == 2
     rownames(ci_tbl) <- NULL
     v$profile_tbl <- ci_tbl
-    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE)
+    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = pcm_env$round_to)
     output$profile_notes <- render_strings_as_bullets( profile_table_notes())
-
-    # ProfileCI plots
-    # output$profile_mu_title <- renderText("profile for mu")
 
     # Interesting: you can't re-use plain x & y across multiple ggplots.
     # If you do, all plots show the final x & y values.
@@ -512,28 +533,29 @@ server <- function(input, output) {
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
         params = list(
-          p_filename = v$p_filename,
-          tails = tails,
-          descriptor_tbl = v$descriptor_tbl,
-          estimates_tbl = v$estimates_tbl,
-          estimates_notes = v$estimates_notes,
-          pdf_plot = v$pdf_plot,
-          cdf_plot = v$cdf_plot,
-          n_jack_samples = v$n_jack_samples,
-          jack_tbl = v$jack_tbl,
-          jack_notes = v$jack_notes,
-          n_boot_samples = v$n_boot_samples,
-          boot_tbl = v$boot_tbl,
           boot_notes = v$boot_notes,
-          np_n_boot_samples = v$np_n_boot_samples,
-          np_boot_tbl = v$np_boot_tbl,
+          boot_tbl = v$boot_tbl,
+          cdf_plot = v$cdf_plot,
+          descriptor_tbl = v$descriptor_tbl,
+          estimates_notes = v$estimates_notes,
+          estimates_tbl = v$estimates_tbl,
+          jack_notes = v$jack_notes,
+          jack_tbl = v$jack_tbl,
+          n_boot_samples = v$n_boot_samples,
+          n_jack_samples = v$n_jack_samples,
           np_boot_notes = v$np_boot_notes,
+          np_boot_tbl = v$np_boot_tbl,
+          np_n_boot_samples = v$np_n_boot_samples,
+          p_filename = v$p_filename,
+          pdf_plot = v$pdf_plot,
           profile_analysis = v$profile_analysis,
-          profile_tbl = v$profile_tbl,
           profile_mu_plot = v$profile_mu_plot,
-          profile_sigma_plot = v$profile_sigma_plot,
           profile_pi_plot = v$profile_pi_plot,
-          profile_power_plot = v$profile_power_plot
+          profile_power_plot = v$profile_power_plot,
+          profile_sigma_plot = v$profile_sigma_plot,
+          profile_tbl = v$profile_tbl,
+          round_to = pcm_env$round_to,
+          tails = tails
         )
         if (tails == 2) {
           params <- c(params,
@@ -575,8 +597,19 @@ server <- function(input, output) {
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)
         file.remove(all_file_paths)
-        showNotification("Note that you can select a folder for the download. After download finishes, you can perform another analysis or quit.", duration = 45,
-                         closeButton = TRUE)
+        # This notification appears before the user selects the download location.
+        # Arranging for the notification to appear after the download finishes
+        #  is prohibitively complicated and out of scope.
+        # showNotification("Note that you can select a folder for the download. After download finishes, you can perform another analysis or quit.", duration = 45,
+        #                  closeButton = TRUE)
+        # session$onFlushed(function() {
+        #   shinyalert::shinyalert(
+        #   title = "Success!",
+        #   text = "Zip file is being download.",
+        #   type = "success",
+        #   showConfirmButton = TRUE,
+        #   confirmButtonText = "OK"
+        # )}, once = TRUE)
       } # end of else
     },  # end content function
 
@@ -599,6 +632,13 @@ server <- function(input, output) {
 
   observeEvent(input$btnquit, {
     stopApp()
+  })
+
+  onStop(function() {
+    pcm_env$confidence_level <- entry_confidence_level
+    pcm_env$round_to <- entry_round_to
+    pcm_env$fast_boot_jack <- entry_fast_boot_jack
+    pcm_env$bias_correct_ci_bounds <- entry_bias_correct_ci_bounds
   })
 
 } # end server function

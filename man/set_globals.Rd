@@ -6,6 +6,7 @@
 \usage{
 set_globals(
   confidence_level = NA,
+  round_to = NA,
   bias_correct_ci_bounds = NA,
   edge_p = NA,
   p_seq_pdf = NA,
@@ -22,6 +23,8 @@ set_globals(
 }
 \arguments{
 \item{confidence_level}{Used in computing confidence intervals (default = 95)}
+
+\item{round_to}{Number of decimal places to display (default = 3)}
 
 \item{bias_correct_ci_bounds}{Boolean; if true (default), confidence interval bounds
 are adjusted to correct for estimated bias.}

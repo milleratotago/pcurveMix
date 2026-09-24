@@ -81,7 +81,7 @@ ui <- tagList(
              )
       )
     ), # fluidRow
-
+    #                                                                    ====
 
     # wellPanel: Specify p values ====
     wellPanel(
@@ -98,11 +98,16 @@ ui <- tagList(
       inlineNumericInput("custom_cutoff", "Upper p cutoff for inclusion in file ('alpha'):",
                          value = "1", min = 0, max = 1, step = 0.05, label_width = "400px")
     ), # wellPanel
-
+    #                                                                ====
+    # wellPanel: Analysis options ====
     wellPanel(
       h2("Analysis options:"),
       inlineNumericInput("confidence_level", "Confidence level for confidence intervals:",
                          value = "95", min = 0, max = 100, step = 6,
+                         label_width = "400px"),
+
+      inlineNumericInput("round_to", "Number of decimal places to display:",
+                         value = "3", min = 0, max = 9, step = 1,
                          label_width = "400px"),
 
       checkboxInput("jackknifing", label = strong("Compute jackknifing for bias correction & confidence interval"), TRUE),
@@ -123,6 +128,12 @@ ui <- tagList(
                            label_width = "400px")
       ), # conditionalPanel
 
+      conditionalPanel(
+        condition = "input.jackknifing == true || input.parametric_bootstrapping == true || input.nonparametric_bootstrapping == true",
+        checkboxInput("bias_correct_ci_bounds", label = strong("Use bias correction for jackknife & bootstrap confidence interval bounds"), TRUE),
+
+        checkboxInput("fast_boot_jack", label = strong("Always start parameter search at ML estimates when jackknifing & bootstrapping (faster)"), TRUE)
+      ),
       checkboxInput("profile_ci", label = strong("Compute profile confidence intervals"), TRUE),
 
       inlineNumericInput("alpha_sig", "Alpha level to use for power computations ('alpha_sig'):",
@@ -145,104 +156,112 @@ ui <- tagList(
       ), # conditionalPanel
       ## end Adjust starting values ====
 
-    # end Specify p values panel
+      # end Specify p values panel
       actionButton("btnFit","Fit model & compute requested CIs")
     ), # wellPanel Analysis options
     #                                                                ====
     # wellPanel: Results ====
-    wellPanel(
-      #                                                              ====
+    {
+    shinyjs::hidden(  # use shinyjs function to start with this panel hidden
+      wellPanel(
+        id = "results_panel",
+        h1("Maximum-likelihood Fitting Summary"),
+        #                                                              ====
+        ## ML estimates table & predicted/observed pdfs/cdfs ====
+        # h1(textOutput("model_fit_title")),
+        tableOutput("descriptor_tbl"),
+        h3(textOutput("parameter_estimates_title")),
+        tableOutput("estimates_tbl"),
+        uiOutput("estimates_notes"),
 
-      # ML estimates table & predicted/observed pdfs/cdfs ====
-      h1(textOutput("model_fit_title")),
-      tableOutput("descriptor_tbl"),
-      h3(textOutput("parameter_estimates_title")),
-      tableOutput("estimates_tbl"),
-      uiOutput("estimates_notes"),
-
-      h3(textOutput("predicted_pdfs_title")),
-      plotOutput("pdf_plot"),
-      h3(textOutput("predicted_cdfs_title")),
-      plotOutput("cdf_plot"),
-      # end ML estimates table & predicted/observed pdfs/cdfs ====
+        h3(textOutput("predicted_pdfs_title")),
+        plotOutput("pdf_plot"),
+        h3(textOutput("predicted_cdfs_title")),
+        plotOutput("cdf_plot"),
+        ## end ML estimates table & predicted/observed pdfs/cdfs ====
 
 
-      #                                                              ====
-      # Jackknife results ====
-      conditionalPanel(
-        hr(),
-        condition = "input.jackknifing == true",
-        h3(textOutput("jackknife_title")),
-        tableOutput("jackknife_tbl"),
-        uiOutput("jackknife_notes")
-      ),  # end of conditionalPanel
-      # end Jackknife results ====
+        ##                                                              ====
+        ## Jackknife results ====
+        conditionalPanel(
+          hr(),
+          condition = "input.jackknifing == true",
+          h3(textOutput("jackknife_title")),
+          tableOutput("jackknife_tbl"),
+          uiOutput("jackknife_notes")
+        ),  # end of conditionalPanel
+        ## end Jackknife results ====
 
-      #                                                              ====
-      # Bootstrap results (parametric) results ====
-      conditionalPanel(
-        condition = "input.parametric_bootstrapping == true",
-        h3(textOutput("boot_title")),
-        # h5(textOutput("n_boot_samples")),
-        # h5(textOutput("boot_pct_converged")),
-        tableOutput("boot_tbl"),
-        uiOutput("boot_notes")
-      ),  # end of conditionalPanel
-      # end Bootstrap results (parametric) ====
+        ##                                                              ====
+        ## Bootstrap results (parametric) results ====
+        conditionalPanel(
+          condition = "input.parametric_bootstrapping == true",
+          h3(textOutput("boot_title")),
+          # h5(textOutput("n_boot_samples")),
+          # h5(textOutput("boot_pct_converged")),
+          tableOutput("boot_tbl"),
+          uiOutput("boot_notes")
+        ),  # end of conditionalPanel
+        ## end Bootstrap results (parametric) ====
 
-      #                                                              ====
-      # Bootstrap results (nonparametric) results ====
-      conditionalPanel(
-        condition = "input.nonparametric_bootstrapping == true",
-        h3(textOutput("np_boot_title")),
-        # h5(textOutput("np_n_boot_samples")),
-        # h5(textOutput("np_boot_pct_converged")),
-        tableOutput("np_boot_tbl"),
-        uiOutput("np_boot_notes")
-      ),  # end of conditionalPanel
-      # end Bootstrap results (nonparametric) ====
+        ##                                                              ====
+        ## Bootstrap results (nonparametric) results ====
+        conditionalPanel(
+          condition = "input.nonparametric_bootstrapping == true",
+          h3(textOutput("np_boot_title")),
+          # h5(textOutput("np_n_boot_samples")),
+          # h5(textOutput("np_boot_pct_converged")),
+          tableOutput("np_boot_tbl"),
+          uiOutput("np_boot_notes")
+        ),  # end of conditionalPanel
+        ## end Bootstrap results (nonparametric) ====
 
-      #                                                              ====
-      # Profile confidence interval results ====
-      conditionalPanel(
-        condition = "input.profile_ci",
-        h3(textOutput("profileCI_title")),
-        tableOutput("profileCI_tbl"),
-        uiOutput("profile_notes"),
-        plotOutput("profile_mu_plot"),
-        plotOutput("profile_sigma_plot"),
-        plotOutput("profile_pi_plot"),
-        plotOutput("profile_power_plot"),
-        plotOutput("profile_folded_normal_mu_plot"),
-        plotOutput("profile_folded_normal_sigma_plot")
-      ),
-      # end Profile confidence interval results ====
+        ##                                                              ====
+        ## Profile confidence interval results ====
+        conditionalPanel(
+          condition = "input.profile_ci",
+          h3(textOutput("profileCI_title")),
+          tableOutput("profileCI_tbl"),
+          uiOutput("profile_notes"),
+          plotOutput("profile_mu_plot"),
+          plotOutput("profile_sigma_plot"),
+          plotOutput("profile_pi_plot"),
+          plotOutput("profile_power_plot"),
+          plotOutput("profile_folded_normal_mu_plot"),
+          plotOutput("profile_folded_normal_sigma_plot")
+        ),
+        ## end Profile confidence interval results ====
 
-      h3(verbatimTextOutput("optim_failed_output")), # NEWJEFF: Replace with showmessage
+        h3(verbatimTextOutput("optim_failed_output")), # NEWJEFF: Replace with showmessage
 
-      #                                                              ====
-      # Download & Quit buttons ====
-      hr(),
-      h4(),
-      column(6, # User selection for the format
-             radioButtons("rmd_format", "Select document download format:",
-                          choices = c("HTML" = "html",
-                                      "PDF" = "pdf",
-                                      "Word (DOCX)" = "docx")),
-      ),
+        ##                                                              ====
+      ) # wellPanel
+    ) # hidden wellPanel Results
+      } # ====
+    #                                                                 ====
+    # wellPanel: Download & Quit buttons ====
+    shinyjs::hidden(  # use shinyjs function to start with this panel hidden
+      wellPanel(
+        id = "download_panel",
+        h4(),
+        column(6, # User selection for the format
+               radioButtons("rmd_format", "Select document download format:",
+                            choices = c("HTML" = "html",
+                                        "PDF" = "pdf",
+                                        "Word (DOCX)" = "docx")),
+        ),
 
-      # This was previously a fluidRow with 2 4-column buttons
-      # but they appeared above/below rather than left/right;
-      # I don't know why.
-      div(
-        style = "display: flex; gap: 20px;",
-        downloadButton("btnReport","Download results"),
-        actionButton("btnquit","Quit")
-      ) # div
-      # end Download & Quit buttons ====
-
-    ) # wellPanel
-    # end Results panel ====
+        # This was previously a fluidRow with 2 4-column buttons
+        # but they appeared above/below rather than left/right;
+        # I don't know why.
+        div(
+          style = "display: flex; gap: 20px;",
+          downloadButton("btnReport","Download results"),
+          actionButton("btnquit","Quit")
+        ) # div
+      ) # wellPanel: download
+    ) # hidden wellPanel
+    # end wellPanel: Download & Quit buttons ====
 
   ) # end fluidPage
 

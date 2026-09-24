@@ -5,30 +5,31 @@ output:
   word_document:
     reference_docx: pcurveMix_style.docx
 params:
-  p_filename: NA
-  tails : NA
-  descriptor_tbl: NA
-  estimates_tbl: NA
-  estimates_notes: NA
-  pdf_plot: NA
-  cdf_plot: NA
-  n_jack_samples: NA
-  jack_tbl: NA
-  jack_notes: NA
-  n_boot_samples: NA
-  boot_tbl: NA
   boot_notes: NA
-  np_n_boot_samples: NA
-  np_boot_tbl: NA
+  boot_tbl: NA
+  cdf_plot: NA
+  descriptor_tbl: NA
+  estimates_notes: NA
+  estimates_tbl: NA
+  jack_notes: NA
+  jack_tbl: NA
+  n_boot_samples: NA
+  n_jack_samples: NA
   np_boot_notes: NA
+  np_boot_tbl: NA
+  np_n_boot_samples: NA
+  p_filename: NA
+  pdf_plot: NA
   profile_analysis: NA
-  profile_tbl: NA
-  profile_mu_plot: NA
-  profile_sigma_plot: NA
-  profile_pi_plot: NA
-  profile_power_plot: NA
   profile_folded_normal_mu_plot: NA
   profile_folded_normal_sigma_plot: NA
+  profile_mu_plot: NA
+  profile_pi_plot: NA
+  profile_power_plot: NA
+  profile_sigma_plot: NA
+  profile_tbl: NA
+  round_to: NA
+  tails : NA
 ---
 
 ```{r setup, include=FALSE}
@@ -47,7 +48,7 @@ print(knitr::kable(params$descriptor_tbl))
 ## Parameter estimates
 
 ```{r print_parameter_estimates, echo=FALSE, results='asis'}
-print(knitr::kable(params$estimates_tbl))
+print(knitr::kable(params$estimates_tbl, digits = params$round_to))
 ```
 ```{r echo = FALSE}
 bullet_list <- paste("-", params$estimates_notes, collapse = "\n")  # paste adds space after "-"
@@ -73,7 +74,7 @@ plot(params$cdf_plot)
 ## Jackknifing analysis
 ```
 ```{r print_jack_tbl, echo=FALSE, results='asis', eval = params$n_jack_samples > 0}
-print(knitr::kable(params$jack_tbl))
+print(knitr::kable(params$jack_tbl, digits = params$round_to))
 ```
 ```{r echo = FALSE}
 bullet_list <- paste("-", params$jack_notes, collapse = "\n")  # paste adds space after "-"
@@ -85,7 +86,7 @@ knitr::asis_output(bullet_list)
 ## Parametric bootstrapping analysis
 ```
 ```{r print_boot_tbl, echo=FALSE, results='asis', eval = params$n_boot_samples > 0}
-print(knitr::kable(params$boot_tbl))
+print(knitr::kable(params$boot_tbl, digits = params$round_to))
 ```
 ```{r echo = FALSE}
 bullet_list <- paste("-", params$boot_notes, collapse = "\n")  # paste adds space after "-"
@@ -98,7 +99,7 @@ knitr::asis_output(bullet_list)
 ```
 
 ```{r print_np_boot_tbl, echo=FALSE, results='asis', eval = params$np_n_boot_samples > 0}
-print(knitr::kable(params$np_boot_tbl))
+print(knitr::kable(params$np_boot_tbl, digits = params$round_to))
 ```
 ```{r echo = FALSE}
 bullet_list <- paste("-", params$np_boot_notes, collapse = "\n")  # paste adds space after "-"
@@ -112,7 +113,7 @@ knitr::asis_output(bullet_list)
 ```
 
 ```{r profile_tbl, echo=FALSE, results='asis', eval = params$profile_analysis > 0}
-print(knitr::kable(params$profile_tbl))
+print(knitr::kable(params$profile_tbl, digits = params$round_to))
 ```
 
 ```{r profile_plots, echo=FALSE, eval = params$profile_analysis > 0}
