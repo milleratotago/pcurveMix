@@ -1,10 +1,12 @@
 # table_notes.R
 
-estimates_table_notes <- function(confidence_level = pcm_env$confidence_level,
+estimates_table_notes <- function(converged, confidence_level = pcm_env$confidence_level,
                                   lower_str = CI_LOWER_BOUND_LABEL,
-                                  upper_str = CI_UPPER_BOUND_LABEL) { # NEWJEFF: Note converged?
-  s <- sprintf("Wald standard error (se) and %3.1f%% %s/%s confidence interval bounds are computed based on Hessian from maximum likelihood estimation.",
-               confidence_level, lower_str, upper_str)
+                                  upper_str = CI_UPPER_BOUND_LABEL) {
+  sconverged <- ifelse(converged,"Estimation converged","Estimation did NOT converge")
+  s <- c(sconverged,
+         sprintf("Wald standard error (se) and %3.1f%% %s/%s confidence interval bounds are computed based on Hessian from maximum likelihood estimation.",
+               confidence_level, lower_str, upper_str))
   return(s)
 }
 

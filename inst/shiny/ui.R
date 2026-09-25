@@ -152,7 +152,7 @@ ui <- tagList(
                              min = 1e-6, max = 20, step = 0.1, label_width = "60px"),
           inlineNumericInput("start_pi", "pi =", value = START_PI_DEFAULT,
                              min = 0, max = 1, step = 0.1, label_width = "40px")
-        ), # div
+        ) # div
       ), # conditionalPanel
       ## end Adjust starting values ====
 
@@ -161,7 +161,6 @@ ui <- tagList(
     ), # wellPanel Analysis options
     #                                                                ====
     # wellPanel: Results ====
-    {
     shinyjs::hidden(  # use shinyjs function to start with this panel hidden
       wellPanel(
         id = "results_panel",
@@ -179,8 +178,6 @@ ui <- tagList(
         h3(textOutput("predicted_cdfs_title")),
         plotOutput("cdf_plot"),
         ## end ML estimates table & predicted/observed pdfs/cdfs ====
-
-
         ##                                                              ====
         ## Jackknife results ====
         conditionalPanel(
@@ -191,7 +188,6 @@ ui <- tagList(
           uiOutput("jackknife_notes")
         ),  # end of conditionalPanel
         ## end Jackknife results ====
-
         ##                                                              ====
         ## Bootstrap results (parametric) results ====
         conditionalPanel(
@@ -232,23 +228,22 @@ ui <- tagList(
         ),
         ## end Profile confidence interval results ====
 
-        h3(verbatimTextOutput("optim_failed_output")), # NEWJEFF: Replace with showmessage
+        h3(verbatimTextOutput("optim_failed_output")) # NEWJEFF: Replace with showmessage
 
         ##                                                              ====
       ) # wellPanel
-    ) # hidden wellPanel Results
-      } # ====
+    ), # hidden wellPanel Results
     #                                                                 ====
     # wellPanel: Download & Quit buttons ====
     shinyjs::hidden(  # use shinyjs function to start with this panel hidden
       wellPanel(
         id = "download_panel",
-        h4(),
+        h4("Download"),
         column(6, # User selection for the format
                radioButtons("rmd_format", "Select document download format:",
                             choices = c("HTML" = "html",
                                         "PDF" = "pdf",
-                                        "Word (DOCX)" = "docx")),
+                                        "Word (DOCX)" = "docx"))
         ),
 
         # This was previously a fluidRow with 2 4-column buttons
@@ -261,7 +256,7 @@ ui <- tagList(
         ) # div
       ) # wellPanel: download
     ) # hidden wellPanel
-    # end wellPanel: Download & Quit buttons ====
+    # end wellPanel: Download & Quit buttons               ====
 
   ) # end fluidPage
 

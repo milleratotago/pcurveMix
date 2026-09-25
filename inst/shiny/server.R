@@ -232,7 +232,8 @@ server <- function(input, output, session) {
     } else {
       restart()
       assign_input_globals()
-      show("results_panel")
+      shinyjs::show("results_panel")
+      shinyjs::show("download_panel")
       df <- read.csv(full_p_filename)
       if (!"p" %in% names(df)) {  # NEWJEFF: This should really be checked at the upload button.
         shinyalert::shinyalert(
@@ -268,7 +269,7 @@ server <- function(input, output, session) {
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_list)
       v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],pcm_env$round_to) # Round numeric columns to avoid line wrapping
       output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE, digits = pcm_env$round_to)
-      v$estimates_notes <- pcurveMix:::estimates_table_notes()
+      v$estimates_notes <- pcurveMix:::estimates_table_notes(v$fit_list$converged)
       output$estimates_notes <- render_strings_as_bullets(v$estimates_notes)
 
       do_jackknifing()
