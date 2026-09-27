@@ -67,11 +67,11 @@ ui <- tagList(
       .custom-text-input input { width: 45%; }
     ")),
 
-    tags$style(HTML("
-                    #start_mu { width: 60px; }
-                    #start_sigma { width: 60px; }
-                    #start_pi { width: 60px; }
-                    ")),
+    # tags$style(HTML("
+    #                 #start_mu { width: 60px; }
+    #                 #start_sigma { width: 60px; }
+    #                 #start_pi { width: 60px; }
+    #                 ")),
 
     fluidPage(title = "pcurveMix"),
 
@@ -146,11 +146,11 @@ ui <- tagList(
         condition = "input.specify_starting_values == true",
         div(
           style = "display: flex; align-items: center; flex-wrap: wrap; gap: 10px;",
-          inlineNumericInput("start_mu", "mu =", value = START_MU_DEFAULT,
+          inlineNumericInput("start_mu", "mu =", value = pcurveMix:::START_MU_DEFAULT,
                              min = 0, max = 20, step = 0.1, label_width = "40px"),
-          inlineNumericInput("start_sigma", "sigma =", value = START_SIGMA_DEFAULT,
+          inlineNumericInput("start_sigma", "sigma =", value = pcurveMix:::START_SIGMA_DEFAULT,
                              min = 1e-6, max = 20, step = 0.1, label_width = "60px"),
-          inlineNumericInput("start_pi", "pi =", value = START_PI_DEFAULT,
+          inlineNumericInput("start_pi", "pi =", value = pcurveMix:::START_PI_DEFAULT,
                              min = 0, max = 1, step = 0.1, label_width = "40px")
         ) # div
       ), # conditionalPanel
