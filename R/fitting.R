@@ -94,12 +94,12 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
     start_parms1 <- as.list(start_parms[1,])
     best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
-                             start = start_parms1) # , lower = lower, upper = upper)
+                             start = start_parms1)
     for (i_row in 2:n_starting_points) {
       start_parms1 <- as.list(start_parms[i_row,])
       one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                               want_optim_hessian = want_optim_hessian,
-                              start = start_parms1) #, lower = lower, upper = upper)
+                              start = start_parms1)
       if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
     }
     best_fit$start_parm_set <- start_parms
@@ -141,6 +141,12 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
+  fit[[PR_TP]] <- fit$pi * fit$power
+  fit[[PR_FN]] <- fit$pi * (1 - fit$power)
+  fit[[PR_FP]] <- (1 - fit$pi) * alpha_sig
+  fit[[PR_TN]] <- (1 - fit$pi) * (1 - alpha_sig)
+  fit[[R_FP]] <- fit[[PR_FP]] / (fit[[PR_FP]] + fit[[PR_TP]])
+  fit[[R_FN]] <- fit[[PR_FN]] / (fit[[PR_FN]] + fit[[PR_TN]])
   cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
   fit$ks <- ks_with_cdf(p, cdf_fit)
   fit$n <- length(p)
@@ -223,6 +229,15 @@ fit_to_estimates_tbl <- function(fit) {
     )
     mle_tbl <- rbind(mle_tbl, folded_normal_cols)
   }
+  derived_tbl <- data.frame(
+    parameter = c(PR_TP, PR_FN, PR_FP, PR_TN, R_FP, R_FN),
+    estimate  = c(fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]], fit[[R_FP]], fit[[R_FN]]),
+    Wald_se   = c(NA, NA, NA, NA, NA, NA),
+    Wald_lwr  = c(NA, NA, NA, NA, NA, NA),
+    Wald_upr  = c(NA, NA, NA, NA, NA, NA),
+    row.names = NULL
+  )
+  mle_tbl <- rbind(mle_tbl, derived_tbl)
   names(mle_tbl)[names(mle_tbl) == "Wald_se"] <- "se"
   names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- CI_LOWER_BOUND_LABEL # paste0("Wald_",CI_LOWER_BOUND_LABEL)
   names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- CI_UPPER_BOUND_LABEL # paste0("Wald_",CI_UPPER_BOUND_LABEL)
@@ -312,6 +327,7 @@ estimate_names <- function(tails, want_converged = TRUE) {
   } else {
     parm_names <- c("mu", "sigma", "pi", "power")
   }
+  parm_names <- c(parm_names, PR_TP, PR_FN, PR_FP, PR_TN, R_FP, R_FN)
   if (want_converged) parm_names <- c(parm_names, "converged")
   return(parm_names)
 }
@@ -328,6 +344,7 @@ fit_to_parms_vec <- function(fit, want_names = TRUE, want_converged = TRUE) {
   # ORDER OF PARMS MUST MATCH IN fit_to_parms_vec() AND estimate_names()
   parms <- c(fit$mu, fit$sigma, fit$pi, fit$power)
   if (fit$tails == 2) parms <- c(parms, mean_folded_normal(fit$mu, fit$sigma), sd_folded_normal(fit$mu, fit$sigma))
+  parms <- c(parms, fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]], fit[[R_FP]], fit[[R_FN]])
   if (want_converged)  parms <- c(parms, fit$converged)
   if (want_names) names(parms) <- estimate_names(fit$tails, want_converged = want_converged)
   return(parms)
@@ -345,13 +362,11 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                             want_optim_hessian = FALSE,
                             start_parms = pcm_env$optim_starting_parms,
                             n_progress_bar_steps = 20 ) {
-                            # lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),  # NEWJEFF lower mu can be neg for 1 tail but lower not used anyway, right?
-                            # upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   n_samples <- nrow(mat_of_ps)
-  if (tails == 2) {
-    n_parms <- 7
+  if (tails == 2) { # initial 1+ is for parm name
+    n_parms <- 1+ N_BASE_PARMS + N_DERIVED_PARMS + 2
   } else {
-    n_parms <- 5
+    n_parms <- 1+ N_BASE_PARMS + N_DERIVED_PARMS
   }
   estimates <- matrix(NA, nrow = n_samples, ncol = n_parms)
   p <- progressr::progressor(steps = n_samples)

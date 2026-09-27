@@ -36,36 +36,6 @@ bootstrap <- function(n, fit_list, n_boot_samples,
   return(boot_df)
 }
 
-# # OBSOLETE
-# # Compute named vector of boot_mean, boot_sd, bias, bc_estimate,
-# #  not_bc_lower, not_bc_upplower
-# boot_comps1 <- function(est_orig, boot_mean, boot_sd, full_sample_n, t_or_z = 2,
-#                              bias_correct_ci_bounds = TRUE) {
-#    tbl$bias <- 999
-#    tbl$bc_estimate <- est_orig - tbl$bias
-#    # compute CI bounds relative to est_orig
-#    lower <- 999
-#    upper <- 999
-#    q_lower <- 999
-#    q_upper <- 999
-#    lower_name <- CI_LOWER_BOUND_LABEL
-#    upper_name <- CI_UPPER_BOUND_LABEL
-#    q_lower_name <- quantile_name(CI_LOWER_BOUND_LABEL)
-#    q_upper_name <- quantile_name(CI_UPPER_BOUND_LABEL)
-#    if (bias_correct_ci_bounds) {
-#      # subtract bias
-#      lower <- lower - bias
-#      upper <- upper - bias
-#      q_lower <- q_lower - bias
-#      q_upper <- q_upper - bias
-#    }
-#    tbl <- data.frame(parameter = parm, mean = boot_mean, sd = boot_sd, bias = bias, bc_estimate = bc_estimate)
-#    tbl[[lower_name]] <- lower
-#    tbl[[upper_name]] <- upper
-#    tbl[[q_lower_name]] <- q_lower
-#    tbl[[q_upper_name]] <- q_upper
-# }
-
 get_ci_half_width <- function(sds, confidence_level = pcm_env$confidence_level) {
   upper_q <- get_upper_q(confidence_level)
   zcrit <- stats::qnorm(upper_q)

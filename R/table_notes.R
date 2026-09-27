@@ -5,6 +5,7 @@ estimates_table_notes <- function(converged, confidence_level = pcm_env$confiden
                                   upper_str = CI_UPPER_BOUND_LABEL) {
   sconverged <- ifelse(converged,"Estimation converged","Estimation did NOT converge")
   s <- c(sconverged,
+         "mu, sigma, and pi are the only fundamental model parameters; all others are derived from those three",
          sprintf("Wald standard error (se) and %3.1f%% %s/%s confidence interval bounds are computed based on Hessian from maximum likelihood estimation.",
                confidence_level, lower_str, upper_str))
   return(s)

@@ -12,6 +12,15 @@ FOLDED_NORMAL_MU_LABEL <- "folded_normal_mu"
 FOLDED_NORMAL_SIGMA_LABEL <- "folded_normal_sigma"
 LIKELIHOOD_LABEL <- "log likelihood"
 BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL <- "bc_estimate"
+PR_TP <- "Pr_TP"
+PR_FN <- "Pr_FN"
+PR_FP <- "Pr_FP"
+PR_TN <- "Pr_TN"
+R_FP <- "Rate_FPs"
+R_FN <- "Rate_FNs"
+N_BASE_PARMS <- 4 # mu, sigma, pi, power
+N_DERIVED_PARMS <- 6 # PR_TP ... R_FN
+
 START_MU_DEFAULT <- 2
 START_SIGMA_DEFAULT <- 1
 START_PI_DEFAULT <- 0.5
@@ -179,7 +188,7 @@ utils::globalVariables(c("density"))
   packageStartupMessage('Get help with these RStudio console commands:')
   packageStartupMessage('  ?',pkgname,'    # shows a summary of the package.')
   # NEWJEFF packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
-  packageStartupMessage('  browseVignettes(',pkgname,')    # shows a catalog of all vignettes.')
+  packageStartupMessage('  browseVignettes("',pkgname,'")    # shows a catalog of all vignettes.')
   packageStartupMessage('  help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
   packageStartupMessage('  run_shiny_app()  # starts the shiny app')
 
