@@ -509,7 +509,7 @@ server <- function(input, output, session) {
           # NEWJEFF: I WANT POWER, FOLDED_MU, FOLDED_SIGMA in natural units
           csv_profile_power_outfile_name <- paste0(output_directory_name, "/",
                                                    "profile_power_", time_stamp, ".csv")
-          temp_mat <- extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
+          temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
           temp_mat[,1] <- pcurveMix:::reals_to_powers(temp_mat[,1])
           profile_power <- data.frame(power = temp_mat[,1],
                                       likelihood = temp_mat[,2])
@@ -518,7 +518,7 @@ server <- function(input, output, session) {
           if (tails == 2) {
             csv_profile_folded_normal_mu_outfile_name <- paste0(output_directory_name, "/",
                                                                 "profile_folded_normal_mu_", time_stamp, ".csv")
-            temp_mat <- extract_profile_plot_columns(v$profileCI_folded_normal_mu,1) # 1st profiled parm
+            temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_mu,1) # 1st profiled parm
             temp_mat[,1] <- pcurveMix:::reals_to_mus(temp_mat[,1])
             profile_folded_normal_mu <- data.frame(folded_normal_mu = temp_mat[,1],
                                                    likelihood = temp_mat[,2])
@@ -526,7 +526,7 @@ server <- function(input, output, session) {
 
             csv_profile_folded_normal_sigma_outfile_name <- paste0(output_directory_name, "/",
                                                                    "profile_folded_normal_sigma_", time_stamp, ".csv")
-            temp_mat <- extract_profile_plot_columns(v$profileCI_folded_normal_sigma,1) # 1st profiled parm
+            temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_sigma,1) # 1st profiled parm
             temp_mat[,1] <- pcurveMix:::reals_to_sigmas(temp_mat[,1])
             profile_folded_normal_sigma <- data.frame(folded_normal_sigma = temp_mat[,1],
                                                       likelihood = temp_mat[,2])
@@ -601,20 +601,12 @@ server <- function(input, output, session) {
         # Zip using the filename returned by function filename
         zip::zipr(file, all_file_paths)
         file.remove(all_file_paths)
-        # This notification appears before the user selects the download location.
+        # A notification here appears before the user selects the download location.
         # Arranging for the notification to appear after the download finishes
         #  is prohibitively complicated and out of scope.
         # showNotification("Note that you can select a folder for the download. After download finishes, you can perform another analysis or quit.", duration = 45,
         #                  closeButton = TRUE)
-        # session$onFlushed(function() {
-        #   shinyalert::shinyalert(
-        #   title = "Success!",
-        #   text = "Zip file is being download.",
-        #   type = "success",
-        #   showConfirmButton = TRUE,
-        #   confirmButtonText = "OK"
-        # )}, once = TRUE)
-      } # end of else
+      } # end of else after if (!v$fit_completed)
     },  # end content function
 
     # Required
