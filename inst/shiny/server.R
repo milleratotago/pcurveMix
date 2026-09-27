@@ -5,6 +5,9 @@
 
 server <- function(input, output, session) {
 
+  # Grab the package environment for server use
+  pcm_env <- as.list(pcurveMix:::pcm_env)
+
   # Import some analysis parameters from the package environment
   # and save them as "entry" variables so that they can be restored
   # when the shiny app finishes.
