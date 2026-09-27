@@ -1,4 +1,5 @@
 # table_notes.R
+# Unexported functions must be called via pcurveMix:::
 
 estimates_table_notes <- function(converged, confidence_level = pcm_env$confidence_level,
                                   lower_str = CI_LOWER_BOUND_LABEL,

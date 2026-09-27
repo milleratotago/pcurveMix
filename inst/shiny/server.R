@@ -104,7 +104,7 @@ server <- function(input, output, session) {
                          "% confidence)")
     output$jackknife_title <- renderText(jack_title)
     output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE, digits = pcm_env$round_to)
-    v$jack_notes <- jackknife_table_notes(full_sample_n,v$jack_pct_converged)
+    v$jack_notes <- pcurveMix:::jackknife_table_notes(full_sample_n,v$jack_pct_converged)
     output$jackknife_notes <- render_strings_as_bullets(v$jack_notes)
   } # do_jackknifing
 
@@ -156,7 +156,7 @@ server <- function(input, output, session) {
                          "% confidence)")
     output$boot_title <- renderText(boot_title)
     output$boot_tbl <- renderTable(v$boot_tbl, rownames = FALSE, digits = pcm_env$round_to)
-    v$boot_notes <- boot_table_notes(v$n_boot_samples,v$boot_pct_converged)
+    v$boot_notes <- pcurveMix:::boot_table_notes(v$n_boot_samples,v$boot_pct_converged)
     output$boot_notes <- render_strings_as_bullets(v$boot_notes)
   } # do_bootstrapping
 
@@ -202,7 +202,7 @@ server <- function(input, output, session) {
                            "% confidence)")
     output$np_boot_title <- renderText(npboot_title)
     output$np_boot_tbl <- renderTable(v$np_boot_tbl, rownames = FALSE, digits = pcm_env$round_to)
-    v$np_boot_notes <- boot_table_notes(v$np_n_boot_samples,v$boot_pct_converged)
+    v$np_boot_notes <- pcurveMix:::boot_table_notes(v$np_n_boot_samples,v$boot_pct_converged)
     output$np_boot_notes <- render_strings_as_bullets(v$np_boot_notes)
   } # do_npbootstrapping
 
@@ -386,7 +386,7 @@ server <- function(input, output, session) {
     rownames(ci_tbl) <- NULL
     v$profile_tbl <- ci_tbl
     output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = pcm_env$round_to)
-    output$profile_notes <- render_strings_as_bullets( profile_table_notes())
+    output$profile_notes <- render_strings_as_bullets( pcurveMix:::profile_table_notes() )
 
     # Interesting: you can't re-use plain x & y across multiple ggplots.
     # If you do, all plots show the final x & y values.
