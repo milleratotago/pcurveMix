@@ -53,12 +53,12 @@ extract_profile_plot_columns <- function(profileCI_output, param_number) {
 #' Computations for profile-based confidence intervals of the basic model
 #'  parameters mu, sigma, and pi (NOT the folded normal parameters).
 #' @inheritParams fit_list_to_df
-#' @param level Confidence level for the CI (0-1, default = 0.95)
+#' @param level Confidence level for the CI (0-100, default = pcm_env$confidence_level)
 #' @returns A list with: bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI <- function(fit_list, level = 0.95) {
+compute_profileCI <- function(fit_list, level = pcm_env$confidence_level / 100) {
   coefficients <- c(mu = 0, sigma = 0, pi = 0)
   profCI_model <- list(coefficients = coefficients)
   class(profCI_model) <- "profCI_model"
@@ -176,8 +176,7 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_folded <- function(fit_list, target_folded_normal_mu, level = 0.95) {
-
+compute_profileCI_folded <- function(fit_list, target_folded_normal_mu, level = pcm_env$confidence_level / 100) {
   alpha <- fit_list$alpha
   tails <- fit_list$tails
   p_values <- fit_list$check_ps_list$ps_in_bounds
@@ -230,10 +229,10 @@ compute_profileCI_folded <- function(fit_list, target_folded_normal_mu, level = 
   profile_result <- profileCI::profileCI(
     object = profile_object,
     loglik = profile_loglik_for_folded,
-      p_values = p_values,  # passed to loglik fn
-      alpha = alpha,  # passed to loglik fn
-      tails = tails,  # passed to loglik fn
-      target_folded_normal_mu = target_folded_normal_mu,  # passed to loglik fn
+    p_values = p_values,  # passed to loglik fn
+    alpha = alpha,  # passed to loglik fn
+    tails = tails,  # passed to loglik fn
+    target_folded_normal_mu = target_folded_normal_mu,  # passed to loglik fn
     parm = target_name,  # specifies which parameter to compute profile for (default = "all")
     level = level,
     faster = FALSE,
@@ -261,11 +260,13 @@ compute_profileCI_folded <- function(fit_list, target_folded_normal_mu, level = 
   result_table <- data.frame(
     n = length(p_values),
     Estimate = target_hat,
-    `95% CI lower` = ci_natural[1],
-    `95% CI upper` = ci_natural[2],
+    lower = ci_natural[1],
+    upper = ci_natural[2],
     Status = status,
     check.names = FALSE
   )
+  names(result_table)[names(result_table) == "lower"] <- CI_LOWER_BOUND_LABEL
+  names(result_table)[names(result_table) == "upper"] <- CI_UPPER_BOUND_LABEL
 
   result <- list(
     table = result_table,
@@ -342,8 +343,7 @@ parameters_from_power <- function(power, log_ratio, alpha_sig, tails) {
 }
 
 profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
-                             tails = 2, level = 0.95) {
-
+                             tails = 2, level = pcm_env$confidence_level / 100) {
   p_values <- p_values[
     is.finite(p_values) & p_values >= 0 & p_values <= alpha
   ]
@@ -559,11 +559,13 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
   result_table <- data.frame(
     n = length(p_values),
     Estimate = power_hat,
-    `95% CI lower` = ci_power[1],
-    `95% CI upper` = ci_power[2],
+    lower = ci_power[1],
+    upper = ci_power[2],
     Status = status,
     check.names = FALSE
   )
+  names(result_table)[names(result_table) == "lower"] <- CI_LOWER_BOUND_LABEL
+  names(result_table)[names(result_table) == "upper"] <- CI_UPPER_BOUND_LABEL
 
   list(
     table = result_table,
@@ -583,7 +585,7 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_power <- function(fit_list, level = 0.95) {
+compute_profileCI_power <- function(fit_list, level = pcm_env$confidence_level / 100) {
   alpha <- fit_list$alpha
   tails <- fit_list$tails
   p_values <- fit_list$check_ps_list$ps_in_bounds
@@ -592,10 +594,119 @@ compute_profileCI_power <- function(fit_list, level = 0.95) {
   pi_hat <- fit_list$pi
   alpha_sig <- fit_list$alpha_sig
   result <- profile_ci_power(p_values, alpha, alpha_sig = alpha_sig,
-                               tails = tails, level = level)
+                             tails = tails, level = level)
   return(result)
 }
 
 #### END of Special routines for computing profileCIs of power
 
+#' Function to produce summary table of profile confidence interval values
+#' @param profileCI_std Profile result list for mu, sigma, and pi
+#' @param profileCI_power Profile result list for power
+#' @param profileCI_folded_normal_mu Profile result list for mu
+#' @param profileCI_folded_normal_sigma Profile result list for sigma
+#' @export
+make_profile_ci_tbl <- function(profileCI_std,
+                                profileCI_power,
+                                profileCI_folded_normal_mu = NA,
+                                profileCI_folded_normal_sigma = NA) {
+  ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"), row.names = NULL)
+  ci_tbl <- cbind(ci_tbl,profileCI_std$bounds_matrix)
+  names(ci_tbl) <- c("parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+  power_row <- data.frame(parameter = "power",
+                          c2 = profileCI_power$table[[CI_LOWER_BOUND_LABEL]],
+                          c3 = profileCI_power$table[[CI_UPPER_BOUND_LABEL]])
+  names(power_row) <- c("parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+  ci_tbl <- rbind(ci_tbl, power_row)
+  if (!identical(profileCI_folded_normal_mu,NA)) {
+    folded_normal_mu_row <- data.frame(parameter = FOLDED_NORMAL_MU_LABEL,
+                                       c2 = profileCI_folded_normal_mu$table[[CI_LOWER_BOUND_LABEL]],
+                                       c3 = profileCI_folded_normal_mu$table[[CI_UPPER_BOUND_LABEL]])
+    names(folded_normal_mu_row) <- c("parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
+  }
+  if (!identical(profileCI_folded_normal_sigma,NA)) {
+    folded_normal_sigma_row <- data.frame(parameter = FOLDED_NORMAL_SIGMA_LABEL,
+                                          c2 = profileCI_folded_normal_sigma$table[[CI_LOWER_BOUND_LABEL]],
+                                          c3 = profileCI_folded_normal_sigma$table[[CI_UPPER_BOUND_LABEL]])
+    names(folded_normal_sigma_row) <- c("parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+    ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
+  }
+  rownames(ci_tbl) <- NULL
+  return(ci_tbl)
+}
+
+#' Function to produce plots of likelihood profiles
+#' @inheritParams make_profile_ci_tbl
+#' @returns A list with each element being a ggplot for one parameter's profile
+#' @export
+make_profile_plots <- function(profileCI_std,
+                                profileCI_power,
+                                profileCI_folded_normal_mu = NA,
+                                profileCI_folded_normal_sigma = NA) {
+  l <- list()
+  # Interesting: you can't re-use plain x & y across multiple ggplots.
+  # If you do, all plots show the final x & y values.
+  mu_x <- profileCI_std$profile_curves$mu[,1]
+  mu_y <- profileCI_std$profile_curves$mu[,2]
+  l$mu <- ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x = mu_x, y = mu_y), color = "black") +
+    ggplot2::labs(title = "profile for mu",
+                  x = "mu",
+                  y = LIKELIHOOD_LABEL)
+  # output$profile_mu_plot <- renderPlot(profile_mu_plot)
+
+  sigma_x <- profileCI_std$profile_curves$sigma[,1]
+  sigma_y <- profileCI_std$profile_curves$sigma[,2]
+  l$sigma <- ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x = sigma_x, y = sigma_y), color = "black") +
+    ggplot2::labs(title = "profile for sigma",
+                  x = "sigma",
+                  y = LIKELIHOOD_LABEL)
+  # output$profile_sigma_plot <- renderPlot(profile_sigma_plot)
+
+  pi_x <- profileCI_std$profile_curves$pi[,1]
+  pi_y <- profileCI_std$profile_curves$pi[,2]
+  l$pi <- ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x = pi_x, y = pi_y), color = "black") +
+    ggplot2::labs(title = "profile for pi",
+                  x = "pi",
+                  y = LIKELIHOOD_LABEL)
+  # output$profile_pi_plot <- renderPlot(profile_pi_plot)
+
+  profile_curves <- as.matrix(attr(profileCI_power$profile,"for_plot")[["logit_relative_power"]])
+  power_x <- reals_to_powers(profile_curves[,1])
+  power_y <- profile_curves[,2]
+  l$power <- ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x = power_x, y = power_y), color = "black") +
+    ggplot2::labs(title = "profile for power",
+                  x = "power",
+                  y = LIKELIHOOD_LABEL)
+  # output$profile_power_plot <- renderPlot(profile_power_plot)
+
+  if (!identical(profileCI_folded_normal_mu, NA)) {
+    profile_curves <- as.matrix(attr(profileCI_folded_normal_mu$profile,"for_plot")[["log_folded_normal_mu"]])
+    folded_normal_mus_x <- reals_to_mus(profile_curves[,1])
+    folded_normal_mus_y <- profile_curves[,2]
+    l$folded_normal_mu <- ggplot2::ggplot() +
+      ggplot2::geom_line(ggplot2::aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
+      ggplot2::labs(title = paste("profile for",FOLDED_NORMAL_MU_LABEL),
+                    x = FOLDED_NORMAL_MU_LABEL,
+                    y = LIKELIHOOD_LABEL)
+    # output$profile_folded_normal_mu_plot <- renderPlot(profile_folded_normal_mu_plot)
+  }
+
+  if (!identical(profileCI_folded_normal_sigma, NA)) {
+    profile_curves <- as.matrix(attr(profileCI_folded_normal_sigma$profile,"for_plot")[["log_folded_normal_sigma"]])
+    folded_normal_sigma_x <- reals_to_sigmas(profile_curves[,1])
+    folded_normal_sigma_y <- profile_curves[,2]
+    l$folded_normal_sigma <- ggplot2::ggplot() +
+      ggplot2::geom_line(ggplot2::aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
+      ggplot2::labs(title = paste("profile for",FOLDED_NORMAL_SIGMA_LABEL),
+                    x = FOLDED_NORMAL_SIGMA_LABEL,
+                    y = LIKELIHOOD_LABEL)
+    # output$profile_folded_normal_sigma_plot <- renderPlot(profile_folded_normal_sigma_plot)
+  }
+  return(l)
+}
 

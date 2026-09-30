@@ -5,12 +5,12 @@
 \title{Computations for profile-based confidence intervals of the derived
 model parameter power.}
 \usage{
-compute_profileCI_power(fit_list, level = 0.95)
+compute_profileCI_power(fit_list, level = pcm_env$confidence_level/100)
 }
 \arguments{
 \item{fit_list}{A list that was the output of fit_p_curve}
 
-\item{level}{Confidence level for the CI (0-1, default = 0.95)}
+\item{level}{Confidence level for the CI (0-100, default = pcm_env$confidence_level)}
 }
 \value{
 A list with the following elements:

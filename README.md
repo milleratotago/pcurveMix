@@ -59,11 +59,11 @@ The best way to start is by starting the shiny app and looking at the vignette '
 The commands for that are:
 
 ```r
-run_shiny_app()
 vignette("Intro", package = "pcurveMix")
+run_shiny_app()
 ```
 
-The first command opens the shiny app in one window, and the second shows the `Intro` vignette in the RStudio Help window.
+The first command shows the `Intro` vignette in the RStudio Help window, and the second opens the shiny app in another window.
 You should be able to run the shiny app and make sense of its results by going back and
 forth between the shiny app and the `Intro` vignette.
 The first section of the vignette ("Option 1") explains how to set the various options in the shiny app,

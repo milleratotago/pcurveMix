@@ -8,6 +8,8 @@ server <- function(input, output, session) {
   # Grab the package environment for server use
   pcm_env <- as.list(pcurveMix:::pcm_env)
 
+  shinyjs::disable(id = "btnFit")
+
   # Import some analysis parameters from the package environment
   # and save them as "entry" variables so that they can be restored
   # when the shiny app finishes.
@@ -33,7 +35,8 @@ server <- function(input, output, session) {
                       boot_pct_converged = NULL,
                       pdf_plot = NULL,
                       cdf_plot = NULL,
-                      profile_list = NULL)
+                      profile_list = NULL,
+                      df = NULL)
 
   restart <- function()  {  # NEWJEFF: Must null out additional fields such as jackknifing & np_boot
     v$fit_completed = FALSE
@@ -206,6 +209,170 @@ server <- function(input, output, session) {
     output$np_boot_notes <- render_strings_as_bullets(v$np_boot_notes)
   } # do_npbootstrapping
 
+  profile_manager <- function(fit_list) {
+    if (!input$profile_ci) {
+      v$profile_analysis <- 0  # Needed to pass to Rmd
+      return(NULL)
+    } else {
+      v$profile_analysis <- 1
+    }
+    # Computations:
+    v$profile_ci_confidence_level <- pcm_env$confidence_level / 100  # profileCI package wants 0-1 confidence level
+    notif_id <- "profileCI_std_notif_id"
+    showNotification(
+      "Profiling mu, sigma, and pi ...",
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+    v$profileCI_std <- compute_profileCI(fit_list, level = v$profile_ci_confidence_level)
+    showNotification(
+      "Profiling power ...",
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+    v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
+    if (fit_list$tails == 2) {
+      showNotification(
+        paste("Profiling",pcurveMix:::FOLDED_NORMAL_MU_LABEL,"..."),
+        id = notif_id,
+        duration = NULL,
+        closeButton = TRUE,
+        type = "message"
+      )
+      v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
+      showNotification(
+        paste("Profiling",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,"..."),
+        id = notif_id,
+        duration = NULL,
+        closeButton = TRUE,
+        type = "message"
+      )
+      v$profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
+    } else {
+      v$profileCI_folded_normal_mu <- NA
+      v$profileCI_folded_normal_sigma <- NA
+    } # if tails == 2
+    # Show results in UI mainPanel
+    removeNotification(notif_id)
+    profileCI_title <- paste0("Profile CIs (",
+                              round(100*v$profile_ci_confidence_level,pcm_env$round_to),
+                              "% confidence)")
+    output$profileCI_title <- renderText(profileCI_title)
+    # tbl <- v$profileCI_std$tabl
+    # v$profileCI_tbl <- tbl
+    ci_tbl <- make_profile_ci_tbl(v$profileCI_std,v$profileCI_power,
+                                  v$profileCI_folded_normal_mu,v$profileCI_folded_normal_sigma)
+    # ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"), row.names = NULL)
+    # ci_tbl <- cbind(ci_tbl,v$profileCI_std$bounds_matrix)
+    # names(ci_tbl) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    #
+    # power_row <- data.frame(parameter = "power",
+    #                         c2 = v$profileCI_power$table[[pcurveMix:::CI_LOWER_BOUND_LABEL]],
+    #                         c3 = v$profileCI_power$table[[pcurveMix:::CI_UPPER_BOUND_LABEL]])
+    # names(power_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    # ci_tbl <- rbind(ci_tbl, power_row)
+    #
+    # if (fit_list$tails == 2) {
+    #   folded_normal_mu_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
+    #                                      c2 = v$profileCI_folded_normal_mu$table[[pcurveMix:::CI_LOWER_BOUND_LABEL]],
+    #                                      c3 = v$profileCI_folded_normal_mu$table[[pcurveMix:::CI_UPPER_BOUND_LABEL]])
+    #   names(folded_normal_mu_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    #   ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
+    #
+    #   folded_normal_sigma_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
+    #                                         c2 = v$profileCI_folded_normal_sigma$table[[pcurveMix:::CI_LOWER_BOUND_LABEL]],
+    #                                         c3 = v$profileCI_folded_normal_sigma$table[[pcurveMix:::CI_UPPER_BOUND_LABEL]])
+    #   names(folded_normal_sigma_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
+    #   ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
+    # } # if tails == 2
+    # rownames(ci_tbl) <- NULL
+    v$profile_tbl <- ci_tbl
+    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = pcm_env$round_to)
+    output$profile_notes <- render_strings_as_bullets( pcurveMix:::profile_table_notes() )
+
+    l <- make_profile_plots(v$profileCI_std, v$profileCI_power, v$profileCI_folded_normal_mu, v$profileCI_folded_normal_sigma)
+    output$profile_mu_plot <- renderPlot(l$mu) # v$profile_mu_plot)
+    output$profile_sigma_plot <- renderPlot(l$sigma) # v$profile_sigma_plot)
+    output$profile_pi_plot <- renderPlot(l$pi) # v$profile_pi_plot)
+    output$profile_power_plot <- renderPlot(l$power) # v$profile_power_plot)
+    if (fit_list$tails == 2) {
+      output$profile_folded_normal_mu_plot <- renderPlot(l$folded_normal_mu) # v$profile_folded_normal_mu_plot)
+      output$profile_folded_normal_sigma_plot <- renderPlot(l$folded_normal_sigma) # v$profile_folded_normal_sigma_plot)
+    }
+    v$profile_mu_plot <- l$mu
+    v$profile_sigma_plot <- l$sigma
+    v$profile_pi_plot <- l$pi
+    v$profile_power_plot <- l$power
+    if (fit_list$tails == 2) {
+      v$profile_folded_normal_mu_plot <- l$folded_normal_mu
+      v$profile_folded_normal_sigma_plot <- l$folded_normal_sigma
+    }
+    # # Interesting: you can't re-use plain x & y across multiple ggplots.
+    # # If you do, all plots show the final x & y values.
+    # mu_x <- v$profileCI_std$profile_curves$mu[,1]
+    # mu_y <- v$profileCI_std$profile_curves$mu[,2]
+    # v$profile_mu_plot <- ggplot2::ggplot() +
+    #   ggplot2::geom_line(ggplot2::aes(x = mu_x, y = mu_y), color = "black") +
+    #   ggplot2::labs(title = "profile for mu",
+    #                 x = "mu",
+    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
+    # output$profile_mu_plot <- renderPlot(v$profile_mu_plot)
+    #
+    # sigma_x <- v$profileCI_std$profile_curves$sigma[,1]
+    # sigma_y <- v$profileCI_std$profile_curves$sigma[,2]
+    # v$profile_sigma_plot <- ggplot2::ggplot() +
+    #   ggplot2::geom_line(ggplot2::aes(x = sigma_x, y = sigma_y), color = "black") +
+    #   ggplot2::labs(title = "profile for sigma",
+    #                 x = "sigma",
+    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
+    # output$profile_sigma_plot <- renderPlot(v$profile_sigma_plot)
+    #
+    # pi_x <- v$profileCI_std$profile_curves$pi[,1]
+    # pi_y <- v$profileCI_std$profile_curves$pi[,2]
+    # v$profile_pi_plot <- ggplot2::ggplot() +
+    #   ggplot2::geom_line(ggplot2::aes(x = pi_x, y = pi_y), color = "black") +
+    #   ggplot2::labs(title = "profile for pi",
+    #                 x = "pi",
+    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
+    # output$profile_pi_plot <- renderPlot(v$profile_pi_plot)
+    #
+    # profile_curves <- as.matrix(attr(v$profileCI_power$profile,"for_plot")[["logit_relative_power"]])
+    # power_x <- pcurveMix:::reals_to_powers(profile_curves[,1])
+    # power_y <- profile_curves[,2]
+    # v$profile_power_plot <- ggplot2::ggplot() +
+    #   ggplot2::geom_line(ggplot2::aes(x = power_x, y = power_y), color = "black") +
+    #   ggplot2::labs(title = "profile for power",
+    #                 x = "power",
+    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
+    # output$profile_power_plot <- renderPlot(v$profile_power_plot)
+    #
+    # if (fit_list$tails == 2) {
+    #   profile_curves <- as.matrix(attr(v$profileCI_folded_normal_mu$profile,"for_plot")[["log_folded_normal_mu"]])
+    #   folded_normal_mus_x <- pcurveMix:::reals_to_mus(profile_curves[,1])
+    #   folded_normal_mus_y <- profile_curves[,2]
+    #   v$profile_folded_normal_mu_plot <- ggplot2::ggplot() +
+    #     ggplot2::geom_line(ggplot2::aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
+    #     ggplot2::labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MU_LABEL),
+    #                   x = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
+    #                   y = pcurveMix:::LIKELIHOOD_LABEL)
+    #   output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
+    #
+    #   profile_curves <- as.matrix(attr(v$profileCI_folded_normal_sigma$profile,"for_plot")[["log_folded_normal_sigma"]])
+    #   folded_normal_sigma_x <- pcurveMix:::reals_to_sigmas(profile_curves[,1])
+    #   folded_normal_sigma_y <- profile_curves[,2]
+    #   v$profile_folded_normal_sigma_plot <- ggplot2::ggplot() +
+    #     ggplot2::geom_line(ggplot2::aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
+    #     ggplot2::labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL),
+    #                   x = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
+    #                   y = pcurveMix:::LIKELIHOOD_LABEL)
+    #   output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
+    # } # if tails == 2
+  } # profile_manager
+
   assign_input_globals <- function() {
     pcm_env$confidence_level <- input$confidence_level
     pcm_env$round_to <- input$round_to
@@ -213,42 +380,51 @@ server <- function(input, output, session) {
     pcm_env$bias_correct_ci_bounds <- input$bias_correct_ci_bounds
   }
 
-  observeEvent(input$btnFit, {
-
-    # l <- get_p_vec_to_fit() # NEWJEFF: Modularize here
-    if (input$use_demo) {
-      package_path <- system.file(package = "pcurveMix")
-      v$p_filename <- "sample_ps.csv"
-      full_p_filename <- paste0(package_path,"/extdata/",v$p_filename)
-    } else {
-      v$p_filename <- input$p_file$name
-      full_p_filename <- input$p_file$datapath
+  observeEvent(input$btnUpload, {
+    p_file_name <- input$p_file$name
+    if (is.null(p_file_name)) {  # p_file_name == "demo_data.csv" NEWJEFF: HARD-CODED IN UI & Intro.Rmd
+      p_file_name <- system.file("extdata", "demo_data.csv", package = "pcurveMix")
     }
-    if (is.null(full_p_filename)) {
-      shinyalert::shinyalert(
-        title = "",
-        text = "You must upload a file of p's before fitting the model.",
-        type = "error",
-        size = "xs",
-        showConfirmButton = TRUE,
-        confirmButtonText = "OK")
+    v$p_filename <- p_file_name
+    v$df <- read.csv(p_file_name)
+    if ("p" %in% names(v$df)) {
+      n_ps <- length(v$df$p)
+      ps_min <- round(min(v$df$p),4)
+      ps_max <- round(max(v$df$p),4)
+      id <- showNotification(
+        paste("Successful upload of",n_ps,"p's; min =",ps_min," & max =",ps_max),
+        duration = 10,  # seconds
+        closeButton = TRUE,
+        type = "message",
+        # Add a large, high-contrast dismiss button at the bottom
+        action = actionButton(
+          "dismiss_btn",
+          "OK"
+          # class = "btn-danger btn-sm",
+          # style = "width: 100%; font-weight: bold; border-radius: 4px;"
+        )
+      ) # showNotification
+      shinyjs::enable(id = "btnFit")
+      shinyjs::runjs('document.getElementById("analysis_options_panel").scrollIntoView({behavior: "smooth", block: "start"});')
     } else {
+      shiny::showModal(shiny::modalDialog(title = "No p values found",
+                                          "Error: The file must contain a column named 'p'",
+                                          easyClose = TRUE))
+    } # else
+
+    # Listen specifically for the custom dismiss button click
+    observeEvent(input$dismiss_btn, {
+      removeNotification(id)
+    }, once = TRUE) # once = TRUE ensures the observer cleans itself up
+  }  ) # end observeEvent(input$btnUpload
+
+  observeEvent(input$btnFit, {
       restart()
       assign_input_globals()
       shinyjs::show("results_panel")
       shinyjs::show("download_panel")
-      df <- read.csv(full_p_filename)
-      if (!"p" %in% names(df)) {  # NEWJEFF: This should really be checked at the upload button.
-        shinyalert::shinyalert(
-          title = "",
-          text = "Cancelling computation because no column named 'p' was found in the file.",
-          type = "error",
-          size = "xs",
-          showConfirmButton = TRUE,
-          confirmButtonText = "OK")
-        return()
-      }
-      p_vec_to_fit <- df$p
+      shinyjs::runjs('document.getElementById("results_panel").scrollIntoView({behavior: "smooth", block: "start"});')
+      p_vec_to_fit <- v$df$p
 
       # output$model_fit_title <- renderText("Maximum-likelihood Fitting Summary")
       output$parameter_estimates_title <- renderText("Parameter estimates:")
@@ -258,11 +434,12 @@ server <- function(input, output, session) {
       tails <- get_tails()
       alpha_cutoff <- input$custom_cutoff
       alpha_sig <- input$alpha_sig
-      if (input$specify_starting_values) {
-        start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
-      } else {
-        start_list <- pcm_env$optim_starting_parms
-      }
+      # if (input$specify_starting_values) {
+      #   start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
+      # } else {
+      #   start_list <- pcm_env$optim_starting_parms
+      # }
+      start_list <- pcm_env$optim_starting_parms
 
       v$fit_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start_parms = start_list)
       ps_in_bounds <- v$fit_list$check_ps_list$ps_in_bounds
@@ -305,150 +482,8 @@ server <- function(input, output, session) {
                       y = "cumulative proportion")
       output$cdf_plot <- renderPlot(v$cdf_plot)
       v$fit_completed <- TRUE
-    } # end else (file name not null)
+#    } # end else (file name not null)
   }) # end observeEvent fit modelbutton
-
-  profile_manager <- function(fit_list) {
-    if (!input$profile_ci) {
-      v$profile_analysis <- 0  # Needed to pass to Rmd
-      return(NULL)
-    } else {
-      v$profile_analysis <- 1
-    }
-    # Computations:
-    v$profile_ci_confidence_level <- pcm_env$confidence_level / 100  # profileCI package wants 0-1 confidence level
-    notif_id <- "profileCI_std_notif_id"
-    showNotification(
-      "Profiling mu, sigma, and pi ...",
-      id = notif_id,
-      duration = NULL,
-      closeButton = TRUE,
-      type = "message"
-    )
-    v$profileCI_std <- pcurveMix::compute_profileCI(fit_list, level = v$profile_ci_confidence_level)
-    showNotification(
-      "Profiling power ...",
-      id = notif_id,
-      duration = NULL,
-      closeButton = TRUE,
-      type = "message"
-    )
-    v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
-    if (fit_list$tails == 2) {
-      showNotification(
-        paste("Profiling",pcurveMix:::FOLDED_NORMAL_MU_LABEL,"..."),
-        id = notif_id,
-        duration = NULL,
-        closeButton = TRUE,
-        type = "message"
-      )
-      v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
-      showNotification(
-        paste("Profiling",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,"..."),
-        id = notif_id,
-        duration = NULL,
-        closeButton = TRUE,
-        type = "message"
-      )
-      v$profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
-    } # if tails == 2
-    # Show results in UI mainPanel
-    removeNotification(notif_id)
-    profileCI_title <- paste0("Profile CIs (",
-                              round(100*v$profile_ci_confidence_level,pcm_env$round_to),
-                              "% confidence)")
-    output$profileCI_title <- renderText(profileCI_title)
-    # tbl <- v$profileCI_std$tabl
-    # v$profileCI_tbl <- tbl
-    ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"), row.names = NULL)
-    ci_tbl <- cbind(ci_tbl,v$profileCI_std$bounds_matrix)
-    names(ci_tbl) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-
-    power_row <- data.frame(parameter = "power",
-                            c2 = v$profileCI_power$table$`95% CI lower`,
-                            c3 = v$profileCI_power$table$`95% CI upper`)
-    names(power_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    ci_tbl <- rbind(ci_tbl, power_row)
-
-    if (fit_list$tails == 2) {
-      folded_normal_mu_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
-                                         c2 = v$profileCI_folded_normal_mu$table$`95% CI lower`,
-                                         c3 = v$profileCI_folded_normal_mu$table$`95% CI upper`)
-      names(folded_normal_mu_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-      ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
-
-      folded_normal_sigma_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
-                                            c2 = v$profileCI_folded_normal_sigma$table$`95% CI lower`,
-                                            c3 = v$profileCI_folded_normal_sigma$table$`95% CI upper`)
-      names(folded_normal_sigma_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-      ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
-    } # if tails == 2
-    rownames(ci_tbl) <- NULL
-    v$profile_tbl <- ci_tbl
-    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = pcm_env$round_to)
-    output$profile_notes <- render_strings_as_bullets( pcurveMix:::profile_table_notes() )
-
-    # Interesting: you can't re-use plain x & y across multiple ggplots.
-    # If you do, all plots show the final x & y values.
-    mu_x <- v$profileCI_std$profile_curves$mu[,1]
-    mu_y <- v$profileCI_std$profile_curves$mu[,2]
-    v$profile_mu_plot <- ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(x = mu_x, y = mu_y), color = "black") +
-      ggplot2::labs(title = "likelihood profile for mu",
-                    x = "mu",
-                    y = pcurveMix:::LIKELIHOOD_LABEL)
-    output$profile_mu_plot <- renderPlot(v$profile_mu_plot)
-
-    sigma_x <- v$profileCI_std$profile_curves$sigma[,1]
-    sigma_y <- v$profileCI_std$profile_curves$sigma[,2]
-    v$profile_sigma_plot <- ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(x = sigma_x, y = sigma_y), color = "black") +
-      ggplot2::labs(title = "likelihood profile for sigma",
-                    x = "sigma",
-                    y = pcurveMix:::LIKELIHOOD_LABEL)
-    output$profile_sigma_plot <- renderPlot(v$profile_sigma_plot)
-
-    pi_x <- v$profileCI_std$profile_curves$pi[,1]
-    pi_y <- v$profileCI_std$profile_curves$pi[,2]
-    v$profile_pi_plot <- ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(x = pi_x, y = pi_y), color = "black") +
-      ggplot2::labs(title = "likelihood profile for pi",
-                    x = "pi",
-                    y = pcurveMix:::LIKELIHOOD_LABEL)
-    output$profile_pi_plot <- renderPlot(v$profile_pi_plot)
-
-    profile_curves <- as.matrix(attr(v$profileCI_power$profile,"for_plot")[["logit_relative_power"]])
-    power_x <- pcurveMix:::reals_to_powers(profile_curves[,1])
-    power_y <- profile_curves[,2]
-    v$profile_power_plot <- ggplot2::ggplot() +
-      ggplot2::geom_line(ggplot2::aes(x = power_x, y = power_y), color = "black") +
-      ggplot2::labs(title = "likelihood profile for power",
-                    x = "power",
-                    y = pcurveMix:::LIKELIHOOD_LABEL)
-    output$profile_power_plot <- renderPlot(v$profile_power_plot)
-
-    if (fit_list$tails == 2) {
-      profile_curves <- as.matrix(attr(v$profileCI_folded_normal_mu$profile,"for_plot")[["log_folded_normal_mu"]])
-      folded_normal_mus_x <- pcurveMix:::reals_to_mus(profile_curves[,1])
-      folded_normal_mus_y <- profile_curves[,2]
-      v$profile_folded_normal_mu_plot <- ggplot2::ggplot() +
-        ggplot2::geom_line(ggplot2::aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
-        ggplot2::labs(title = paste("likelihood profile for",pcurveMix:::FOLDED_NORMAL_MU_LABEL),
-                      x = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
-                      y = pcurveMix:::LIKELIHOOD_LABEL)
-      output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
-
-      profile_curves <- as.matrix(attr(v$profileCI_folded_normal_sigma$profile,"for_plot")[["log_folded_normal_sigma"]])
-      folded_normal_sigma_x <- pcurveMix:::reals_to_sigmas(profile_curves[,1])
-      folded_normal_sigma_y <- profile_curves[,2]
-      v$profile_folded_normal_sigma_plot <- ggplot2::ggplot() +
-        ggplot2::geom_line(ggplot2::aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
-        ggplot2::labs(title = paste("likelihood profile for",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL),
-                      x = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
-                      y = pcurveMix:::LIKELIHOOD_LABEL)
-      output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
-    } # if tails == 2
-  } # profile_manager
 
   # source("btn_gen_report.R")
   output$btnReport <- downloadHandler(

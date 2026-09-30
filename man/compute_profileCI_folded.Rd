@@ -7,7 +7,11 @@ model parameters for the folded normal: mu and sigma.
 This function computes the CI for \emph{either} mu or sigma but not both,
 so you must call it twice to get the CIs for both.}
 \usage{
-compute_profileCI_folded(fit_list, target_folded_normal_mu, level = 0.95)
+compute_profileCI_folded(
+  fit_list,
+  target_folded_normal_mu,
+  level = pcm_env$confidence_level/100
+)
 }
 \arguments{
 \item{fit_list}{A list that was the output of fit_p_curve}
@@ -15,7 +19,7 @@ compute_profileCI_folded(fit_list, target_folded_normal_mu, level = 0.95)
 \item{target_folded_normal_mu}{Boolean where TRUE requests CI for folded normal mu
 and FALSE requests CI for folded normal sigma.}
 
-\item{level}{Confidence level for the CI (0-1, default = 0.95)}
+\item{level}{Confidence level for the CI (0-100, default = pcm_env$confidence_level)}
 }
 \value{
 A list with the following elements:

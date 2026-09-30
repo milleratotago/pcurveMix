@@ -54,8 +54,8 @@ capture_progressr_state <- function() {
 # Function to check whether all packages needed for shiny are available.
 check_packages_required_for_shiny <- function() {
   # 1. Define all packages required exclusively for the Shiny app
-  shiny_deps <- c("bslib", "ggplot2", "knitr", "progressr", "rmarkdown", "shiny", "shinyalert", "shinyjs",
-                  "shinyFeedback", "testthat", "zip")
+  shiny_deps <- c("bslib", "ggplot2", "knitr", "progressr", "rmarkdown", "shiny", # "shinyalert",
+                  "shinyjs", "shinyFeedback", "testthat", "zip")
   # 2. Check which packages are missing
   missing_deps <- shiny_deps[!sapply(shiny_deps, requireNamespace, quietly = TRUE)]
 

@@ -1,0 +1,462 @@
+---
+title: "Intro"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Intro}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{=html}
+<style>
+.title {
+  display: none;
+}
+</style>
+```
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include=FALSE}
+# NEWJEFF: Attempting progressR
+knitr::opts_chunk$set(echo = TRUE)
+
+# Force progressr to run in non-interactive knitr sessions
+options(progressr.enable = TRUE)
+
+library(progressr)
+
+# Enable text-based progress updates for knitr
+# Handlers now defined later in with_progress
+# progressr::handlers(handler_txtprogressbar(file = stderr()))
+```
+
+# Introduction to `pcurveMix`
+
+This introductory vignette illustrates two options for the simplest and most common use case of fitting the mixture model of Ulrich and Miller (in preparation) to a set of observed $p$ values obtained from statistical tests.
+Specifically, this is the use case in which:
+
+-   you have a set of observed $p$ values from a given research area.
+
+-   you would like to fit the mixture model to those $p$ values in order to get estimates of the three model parameters describing the research area from which those $p$ values were obtained:
+
+    -   `pi` or $\pi$, the proportion of studies in which real effects are present (i.e., H1 is true).
+    -   `mu` or $\mu$, the mean of those studies' effect sizes.
+    -   `sigma` or $\sigma$, the standard deviation of those studies' effect sizes.
+
+The fitting process provides estimates, standard errors, and confidence intervals for those model parameters, as well as plots of observed and fitted frequency distributions and cumulative frequency distributions of $p$ values.
+It also provides estimates of many derived parameters that can be computed from the estimates of `pi`, `mu`, and `sigma`:
+
+-   `power`: the probability of a significant result when a real effect is present.
+-   `Pr_TP`: the probability of a true positive result in a randomly selected study.
+-   `Pr_FN`: the probability of a false negative result in a randomly selected study.
+-   `Pr_FP`: the probability of a false positive result in a randomly selected study.
+-   `Pr_TN`: the probability of a true negative result in a randomly selected study.
+-   `R_FP`: the rate of false positives across all studies, Pr_FP / (Pr_FP + Pr_TP).
+-   `R_FN`: the rate of false negatives across all studies, Pr_FN / (Pr_FN + Pr_TN).
+
+# Option 1: Fitting with the shiny app
+
+The simplest way to fit the model is by using the shiny app that comes with the package.
+Use the following RStudio command to start the app, and then specify the $p$ values to be fit and the desired analysis options as shown in the following two sections.
+
+```{r, eval = FALSE}
+run_shiny_app()
+```
+
+## Specify the $p$ values to be fit
+
+Normally you would choose your own CSV file with the $p$ values that are to be analyzed. This file must contain a column named "p" with the $p$ values from the different studies, one study per row. Other columns, if any, are ignored.
+
+For a demo run, just read in the default `demo_data.csv` file supplied with the package. This file has some random $p$ values that were generated previously (in accordance with the assumptions of the model.
+
+Next indicate whether the $p$ values in the file came from 1- or 2-tailed testing (because the computations are slightly different for these two cases). The demo file has 2-tailed $p$'s (the default).
+
+Also indicate the upper $p$ cutoff for inclusion in the file (a.k.a. `alpha` or $\alpha$). This cutoff is the largest $p$ value that could possibly have been included in your set of observed $p$'s. The cutoff of 1, shown here, indicates that $p$ values could have come from *any* study, significant or not. Alternatively, a cutoff of 0.05 would be appropriate if the $p$'s all came from published studies, where the cutoff of $p \leq 0.05$ was required for publication (as is common).
+If the file contains any $p$ values larger than the cutoff, these will be discarded prior to fitting.
+For the demo run, use the default value of 1.
+
+## Specify analysis options
+
+*For a demo run, just use the defaults for all of these options.*
+
+-  Alpha level to use for power computations (a.k.a. `alpha_sig`).
+    The fitted values of $\mu$ and $\sigma$ can be used to compute the average power of studies in which a true effect is present (i.e., H1 is true), but only in relation to the $\alpha$ level used as the significance cutoff, which is specified by this argument.
+    With the default value of `alpha_sig = 0.05`, for example, power will be estimated as the probability of obtaining $p \leq 0.05$ in a study with a true effect.
+
+-  Number of decimal places to display.
+   This parameter is just what it sounds like.
+
+The next set of four `Compute...` options controls whether the app will compute confidence intervals via jackknifing, parametric bootstrapping, nonparametric bootstrapping, and/or likelihood profiling. Some other options can be specified if any of these are selected.
+
+-   Confidence level for all of the confidence intervals.
+-   Number of bootstrap samples if bootstrapping is requested. This is reasonably fast and we recommend using at least 2000 samples for any "real" analysis.
+-   Whether to apply bias corrections to jackknifing and/or bootstrapping confidence interval bounds (not applicable for likelihood profiling).
+
+Finally, numerous other rather technical variables can be adjusted *before starting the shiny app* using the `set_globals` function (see NEWJEFF that function's documentation). Use a command sequence like  the following to change the values of any of these variables:
+
+```{r eval = FALSE}
+library(pcurveMix)
+set_globals(edge_p = 1e-13, small_p_bin_cutoff = 1e-9) # Changing 2 example variables
+run_shiny_app()
+```
+
+After you have set the above arguments, click the `Fit model...` button and the results will appear as shown next.
+
+## Maximum-likelihood fitting results
+
+```{r, eval = TRUE, echo = FALSE}
+p_file_name <- "demo_data.csv"
+package_path <- system.file(package = "pcurveMix")
+file_name <- paste0(package_path,"/extdata/",p_file_name)
+```
+
+```{r library_and_read_ps, eval = TRUE, echo = FALSE, message = FALSE, warning = FALSE}
+library(pcurveMix)
+pcurveMix::set_globals(fast_boot_jack = TRUE)
+# file_name <- "Set your file_name here"
+df <- read.csv(file_name)
+sample_ps <- df$p
+n_ps <- length(sample_ps)
+n_boot_samples <- 100
+```
+
+```{r fit_model, eval = TRUE, echo = FALSE}
+alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significance
+tails <- 2
+fit_results_list <- fit_p_curve(sample_ps, alpha = alpha_cutoff, tails = tails)
+real_ps <- fit_results_list$check_ps_list$ps_in_bounds
+full_sample_n <- length(real_ps)
+if (pcurveMix:::pcm_env$fast_boot_jack) {
+  start_list <- list(mu = fit_results_list$mu, sigma = fit_results_list$sigma,
+                     pi = fit_results_list$pi)
+} else {
+  start_list <- pcurveMix:::pcm_env$optim_starting_parms
+}
+```
+
+### Fitting summary table
+
+The first table is a summary of the fitting conditions and overall results.
+
+```{r print_descriptors, echo = FALSE}
+# print(fit_results_list)  # Ugly list format printing; better in next 2 tables.
+descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list, file_name = p_file_name)
+knitr::kable(descriptor_tbl)
+```
+
+The first part of this table gives information about the fitting options `alpha`, `tails`, and `alpha_sig` as specified prior to fitting. It also shows the starting parameter values passed to the `optim` function and the low $p$ censoring value that was used (if any).
+
+The second part of the table gives information about the dataset of $p$'s to which the model has been fit, including the number of $p$ values in the dataset as well as the minimum and maximum of these $p$ values.
+Notations are also included here if any $p$ values were excluded for being less than zero or greater than the `alpha` cutoff.
+In addition, $p$ values of 0 cause numerical errors in the fitting computations, so it is noted if any of these have been replaced with a smaller value.
+
+The third part of the table gives information about the overall results of the model fit:
+
+-   Whether or not the `optim` function reported convergence on a final set of parameter estimates.
+-   The overall log likelihood of the $p$'s dataset under the model with the estimated parameter values.
+-   The value of the Kolmogorov-Smirnov Dmax test statistic comparing the observed and model-predicted CDFs of $p$ values.
+-   The $p$ value of the Kolmogorov-Smirnov test, where the H0 is that the observed $p$ values came from the model-predicted distribution of $p$'s.
+
+### Parameter estimates table
+
+```{r table_parameter_estimates, echo = FALSE}
+estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
+# Round all numeric values, skipping the parameter name
+estimates_tbl[,-1] <- round(estimates_tbl[,-1],pcurveMix:::pcm_env$round_to)
+est_mu <- estimates_tbl$estimate[estimates_tbl$parameter == "mu"]
+est_sigma <- estimates_tbl$estimate[estimates_tbl$parameter == "sigma"]
+est_pi <- estimates_tbl$estimate[estimates_tbl$parameter == "pi"]
+```
+
+The next table shows the estimates for the model parameters $\mu$, $\sigma$, and $\pi$.
+Here, for example, it is estimated that the probability of a real effect (H1 true) in this research area is `r est_pi` and that---when a real effect is present---the size of that effect (in Z-score terms) comes from a normal distribution with a mean of `r est_mu` and a standard deviation of `r est_sigma`.
+
+Many additional parameter estimates are shown that can be derived from the estimated values of $\mu$, $\sigma$, and $\pi$. There are no standard errors or confidence intervals for these derived parameters power because the estimated values are derived from the three base parameters, although it is possible to get estimates of their standard errors and compute confidence intervals using jackknifing or bootstrapping, as shown below.
+
+-    `power`: the estimated probability of rejecting H0 when H1 is true. This is essentially an average power computed across the distribution of possible true effect sizes with the estimated $\mu$ and $\sigma$).
+-    `folded_normal_mu` and `folded_normal_sigma`: With 2-tailed testing, $p$ values are related to the *absolute value* of the effect size rather than the effect size per se, so it is useful to consider the mean and standard deviation of the absolute effect sizes. These are computed from "folded normal" distributions with the estimated `mu` and `sigma` values of the signed effect size distribution.
+-    `Pr_TP`, `Pr_FN`, `Pr_FP`, `Pr_TN`: These are the estimated probabilities of true positives, false negatives, false positives, and true negatives, respectively, all of which may be computed from `pi`, `power`, and `alpha_sig`.
+-    `Rate_FPs` and `Rate_FNs`: These are the estimated proportions of false positives (negatives) within the total of all positives (negatives), computed from the preceding four `Pr_xx` values.
+
+```{r print_parameter_estimates, echo = FALSE}
+knitr::kable(estimates_tbl)
+table_notes <- pcurveMix:::estimates_table_notes(converged = fit_results_list$converged)
+pointed_list <- paste("-", table_notes, collapse = "\n")
+knitr::asis_output(pointed_list)
+```
+
+### PDF and CDF plots
+
+The next output is a (density-scaled) histogram of the sample $p$ values superimposed over the predicted density at each $p$ from the fitted model:
+
+```{r, fig.width=6, echo = FALSE}
+pdf_plot <- make_pdf_plot(fit_results_list)
+print(pdf_plot)
+```
+
+The final plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
+
+```{r, fig.width=6, echo = FALSE}
+cdf_plot <- make_cdf_plot(fit_results_list)
+print(cdf_plot)
+```
+
+## Jackknife analysis table
+
+The jackknife analysis estimates parameter values for all possible leave-out-one subsamples of the original $p$s, and then computes the means and standard standard deviations of the subsamples estimates of all parameter. These values can be used to estimate and correct for estimation bias and to compute confidence intervals for each parameter.
+
+```{r jack_analysis, echo = FALSE, comment = ""}
+mat_of_ps <- generate_jackknife_subsamples(real_ps)
+cat("\nJackknifing\n", file = stderr())
+progressr::with_progress({
+  ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+  handlers = handler_txtprogressbar(file = stderr()) # , title = "Jackknifing")
+)
+jack_pct_converged <- 100 * mean(ests_tbl$converged)
+summaries <- get_parm_summaries(ests_tbl)
+jack_tbl <- jackknife_computations(fit_results_list, summaries, full_sample_n)
+```
+
+```{r print_jackknife_estimates, echo = FALSE}
+jack_tbl[,-1] <- round(jack_tbl[,-1],pcurveMix:::pcm_env$round_to)
+knitr::kable(jack_tbl)
+table_notes <- pcurveMix:::jackknife_table_notes(full_sample_n, jack_pct_converged)
+pointed_list <- paste("-", table_notes, collapse = "\n")
+knitr::asis_output(pointed_list)
+```
+
+## Parametric bootstrap analysis table
+
+The parametric bootstrap analysis provides bootstrap means, standard errors, and confidence intervals for the parameters.
+These are computed across the indicated number of parametric bootstrap samples, where for each sample the program:
+
+-   generates a random sample of $p$ values from the mixture model **with the estimated values of the parameters $\mu$, $\sigma$, and $\pi$** (i.e., a "parametric" bootstrap sample).
+-   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, and then to compute values of the derived parameters from those.
+
+```{r boot_analysis, echo = FALSE, comment = ""}
+mat_of_ps <- generate_parametric_subsamples(n_boot_samples, full_sample_n,
+                                            fit_results_list$mu, fit_results_list$sigma,
+                                            pi = fit_results_list$pi,
+                                            alpha = fit_results_list$alpha,
+                                            tails = fit_results_list$tails)
+cat("\nParametric bootstrapping\n", file = stderr())
+progressr::with_progress({
+  ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+  handlers = handler_txtprogressbar(file = stderr() ) # , title = "Parametric bootstrapping")
+)
+boot_pct_converged <- 100 * mean(ests_tbl$converged)
+# df <- bootstrap(n_ps, fit_results_list, n_boot_samples, show_progress_bar = FALSE)
+boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
+```
+
+```{r print_boot_estimates, echo = FALSE}
+boot_tbl[,-1] <- round(boot_tbl[,-1],pcurveMix:::pcm_env$round_to)
+knitr::kable(boot_tbl)
+table_notes <- pcurveMix:::boot_table_notes(full_sample_n, boot_pct_converged)
+pointed_list <- paste("-", table_notes, collapse = "\n")
+knitr::asis_output(pointed_list)
+```
+
+
+```{r BC_est_explanation, echo = FALSE}
+#The outputs show the percentage of bootstrap samples for which the fitting process converged with legal parameter values (e.g., $0\leq\pi\leq1$) and the means, standard errors, and confidence intervals of the parameter estimates across the different bootstrap samples.
+mu_row <- 1 # estimates_tbl$parameter == "estimate"
+mu_est <- estimates_tbl$estimate[mu_row]
+boot_mean_mu <- boot_tbl$mean[mu_row]
+bias <- boot_mean_mu - mu_est
+bc_est <- 2*mu_est - boot_mean_mu
+#It also includes the `BC_est` column to show *bias-corrected* parameter estimates. These are the original parameter estimates that are *corrected for* any bias that is suggested by the mean of the bootstrap sample estimates.
+# NEWJEFF: The code doesn't actually compute bias as described here.
+```
+
+Here is an illustration of the bias correction for the $\mu$ parameter in the current example.
+As shown in the original "Parameter estimates" table, the original estimate of $\mu$ was `r mu_est`.
+This value was then used as the true $\mu$ for all of the parametric bootstrap samples.
+Therefore, if there were no bias, the mean of the bootstrap samples would also be (very close to) `r mu_est`.
+But the actual mean estimate of $\mu$ was `r boot_mean_mu`, suggesting that there is an estimation bias of
+
+<center>`r boot_mean_mu` - `r mu_est` = `r bias`.</center>
+
+The `BC_est` value is thus computed as
+
+<center>`r mu_est` - `r bias` = `r bc_est`</center>
+
+to correct for this bias.
+
+## Nonparametric bootstrap analysis table
+
+The nonparametric bootstrap analysis provides bootstrap means, standard errors, and confidence intervals for the parameters.
+These are computed across the indicated number of nonparametric bootstrap samples, where for each sample the program:
+
+-   generates a random sample **with replacement** of the original $p$ values.
+-   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, and then to compute values of the derived parameters from those.
+
+```{r np_boot_analysis, echo = FALSE, comment = ""}
+mat_of_ps <- generate_nonparametric_subsamples(n_boot_samples, full_sample_n, real_ps)
+cat("\nNonparametric bootstrapping\n", file = stderr())
+progressr::with_progress({
+  ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+  handlers = handler_txtprogressbar(file = stderr()) # , title = "Nonparametric bootstrapping")
+)
+np_boot_pct_converged <- 100 * mean(ests_tbl$converged)
+np_boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
+```
+
+```{r print_np_boot_estimates, echo = FALSE}
+np_boot_tbl[,-1] <- round(np_boot_tbl[,-1],pcurveMix:::pcm_env$round_to)
+knitr::kable(np_boot_tbl)
+table_notes <- pcurveMix:::boot_table_notes(full_sample_n, np_boot_pct_converged)
+pointed_list <- paste("-", table_notes, collapse = "\n")
+knitr::asis_output(pointed_list)
+```
+
+## Likelihood Profile CIs
+
+Finally, it is also possible to estimate confidence intervals for the base parameters and some of the derived parameters using likelihood profiling. `pcurveMix` supports this using the R package `profileCI`.
+
+```{r profiling computations, echo = FALSE, comment = ""}
+cat("\nProfiling...", file = stderr())
+profileCI_std <- compute_profileCI(fit_results_list)
+cat("...", file = stderr())
+profileCI_power <- compute_profileCI_power(fit_results_list)
+cat(".", file = stderr())
+if (fit_results_list$tails == 2) {
+  profileCI_folded_normal_mu <- compute_profileCI_folded(fit_results_list,
+                                                         target_folded_normal_mu = TRUE)
+  cat(".", file = stderr())
+  profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_results_list,
+                                                            target_folded_normal_mu = FALSE)
+  cat(".", file = stderr())
+} else {
+  profileCI_folded_normal_mu <- NA
+  profileCI_folded_normal_sigma <- NA
+} # end if tails == 2
+cat("\n", file = stderr())
+profile_ci_tbl <- make_profile_ci_tbl(profileCI_std,
+                                      profileCI_power,
+                                      profileCI_folded_normal_mu,
+                                      profileCI_folded_normal_sigma)
+profile_ci_tbl[,-1] <- round(profile_ci_tbl[,-1],pcurveMix:::pcm_env$round_to)
+knitr::kable(profile_ci_tbl)
+table_notes <- pcurveMix:::profile_table_notes()
+pointed_list <- paste("-", table_notes, collapse = "\n")
+knitr::asis_output(pointed_list)
+```
+
+The app also displays the likelihood profile plots from which these profile confidence intervals are determined.
+
+```{r profile plots, echo = FALSE, comment = ""}
+l <- make_profile_plots(profileCI_std,
+                        profileCI_power,
+                        profileCI_folded_normal_mu,
+                        profileCI_folded_normal_sigma)
+print(l$mu)
+print(l$sigma)
+print(l$pi)
+print(l$folded_normal_mu)
+print(l$folded_normal_sigma)
+```
+
+
+## Saving results
+
+Finally, at the end of all of the displayed results, there is a `Download results` button that can be used to produce a `zip` file with the fitting results.
+NEWJEFF: Description isn't right.
+The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes `CSV` files showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
+
+# Option 2: Fitting with an R script
+
+For automation or finer-grained control over the fitting process, you can fit the model with a simple `R` script instead of the shiny app, as follows.
+
+### Load package and read example dataset of $p$ values
+
+Typically, users would have their own datasets of $p$ values to which the model should be fit.
+
+```{r ref.label = "library_and_read_ps", eval = FALSE, echo = TRUE}
+```
+
+### Fit the model to the example dataset
+
+Fit the mixture model to these $p$'s with the default values of `alpha` and `tails`.
+The `fit_p_curve` function has a number of other optional arguments (for details, see the `fit_p_curve_details` vignette).
+
+```{r ref.label = "fit_model", eval = FALSE, echo = TRUE}
+```
+
+Note that the `fit_p_curve` output is called `fit_results_list`; this list is used as input to several subsequent functions.
+
+### Print a table summarizing the model fit:
+
+This prints the table summarizing the fitting conditions and overall results.
+
+```{r ref.label = "print_descriptors", eval = FALSE, echo = TRUE}
+```
+
+### Print a table summarizing the parameter estimates:
+
+```{r ref.label = "print_parameter_estimates", eval = FALSE, echo = TRUE}
+```
+
+### Perform parametric bootstrapping using the fitted parameters:
+
+```{r ref.label = "boot_analysis", eval = FALSE, echo = TRUE}
+```
+
+### Make PDF and CDF plots
+
+This command makes a (density-scaled) histogram of the sample $p$ values and superimposes over it the predicted density at each $p$ from the fitted model:
+
+```{r, fig.width=6, eval = FALSE}
+pdf_plot <- make_pdf_plot(sample_ps, fit_results_list)
+print(pdf_plot)
+```
+
+This command plots the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
+
+```{r, fig.width=6, eval = FALSE}
+cdf_plot <- make_cdf_plot(sample_ps, fit_results_list)
+print(cdf_plot)
+```
+
+Finally, here are alternative methods of making the PDF and CDF plots that give you more control over the output formats:
+
+```{r, eval = FALSE}
+library(ggplot2)
+
+# Define a sequence of p values at which to get predicted PDFs and CDFs:
+p_seq <- seq(0.001, alpha_cutoff, 0.002)
+
+# Compute & plot predicted PDFs:
+pred_pdfs <- pdf(p_seq, mu = fit_results_list$mu,
+                 sigma = fit_results_list$sigma,
+                 pi = fit_results_list$pi,
+                 alpha = alpha_cutoff, tails = tails)
+pdf_plot <- ggplot() +
+ geom_histogram(aes(x = sample_ps, y = after_stat(density)), # empirical
+                binwidth = 0.02) +
+ geom_line(aes(x = p_seq, y = pred_pdfs), color = "red")  # predicted
+print(pdf_plot)
+
+# Compute & plot predicted CDFs:
+pred_cdfs <- cdf(p_seq, mu = fit_results_list$mu,
+                 sigma = fit_results_list$sigma,
+                 pi = fit_results_list$pi,
+                 alpha = alpha_cutoff, tails = tails)
+cdf_df <- data.frame(x = sample_ps)
+cdf_plot <- ggplot() +
+ stat_ecdf(data = cdf_df, aes(x = x), geom = "step") +  # empirical
+ geom_line(aes(x = p_seq, y = pred_cdfs), color = "red") +  # predicted
+ labs(title = "Observed (black) vs predicted (red) CDFs",
+      x = "p value",
+      y = "cumulative proportion")
+print(cdf_plot)
+```
