@@ -380,22 +380,35 @@ server <- function(input, output, session) {
     pcm_env$bias_correct_ci_bounds <- input$bias_correct_ci_bounds
   }
 
-  observeEvent(input$btnUpload, {
-    p_file_name <- input$p_file$name
-    if (is.null(p_file_name)) {  # p_file_name == "demo_data.csv" NEWJEFF: HARD-CODED IN UI & Intro.Rmd
-      p_file_name <- system.file("extdata", "demo_data.csv", package = "pcurveMix")
-    }
-    v$p_filename <- p_file_name
-    v$df <- read.csv(p_file_name)
+  observeEvent(input$p_file, {
+    # req() prevents the code from running on app launch when input is NULL
+    req(input$p_file)
+
+    v$p_filename <- input$p_file$name
+    v$df <- read.csv(input$p_file$datapath)
+    check_input()
+  })
+
+  observeEvent(input$btnUploadDemo, {
+    demo_file_name <- "demo_data.csv"  # NEWJEFF: HARD-CODED FILE NAME IN UI & Intro.Rmd
+    full_file_path <- system.file("extdata", demo_file_name, package = "pcurveMix")
+    v$p_filename <- demo_file_name
+    v$df <- read.csv(full_file_path)
+    check_input()
+  })
+
+  check_input <- function() {
     if ("p" %in% names(v$df)) {
       n_ps <- length(v$df$p)
       ps_min <- round(min(v$df$p),4)
       ps_max <- round(max(v$df$p),4)
-      id <- showNotification(
+      id <- "upload_notification"
+      showNotification(
         paste("Successful upload of",n_ps,"p's; min =",ps_min," & max =",ps_max),
         duration = 10,  # seconds
         closeButton = TRUE,
         type = "message",
+        id = id, # Explicit ID stops rapid dismissal/conflict
         # Add a large, high-contrast dismiss button at the bottom
         action = actionButton(
           "dismiss_btn",
@@ -415,8 +428,9 @@ server <- function(input, output, session) {
     # Listen specifically for the custom dismiss button click
     observeEvent(input$dismiss_btn, {
       removeNotification(id)
-    }, once = TRUE) # once = TRUE ensures the observer cleans itself up
-  }  ) # end observeEvent(input$btnUpload
+#    }, once = TRUE) # once = TRUE ensures the observer cleans itself up
+    }, ignoreInit = TRUE) # skips execution on app startup, but continues listening indefinitely for future user actions
+  }   # end check_input
 
   observeEvent(input$btnFit, {
       restart()

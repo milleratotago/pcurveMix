@@ -8,7 +8,8 @@ make_profile_ci_tbl(
   profileCI_std,
   profileCI_power,
   profileCI_folded_normal_mu = NA,
-  profileCI_folded_normal_sigma = NA
+  profileCI_folded_normal_sigma = NA,
+  round_to = pcm_env$round_to
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ make_profile_ci_tbl(
 \item{profileCI_folded_normal_mu}{Profile result list for mu}
 
 \item{profileCI_folded_normal_sigma}{Profile result list for sigma}
+
+\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
 }
 \description{
 Function to produce summary table of profile confidence interval values

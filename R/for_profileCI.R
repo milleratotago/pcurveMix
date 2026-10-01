@@ -10,6 +10,7 @@
 # Notes:
 # - profileCI control parameters are held in pcm_env environment
 #   and can be changed; e.g., profile = FALSE is faster.
+# - profileCI wants confidence levels on the 0-1 scale rather than 0-100
 
 # Be sure to run devtools::document() so that these exports are
 # recorded in NAMESPACE.
@@ -53,7 +54,7 @@ extract_profile_plot_columns <- function(profileCI_output, param_number) {
 #' Computations for profile-based confidence intervals of the basic model
 #'  parameters mu, sigma, and pi (NOT the folded normal parameters).
 #' @inheritParams fit_list_to_df
-#' @param level Confidence level for the CI (0-100, default = pcm_env$confidence_level)
+#' @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100)
 #' @returns A list with: bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
@@ -605,11 +606,13 @@ compute_profileCI_power <- function(fit_list, level = pcm_env$confidence_level /
 #' @param profileCI_power Profile result list for power
 #' @param profileCI_folded_normal_mu Profile result list for mu
 #' @param profileCI_folded_normal_sigma Profile result list for sigma
+#' @inheritParams fit_to_estimates_tbl round_to
 #' @export
 make_profile_ci_tbl <- function(profileCI_std,
                                 profileCI_power,
                                 profileCI_folded_normal_mu = NA,
-                                profileCI_folded_normal_sigma = NA) {
+                                profileCI_folded_normal_sigma = NA,
+                                round_to = pcm_env$round_to) {
   ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"), row.names = NULL)
   ci_tbl <- cbind(ci_tbl,profileCI_std$bounds_matrix)
   names(ci_tbl) <- c("parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
@@ -633,6 +636,9 @@ make_profile_ci_tbl <- function(profileCI_std,
     ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
   }
   rownames(ci_tbl) <- NULL
+  if (!is.null(round_to)) {
+    ci_tbl[,-1] <- round(ci_tbl[,-1], round_to)
+  }
   return(ci_tbl)
 }
 

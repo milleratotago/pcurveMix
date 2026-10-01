@@ -10,7 +10,7 @@ compute_profileCI(fit_list, level = pcm_env$confidence_level/100)
 \arguments{
 \item{fit_list}{A list that was the output of fit_p_curve}
 
-\item{level}{Confidence level for the CI (0-100, default = pcm_env$confidence_level)}
+\item{level}{Confidence level for the CI (0-1, default = pcm_env$confidence_level/100)}
 }
 \value{
 A list with: bounds_matrix = matrix of CI bounds;

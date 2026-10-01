@@ -116,11 +116,13 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_sd, full_sample_n, t_or_z
 #'  confidence interval halfwidth
 #' @param bias_correct_ci_bounds Boolean indicating whether confidence interval
 #'  bounds are corrected for the bias in the original estimate (default = TRUE)
+#' @inheritParams fit_to_estimates_tbl round_to
 #' @returns data frame with rows for parms and cols for bias_corrected_estimate,
 #'  bias, jack_se, lower_bound, and upper_bound
 #' @export
 jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n, t_or_z = 2,
-                                   bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds) {
+                                   bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+                                   round_to = pcm_env$round_to) {
   parms_to_summarize <- unique(jackknife_summaries$parameter)
   jack_df <- data.frame()
   for (parm in parms_to_summarize) {
@@ -133,6 +135,9 @@ jackknife_computations <- function(ests_orig, jackknife_summaries, full_sample_n
                                     bias_correct_ci_bounds = bias_correct_ci_bounds)
     jack1_df <- cbind( data.frame(parameter = parm), jack_1_parm)
     jack_df <- rbind(jack_df, jack1_df)
+  }
+  if (!is.null(round_to)) {
+    jack_df[,-1] <- round(jack_df[,-1], round_to)
   }
   return(jack_df)
 }

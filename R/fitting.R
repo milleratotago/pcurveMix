@@ -204,10 +204,11 @@ ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
 
 #' Convert the fit_p_curve parameter estimates into a nice data frame.
 #' @param fit Output list from fit_p_curve
+#' @param round_to Integer number of decimal places for rounding; use NULL for no rounding.
 #' @returns A data frame
 #' @importFrom rlang .data
 #' @export
-fit_to_estimates_tbl <- function(fit) {
+fit_to_estimates_tbl <- function(fit, round_to = pcm_env$round_to) {
   mle_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
     estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power),
@@ -242,6 +243,9 @@ fit_to_estimates_tbl <- function(fit) {
   names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- CI_LOWER_BOUND_LABEL # paste0("Wald_",CI_LOWER_BOUND_LABEL)
   names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- CI_UPPER_BOUND_LABEL # paste0("Wald_",CI_UPPER_BOUND_LABEL)
   mle_tbl <- mle_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
+  if (!is.null(round_to)) {
+    mle_tbl[,-1] <- round(mle_tbl[,-1], round_to)
+  }
   return(mle_tbl)
 }
 

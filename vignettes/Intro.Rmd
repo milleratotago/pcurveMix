@@ -26,7 +26,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup, include=FALSE}
-# NEWJEFF: Attempting progressR
 knitr::opts_chunk$set(echo = TRUE)
 
 # Force progressr to run in non-interactive knitr sessions
@@ -34,7 +33,6 @@ options(progressr.enable = TRUE)
 
 library(progressr)
 
-# Enable text-based progress updates for knitr
 # Handlers now defined later in with_progress
 # progressr::handlers(handler_txtprogressbar(file = stderr()))
 ```
@@ -103,6 +101,10 @@ The next set of four `Compute...` options controls whether the app will compute 
 
 Finally, numerous other rather technical variables can be adjusted *before starting the shiny app* using the `set_globals` function (see NEWJEFF that function's documentation). Use a command sequence like  the following to change the values of any of these variables:
 
+```{r echo = FALSE, eval = TRUE}
+library(pcurveMix)
+```
+
 ```{r eval = FALSE}
 library(pcurveMix)
 set_globals(edge_p = 1e-13, small_p_bin_cutoff = 1e-9) # Changing 2 example variables
@@ -119,19 +121,20 @@ package_path <- system.file(package = "pcurveMix")
 file_name <- paste0(package_path,"/extdata/",p_file_name)
 ```
 
-```{r library_and_read_ps, eval = TRUE, echo = FALSE, message = FALSE, warning = FALSE}
-library(pcurveMix)
-pcurveMix::set_globals(fast_boot_jack = TRUE)
+```{r read_ps_etc, eval = TRUE, echo = FALSE, message = FALSE, warning = FALSE}
 # file_name <- "Set your file_name here"
 df <- read.csv(file_name)
 sample_ps <- df$p
-n_ps <- length(sample_ps)
-n_boot_samples <- 100
+alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significance
+tails <- 2
+
+n_boot_samples <- 100  # Increase for any real analysis
+
+# Optionally set pcurveMix globals: see "set_globals" vignette
+pcurveMix::set_globals(fast_boot_jack = TRUE)
 ```
 
 ```{r fit_model, eval = TRUE, echo = FALSE}
-alpha_cutoff <- 1 # allow full range of p's, not selected for p<alpha significance
-tails <- 2
 fit_results_list <- fit_p_curve(sample_ps, alpha = alpha_cutoff, tails = tails)
 real_ps <- fit_results_list$check_ps_list$ps_in_bounds
 full_sample_n <- length(real_ps)
@@ -147,8 +150,7 @@ if (pcurveMix:::pcm_env$fast_boot_jack) {
 
 The first table is a summary of the fitting conditions and overall results.
 
-```{r print_descriptors, echo = FALSE}
-# print(fit_results_list)  # Ugly list format printing; better in next 2 tables.
+```{r print_descriptors, eval = TRUE, echo = FALSE}
 descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list, file_name = p_file_name)
 knitr::kable(descriptor_tbl)
 ```
@@ -168,10 +170,18 @@ The third part of the table gives information about the overall results of the m
 
 ### Parameter estimates table
 
-```{r table_parameter_estimates, echo = FALSE}
+```{r print_parameter_estimates, echo = FALSE}
 estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
 # Round all numeric values, skipping the parameter name
-estimates_tbl[,-1] <- round(estimates_tbl[,-1],pcurveMix:::pcm_env$round_to)
+# estimates_tbl[,-1] <- round(estimates_tbl[,-1],pcurveMix:::pcm_env$round_to)
+knitr::kable(estimates_tbl)
+table_notes <- pcurveMix:::estimates_table_notes(converged = fit_results_list$converged)
+pointed_list <- paste("-", table_notes, collapse = "\n")
+knitr::asis_output(pointed_list)
+```
+
+```{r table_parameter_estimates, echo = FALSE}
+# Save some values for later:
 est_mu <- estimates_tbl$estimate[estimates_tbl$parameter == "mu"]
 est_sigma <- estimates_tbl$estimate[estimates_tbl$parameter == "sigma"]
 est_pi <- estimates_tbl$estimate[estimates_tbl$parameter == "pi"]
@@ -187,14 +197,7 @@ Many additional parameter estimates are shown that can be derived from the estim
 -    `Pr_TP`, `Pr_FN`, `Pr_FP`, `Pr_TN`: These are the estimated probabilities of true positives, false negatives, false positives, and true negatives, respectively, all of which may be computed from `pi`, `power`, and `alpha_sig`.
 -    `Rate_FPs` and `Rate_FNs`: These are the estimated proportions of false positives (negatives) within the total of all positives (negatives), computed from the preceding four `Pr_xx` values.
 
-```{r print_parameter_estimates, echo = FALSE}
-knitr::kable(estimates_tbl)
-table_notes <- pcurveMix:::estimates_table_notes(converged = fit_results_list$converged)
-pointed_list <- paste("-", table_notes, collapse = "\n")
-knitr::asis_output(pointed_list)
-```
-
-### PDF and CDF plots
+### Predicted & observed PDF and CDF plots
 
 The next output is a (density-scaled) histogram of the sample $p$ values superimposed over the predicted density at each $p$ from the fitted model:
 
@@ -203,7 +206,7 @@ pdf_plot <- make_pdf_plot(fit_results_list)
 print(pdf_plot)
 ```
 
-The final plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
+The subsequent plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
 ```{r, fig.width=6, echo = FALSE}
 cdf_plot <- make_cdf_plot(fit_results_list)
@@ -227,7 +230,7 @@ jack_tbl <- jackknife_computations(fit_results_list, summaries, full_sample_n)
 ```
 
 ```{r print_jackknife_estimates, echo = FALSE}
-jack_tbl[,-1] <- round(jack_tbl[,-1],pcurveMix:::pcm_env$round_to)
+# jack_tbl[,-1] <- round(jack_tbl[,-1],pcurveMix:::pcm_env$round_to)
 knitr::kable(jack_tbl)
 table_notes <- pcurveMix:::jackknife_table_notes(full_sample_n, jack_pct_converged)
 pointed_list <- paste("-", table_notes, collapse = "\n")
@@ -243,23 +246,22 @@ These are computed across the indicated number of parametric bootstrap samples, 
 -   fits the model to this new sample of $p$'s to obtain new estimates of $\mu$, $\sigma$, and $\pi$, and then to compute values of the derived parameters from those.
 
 ```{r boot_analysis, echo = FALSE, comment = ""}
+cat("\nParametric bootstrapping\n", file = stderr())
 mat_of_ps <- generate_parametric_subsamples(n_boot_samples, full_sample_n,
                                             fit_results_list$mu, fit_results_list$sigma,
                                             pi = fit_results_list$pi,
                                             alpha = fit_results_list$alpha,
                                             tails = fit_results_list$tails)
-cat("\nParametric bootstrapping\n", file = stderr())
 progressr::with_progress({
   ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
   handlers = handler_txtprogressbar(file = stderr() ) # , title = "Parametric bootstrapping")
 )
 boot_pct_converged <- 100 * mean(ests_tbl$converged)
-# df <- bootstrap(n_ps, fit_results_list, n_boot_samples, show_progress_bar = FALSE)
 boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 ```
 
 ```{r print_boot_estimates, echo = FALSE}
-boot_tbl[,-1] <- round(boot_tbl[,-1],pcurveMix:::pcm_env$round_to)
+# boot_tbl[,-1] <- round(boot_tbl[,-1],pcurveMix:::pcm_env$round_to)
 knitr::kable(boot_tbl)
 table_notes <- pcurveMix:::boot_table_notes(full_sample_n, boot_pct_converged)
 pointed_list <- paste("-", table_notes, collapse = "\n")
@@ -319,11 +321,11 @@ pointed_list <- paste("-", table_notes, collapse = "\n")
 knitr::asis_output(pointed_list)
 ```
 
-## Likelihood Profile CIs
+## Likelihood Profile Confidence Intervals
 
 Finally, it is also possible to estimate confidence intervals for the base parameters and some of the derived parameters using likelihood profiling. `pcurveMix` supports this using the R package `profileCI`.
 
-```{r profiling computations, echo = FALSE, comment = ""}
+```{r profiling_computations, echo = FALSE, comment = ""}
 cat("\nProfiling...", file = stderr())
 profileCI_std <- compute_profileCI(fit_results_list)
 cat("...", file = stderr())
@@ -345,7 +347,7 @@ profile_ci_tbl <- make_profile_ci_tbl(profileCI_std,
                                       profileCI_power,
                                       profileCI_folded_normal_mu,
                                       profileCI_folded_normal_sigma)
-profile_ci_tbl[,-1] <- round(profile_ci_tbl[,-1],pcurveMix:::pcm_env$round_to)
+#profile_ci_tbl[,-1] <- round(profile_ci_tbl[,-1],pcurveMix:::pcm_env$round_to)
 knitr::kable(profile_ci_tbl)
 table_notes <- pcurveMix:::profile_table_notes()
 pointed_list <- paste("-", table_notes, collapse = "\n")
@@ -354,7 +356,7 @@ knitr::asis_output(pointed_list)
 
 The app also displays the likelihood profile plots from which these profile confidence intervals are determined.
 
-```{r profile plots, echo = FALSE, comment = ""}
+```{r profile_plots, echo = FALSE, comment = ""}
 l <- make_profile_plots(profileCI_std,
                         profileCI_power,
                         profileCI_folded_normal_mu,
@@ -375,13 +377,25 @@ The `zip` includes a `docx` file with the fitting results shown by the shiny app
 
 # Option 2: Fitting with an R script
 
-For automation or finer-grained control over the fitting process, you can fit the model with a simple `R` script instead of the shiny app, as follows.
+For automation or finer-grained control over the fitting process, you can fit the model with `R` scripts instead of the shiny app, as follows. This section gives minimal examples of code snippets that will carry out the same analyses produced by the Shiny app.
+
+### Initial setup
+
+```{r user_setup, eval = FALSE, echo = TRUE}
+library(pcurveMix)  # of course...
+
+# Also include the next 2 lines if you want progress bars
+# to be displayed during jackknifing and bootstrapping
+# (other handler options are available in progressr):
+library(progressr)
+progressr::handlers(handler_txtprogressbar(file = stderr()))
+```
 
 ### Load package and read example dataset of $p$ values
 
 Typically, users would have their own datasets of $p$ values to which the model should be fit.
 
-```{r ref.label = "library_and_read_ps", eval = FALSE, echo = TRUE}
+```{r ref.label = "read_ps_etc", eval = FALSE, echo = TRUE}
 ```
 
 ### Fit the model to the example dataset
@@ -398,36 +412,35 @@ Note that the `fit_p_curve` output is called `fit_results_list`; this list is us
 
 This prints the table summarizing the fitting conditions and overall results.
 
-```{r ref.label = "print_descriptors", eval = FALSE, echo = TRUE}
+```{r print_descriptors_show, eval = FALSE, echo = TRUE}
+descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list, file_name = p_file_name)
+print(descriptor_tbl)
 ```
 
 ### Print a table summarizing the parameter estimates:
 
-```{r ref.label = "print_parameter_estimates", eval = FALSE, echo = TRUE}
+```{r print_parameter_estimates_show, eval = FALSE, echo = TRUE}
+estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
+print(estimates_tbl)
 ```
 
-### Perform parametric bootstrapping using the fitted parameters:
-
-```{r ref.label = "boot_analysis", eval = FALSE, echo = TRUE}
-```
-
-### Make PDF and CDF plots
+### Make predicted & observed PDF and CDF plots
 
 This command makes a (density-scaled) histogram of the sample $p$ values and superimposes over it the predicted density at each $p$ from the fitted model:
 
-```{r, fig.width=6, eval = FALSE}
+```{r, fig.width=6, echo = TRUE, eval = FALSE}
 pdf_plot <- make_pdf_plot(sample_ps, fit_results_list)
 print(pdf_plot)
 ```
 
 This command plots the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
-```{r, fig.width=6, eval = FALSE}
+```{r, fig.width=6, echo = TRUE, eval = FALSE}
 cdf_plot <- make_cdf_plot(sample_ps, fit_results_list)
 print(cdf_plot)
 ```
 
-Finally, here are alternative methods of making the PDF and CDF plots that give you more control over the output formats:
+Incidentally, here are alternative methods of making the PDF and CDF plots that give you more control over the output formats:
 
 ```{r, eval = FALSE}
 library(ggplot2)
@@ -459,4 +472,50 @@ cdf_plot <- ggplot() +
       x = "p value",
       y = "cumulative proportion")
 print(cdf_plot)
+```
+
+### Perform jackknifing analysis
+
+```{r jack_analysis_show, eval = FALSE, echo = TRUE, comment = ""}
+cat("\nJackknifing\n", file = stderr())
+mat_of_ps <- generate_jackknife_subsamples(real_ps)
+ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+jack_pct_converged <- 100 * mean(ests_tbl$converged)
+summaries <- get_parm_summaries(ests_tbl)
+jack_tbl <- jackknife_computations(fit_results_list, summaries, full_sample_n)
+print(jack_tbl)
+```
+
+### Perform parametric bootstrapping using the fitted parameters:
+
+```{r boot_analysis_show, eval = FALSE, echo = TRUE}
+cat("\nParametric bootstrapping\n", file = stderr())
+mat_of_ps <- generate_parametric_subsamples(n_boot_samples, full_sample_n,
+                                            fit_results_list$mu, fit_results_list$sigma,
+                                            pi = fit_results_list$pi,
+                                            alpha = fit_results_list$alpha,
+                                            tails = fit_results_list$tails)
+ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+boot_pct_converged <- 100 * mean(ests_tbl$converged)
+boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
+print(boot_tbl)
+```
+
+### Perform nonparametric bootstrapping:
+
+```{r np_boot_analysis_show, eval = FALSE, echo = TRUE}
+cat("\nNonparametric bootstrapping\n", file = stderr())
+mat_of_ps <- generate_nonparametric_subsamples(n_boot_samples, full_sample_n,real_ps)
+ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+boot_pct_converged <- 100 * mean(ests_tbl$converged)
+boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
+print(boot_tbl)
+```
+
+### Likelihood profiling
+
+```{r ref.label = "profiling_computations", eval = FALSE, echo = TRUE}
+```
+
+```{r ref.label = "profile_plots", eval = FALSE, echo = TRUE}
 ```

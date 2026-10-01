@@ -10,7 +10,8 @@ jackknife_computations(
   jackknife_summaries,
   full_sample_n,
   t_or_z = 2,
-  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds
+  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+  round_to = pcm_env$round_to
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ confidence interval halfwidth}
 
 \item{bias_correct_ci_bounds}{Boolean indicating whether confidence interval
 bounds are corrected for the bias in the original estimate (default = TRUE)}
+
+\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
 }
 \value{
 data frame with rows for parms and cols for bias_corrected_estimate,

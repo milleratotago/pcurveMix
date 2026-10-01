@@ -187,7 +187,7 @@ utils::globalVariables(c("density"))
   packageStartupMessage(s) # NEWJEFF combine strings into one call and export it in a separate function available to users with just a short note here to call that function for help
   packageStartupMessage('Get help with these RStudio console commands:')
   packageStartupMessage('  ?',pkgname,'    # shows a summary of the package.')
-  # NEWJEFF packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
+  packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
   packageStartupMessage('  browseVignettes("',pkgname,'")    # shows a catalog of all vignettes.')
   packageStartupMessage('  help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
   packageStartupMessage('  run_shiny_app()  # starts the shiny app')

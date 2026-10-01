@@ -19,7 +19,7 @@ compute_profileCI_folded(
 \item{target_folded_normal_mu}{Boolean where TRUE requests CI for folded normal mu
 and FALSE requests CI for folded normal sigma.}
 
-\item{level}{Confidence level for the CI (0-100, default = pcm_env$confidence_level)}
+\item{level}{Confidence level for the CI (0-1, default = pcm_env$confidence_level/100)}
 }
 \value{
 A list with the following elements:

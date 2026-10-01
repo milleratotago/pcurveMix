@@ -8,7 +8,8 @@ make_boot_summary_tbl(
   mle_estimates_tbl,
   ests_tbl,
   confidence_level = pcm_env$confidence_level,
-  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds
+  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+  round_to = pcm_env$round_to
 )
 }
 \arguments{
@@ -21,6 +22,8 @@ original MLE estimates used as parameter values for parametric bootstrapping}
 
 \item{bias_correct_ci_bounds}{Boolean; if true (default), confidence interval bounds
 are adjusted to correct for estimated bias.}
+
+\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
 }
 \value{
 A data frame with the means and sds of bootstrap sample

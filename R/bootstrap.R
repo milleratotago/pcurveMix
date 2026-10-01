@@ -55,12 +55,14 @@ get_ci_bounds <- function(means, sds, confidence_level = pcm_env$confidence_leve
 #'  original MLE estimates used as parameter values for parametric bootstrapping
 #' @param ests_tbl Data frame of parameter estimates, one row per bootstrap sample
 #' @inheritParams set_globals confidence_level bias_correct_ci_bounds
+#' @inheritParams fit_to_estimates_tbl
 #' @returns A data frame with the means and sds of bootstrap sample
 #'  parameter estimates, plus confidence interval boundss.
 #' @export
 make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_tbl is named differently elsewhere
-                                       confidence_level = pcm_env$confidence_level,
-                                       bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds) {
+                                  confidence_level = pcm_env$confidence_level,
+                                  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+                                  round_to = pcm_env$round_to) {
   mn_sd_df <- get_parm_summaries(ests_tbl, summary_fns = list(mean = mean, sd = sd))
 
   # Parametric bootstrapping:
@@ -88,6 +90,9 @@ make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_t
     names(q_df)[2:3] <- bias_corrected_name(names(q_df)[2:3])
   }
   df <- cbind(mn_sd_df, bias_df, ci_df, q_df[,-1])
+  if (!is.null(round_to)) {
+    df[,-1] <- round(df[,-1], round_to)
+  }
   return(df)
 }
 

@@ -110,10 +110,10 @@ ui <- tagList(
       # ),
       # checkboxInput("use_demo", label = strong("Use demo file of p values"), FALSE),
       fileInput(inputId = "p_file",
-                label = "Browse to load your CSV file with a column 'p' or click 'Read file' to use demo_data",
+                label = "Browse to load your CSV file with a 'p' column or click 'Read demo file' to use demo_data",
                 placeholder = "demo_data.csv", # Custom placeholder text
                 accept = ".csv"),
-      actionButton("btnUpload","Read file"),
+      actionButton("btnUploadDemo","Read demo file"),
       h2(),
       radioButtons("tails", "File has 1- or 2-tailed p's?",
                    choices = c("1-tailed", "2-tailed"), selected = "2-tailed"),
@@ -272,8 +272,11 @@ ui <- tagList(
         column(6, # User selection for the format
                radioButtons("rmd_format", "Select document download format:",
                             choices = c("HTML" = "html",
-                                        "PDF" = "pdf (requires working Latex, e.g. tinytex package)",
-                                        "Word (DOCX)" = "docx"))
+                                        "PDF (requires working Latex, e.g. tinytex package)" = "pdf",
+                                        "Word (DOCX)" = "docx")
+                            # choiceNames = c("html", "pdf (requires working Latex, e.g. tinytex package)",),
+                            # choiceValues = c()
+                            )
         ),
 
         # This was previously a fluidRow with 2 4-column buttons

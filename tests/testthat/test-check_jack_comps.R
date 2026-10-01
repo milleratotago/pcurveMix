@@ -8,9 +8,9 @@ test_that("jackknife computations are correct", {
   jackknife_summaries <- data.frame(parameter = "sample_var",
                                     mean = 10.875, sd = sd(jacksample_ests)  )
   full_sample_n <- 5
-  answers <- jackknife_computations(ests_orig, jackknife_summaries, full_sample_n,
-                                    t_or_z = 1.96,
-                                    bias_correct_ci_bounds = testing_with_bias_correction)
+  answers <- jackknife_computations(ests_orig, jackknife_summaries, full_sample_n, t_or_z = 1.96,
+                                    bias_correct_ci_bounds = testing_with_bias_correction,
+                                    round_to = NULL)
   # Correct answers: bias = -2.9, estimate_bc = 14.5 jack_se = 8.372201,
   #  bounds = -1.909514, 30.909514
   expect_equal(answers$bias, -2.9, tolerance = 0.001)
