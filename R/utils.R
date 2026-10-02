@@ -181,3 +181,8 @@ bias_corrected_name <- function(s) {
 quantile_name <- function(base_name) {
   q_name <- paste0("q_", base_name)
 }
+
+get_p_seq <- function(alpha) {
+  ps <- seq(from = 0.001, to = alpha, length.out = 100)  # NEWJEFF: HARD-CODED
+  return(ps)
+}

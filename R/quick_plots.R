@@ -4,11 +4,12 @@
 #'   predicted pdf density
 #' @param fit List output of fit_p_curve function
 #' @param p_seq Sequence of p values at which to compute predictions
+#'  (default NULL)
 #' @returns Figure object made by ggplot
 #' @export
-make_pdf_plot <- function(fit, p_seq = pcm_env$p_seq_pdf) {
+make_pdf_plot <- function(fit, p_seq = NULL) {
+  if ( is.null(p_seq) ) p_seq <- get_p_seq(fit$alpha)
   ps <- fit$check_ps_list$ps_in_bounds
-  p_seq <- p_seq[p_seq <= fit$alpha]
   pred_pdfs <- pdf(p_seq, mu = fit$mu, sigma = fit$sigma, pi = fit$pi,
                    alpha = fit$alpha) # _cutoff)  # compute predicted
   pdf_df <- data.frame(p = ps)
@@ -27,9 +28,9 @@ make_pdf_plot <- function(fit, p_seq = pcm_env$p_seq_pdf) {
 #' @returns Figure object made by ggplot
 #' @importFrom rlang .data
 #' @export
-make_cdf_plot <- function(fit, p_seq = pcm_env$p_seq_cdf) {
+make_cdf_plot <- function(fit, p_seq = NULL) {
+  if ( is.null(p_seq) ) p_seq <- get_p_seq(fit$alpha)
   ps <- fit$check_ps_list$ps_in_bounds
-  p_seq <- p_seq[p_seq <= fit$alpha]
   pred_cdfs <- cdf(p_seq, mu = fit$mu, sigma = fit$sigma, pi = fit$pi,
                    alpha = fit$alpha) # _cutoff)  # compute predicted
   cdf_df <- data.frame(p = ps)

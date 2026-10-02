@@ -44,45 +44,26 @@ BOOTSTRAP_TABLE_NOTE <- paste("TABLE NOTES:",
 pcm_env <- new.env(parent = baseenv())
 
 initialize_globals <- function() {
-  pcm_env$shiny_running <- FALSE
-  pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
-  pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pwrs <- 4:12
   small_ps <- sort( 10^(-pwrs) )
-  pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
-  pcm_env$optim_control <- list(maxit = 1000)  # Use other optim defaults
-  pcm_env$small_p_bin_cutoff <- NULL
-  pcm_env$MLSEh <- 1e-7
-  pcm_env$small_rcond <- 1e-15
   # pcm_env$optim_starting_parms <- list(mu = START_MU_DEFAULT, sigma = START_SIGMA_DEFAULT, pi = START_PI_DEFAULT)
-  pcm_env$optim_starting_parms <- make_optim_starting_parms_df()
   # pcm_env$profCI_model <- structure(list(coefficients = c(mu = 0, sigma = 0, pi = 0)),
   #                          class = "profCI_model")
-  pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08,
-                                 lb = rep(-200,3), ub = rep(200,3) )
-  pcm_env$fast_boot_jack <- TRUE
-  pcm_env$confidence_level <- 95  # NOTE ALWAYS ON 0-100 scale
   pcm_env$bias_correct_ci_bounds <- TRUE
+  pcm_env$confidence_level <- 95  # NOTE ALWAYS ON 0-100 scale
+  pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
+  pcm_env$fast_boot_jack <- TRUE
+  pcm_env$MLSEh <- 1e-7
+  pcm_env$optim_control <- list(maxit = 1000)  # Use other optim defaults
+  pcm_env$optim_starting_parms <- make_optim_starting_parms_df()
+  pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
+  pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
+  pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08, lb = rep(-200,3), ub = rep(200,3) )
   pcm_env$round_to <- 3
-}
+  pcm_env$small_p_bin_cutoff <- NULL  # NEWJEFF: Should be NA
+  pcm_env$small_rcond <- 1e-15
 
-#' Function to construct a grid of parameter values to use as starting points
-#'  for fitting the model using fit_p_curve. The grid df has rows
-#'  for all possible combinations of the values in the vectors mu, sigma, and pi.
-#' @param mu Vector of different starting values of the mu parameter
-#'  (default = 0.5, 1.0, 2.0)
-#' @param sigma Vector of different starting values of the sigma parameter
-#'  (default = 1, 2, 4)
-#' @param pi Vector of different starting values of the pi parameter.
-#'  (default = 0.2, 0.5, 0.8). If this is set to NA, then a single
-#'  starting value will be computed based on the proportion of significant
-#'  results in the vector of p's that is to be fit.
-#' @export
-make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
-                                        sigma = c(1, 2, 4),
-                                        pi = c(0.2, 0.5, 0.8) ) {
-  start_df <- expand.grid(mu = mu, sigma = sigma, pi = pi)
-  return(start_df)
+  pcm_env$shiny_running <- FALSE
 }
 
 #' Function to override defaults of some global variables.
@@ -119,16 +100,23 @@ make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
 #' @export
 #' @examples
 #' set_globals(confidence_level = 99, fast_boot_jack = FALSE)
-set_globals <- function(confidence_level = NA,
-                        round_to = NA,
+set_globals <- function(
                         bias_correct_ci_bounds = NA,
-                        edge_p = NA, p_seq_pdf = NA,
-                        p_seq_cdf = NA, optim_control = NA,
-                        small_p_bin_cutoff = NA,
-                        MLSEh = NA, small_rcond = NA,
-                        optim_starting_parms = NA, profileCI_args = NA,
+                        confidence_level = NA,
+                        edge_p = NA,
                         fast_boot_jack = NA,
-                        reset_to_defaults = FALSE) {
+                        MLSEh = NA,
+                        optim_control = NA,
+                        optim_starting_parms = NA,
+                        p_seq_cdf = NA,
+                        p_seq_pdf = NA,
+                        profileCI_args = NA,
+                        round_to = NA,
+                        small_p_bin_cutoff = NA,
+                        small_rcond = NA,
+
+                        reset_to_defaults = FALSE
+                        ) {
   if (reset_to_defaults) initialize_globals()
   if (!is.na(confidence_level)) pcm_env$confidence_level <- confidence_level
   if (!is.na(round_to)) pcm_env$round_to <- round_to
@@ -143,15 +131,41 @@ set_globals <- function(confidence_level = NA,
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
   if (any(!is.na(profileCI_args))) pcm_env$profileCI_args <- profileCI_args
   if (!is.na(fast_boot_jack)) pcm_env$fast_boot_jack <- fast_boot_jack
-  l <- list(confidence_level = pcm_env$confidence_level,
-            edge_p = pcm_env$edge_p, p_seq_pdf = pcm_env$p_seq_pdf,
-            p_seq_cdf = pcm_env$p_seq_cdf, optim_control = pcm_env$optim_control,
-            small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
-            MLSEh = pcm_env$MLSEh, small_rcond = pcm_env$small_rcond,
+  l <- list(
+            bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+            confidence_level = pcm_env$confidence_level,
+            edge_p = pcm_env$edge_p,
+            fast_boot_jack = pcm_env$fast_boot_jack,
+            MLSEh = pcm_env$MLSEh,
+            optim_control = pcm_env$optim_control,
             optim_starting_parms = pcm_env$optim_starting_parms,
+            p_seq_cdf = pcm_env$p_seq_cdf,
+            p_seq_pdf = pcm_env$p_seq_pdf,
             profileCI_args = pcm_env$profileCI_args,
-            fast_boot_jack = pcm_env$fast_boot_jack)
+            round_to = pcm_env$round_to,
+            small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
+            small_rcond = pcm_env$small_rcond
+            )
   invisible(l)
+}
+
+#' Function to construct a grid of parameter values to use as starting points
+#'  for fitting the model using fit_p_curve. The grid df has rows
+#'  for all possible combinations of the values in the vectors mu, sigma, and pi.
+#' @param mu Vector of different starting values of the mu parameter
+#'  (default = 0.5, 1.0, 2.0)
+#' @param sigma Vector of different starting values of the sigma parameter
+#'  (default = 1, 2, 4)
+#' @param pi Vector of different starting values of the pi parameter.
+#'  (default = 0.2, 0.5, 0.8). If this is set to NA, then a single
+#'  starting value will be computed based on the proportion of significant
+#'  results in the vector of p's that is to be fit.
+#' @export
+make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
+                                        sigma = c(1, 2, 4),
+                                        pi = c(0.2, 0.5, 0.8) ) {
+  start_df <- expand.grid(mu = mu, sigma = sigma, pi = pi)
+  return(start_df)
 }
 
 #' Return the value of a single environment variable or a

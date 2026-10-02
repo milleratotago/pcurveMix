@@ -71,18 +71,34 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @param start_parms Either a list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
 #'  and the function tries all combinations (defaults to optim_starting_parms).
+#' @param show_shiny_error Show error message on shiny if any p value is out of
+#'  bounds (default TRUE)
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
-                        start_parms = pcm_env$optim_starting_parms) {
+                        start_parms = pcm_env$optim_starting_parms, show_shiny_error = TRUE) {
+# NEWJEFF: show_shiny_error is horrible. This function is not the right place to check p's.
 # @param lower List of lower bounds for the optim search
 #  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 # @param upper List of upper bounds for the optim search
 #  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)
 #                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
 #                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
+  p <- as.numeric(p)
+  check_ps_list <- check_ps(p, alpha_cutoff = alpha)
+  ## print(check_ps_list)  # NWJEFF
+  if (!check_ps_list$all_in_bounds) {
+    p <- check_ps_list$ps_in_bounds
+    if (shiny::isRunning()&& show_shiny_error) { # (pcm_env$shiny_running) {
+      problem_string <- bad_ps_report_string(check_ps_list)
+      shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
+      # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
+    }
+  }
+
+  if (!length(p)) stop("No valid p-values in (0,1).")
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
     best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
@@ -111,6 +127,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
     best_fit[[FOLDED_NORMAL_MU_LABEL]] <- mean_folded_normal(best_fit$mu, best_fit$sigma)
     best_fit[[FOLDED_NORMAL_SIGMA_LABEL]] <- sd_folded_normal(best_fit$mu, best_fit$sigma)
   }
+  best_fit$check_ps_list <- check_ps_list
   return(best_fit)
 }
 
@@ -125,19 +142,19 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                          start = pcm_env$optim_starting_parms) {
 #                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
 #                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
-  p <- as.numeric(p)
-  check_ps_list <- check_ps(p, alpha_cutoff = alpha)
-  ## print(check_ps_list)  # NWJEFF
-  if (!check_ps_list$all_in_bounds) {
-    p <- check_ps_list$ps_in_bounds
-    if (pcm_env$shiny_running) {
-      problem_string <- bad_ps_report_string(check_ps_list)
-      shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
-      # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
-    }
-  }
-
-  if (!length(p)) stop("No valid p-values in (0,1).")
+  # p <- as.numeric(p)
+  # check_ps_list <- check_ps(p, alpha_cutoff = alpha)
+  # ## print(check_ps_list)  # NWJEFF
+  # if (!check_ps_list$all_in_bounds) {
+  #   p <- check_ps_list$ps_in_bounds
+  #   if (shiny::isRunning()) { # (pcm_env$shiny_running) {
+  #     problem_string <- bad_ps_report_string(check_ps_list)
+  #     shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
+  #     # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
+  #   }
+  # }
+  #
+  # if (!length(p)) stop("No valid p-values in (0,1).")
   fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
@@ -152,7 +169,6 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit$n <- length(p)
   fit$min_p <- min(p)
   fit$max_p <- max(p)
-  fit$check_ps_list <- check_ps_list
   # print( paste(start$mu, start$sigma, start$pi, fit$mu, fit$sigma, fit$pi, fit$logLik) ) # NWJEFF
   return(fit)
 } # fit_p_curve1
@@ -378,7 +394,7 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
   for (isample in 1:n_samples) {
     one_fit <- fit_p_curve(mat_of_ps[isample,], alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                            want_optim_hessian = want_optim_hessian,
-                           start_parms = start_parms)
+                           start_parms = start_parms, show_shiny_error = FALSE)
                            # lower = lower,
                            # upper = upper)
     estimates[isample,] <- fit_to_parms_vec(one_fit, want_names = FALSE)

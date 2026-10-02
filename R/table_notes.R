@@ -19,8 +19,8 @@ jackknife_table_notes <- function(n_samples, pct_converged,
                                   sample_string = "jackknife subsamples",
                                   lower_str = CI_LOWER_BOUND_LABEL,
                                   upper_str = CI_UPPER_BOUND_LABEL) {
-  notes <- c(sprintf("results based on estimates from %d samples; %3.1f%% converged.",n_samples, pct_converged),
-             sprintf("mean and sd of estimates across %s.",sample_string),
+  notes <- c(sprintf("results based on estimates from %d %s; %3.1f%% converged.",n_samples, sample_string, pct_converged),
+             sprintf("mean and se of estimates across %s.",sample_string),
              "estimated bias and bias-corrected estimate (bc_estimate).",
              sprintf("%s/%s  bias-corrected (bc_) %3.1f%% confidence interval bounds.", lower_str, upper_str, confidence_level)
   )

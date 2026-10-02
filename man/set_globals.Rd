@@ -5,61 +5,61 @@
 \title{Function to override defaults of some global variables.}
 \usage{
 set_globals(
-  confidence_level = NA,
-  round_to = NA,
   bias_correct_ci_bounds = NA,
+  confidence_level = NA,
   edge_p = NA,
-  p_seq_pdf = NA,
-  p_seq_cdf = NA,
-  optim_control = NA,
-  small_p_bin_cutoff = NA,
-  MLSEh = NA,
-  small_rcond = NA,
-  optim_starting_parms = NA,
-  profileCI_args = NA,
   fast_boot_jack = NA,
+  MLSEh = NA,
+  optim_control = NA,
+  optim_starting_parms = NA,
+  p_seq_cdf = NA,
+  p_seq_pdf = NA,
+  profileCI_args = NA,
+  round_to = NA,
+  small_p_bin_cutoff = NA,
+  small_rcond = NA,
   reset_to_defaults = FALSE
 )
 }
 \arguments{
-\item{confidence_level}{Used in computing confidence intervals (default = 95)}
-
-\item{round_to}{Number of decimal places to display (default = 3)}
-
 \item{bias_correct_ci_bounds}{Boolean; if true (default), confidence interval bounds
 are adjusted to correct for estimated bias.}
 
+\item{confidence_level}{Used in computing confidence intervals (default = 95)}
+
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-12)}
-
-\item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
-values for plots (default = seq(0.001, 0.999, 0.002))}
-
-\item{p_seq_cdf}{Sequence of p values at which to compute predicted cdf
-values for plots (default same as pdf with added 10^(4:10))}
-
-\item{optim_control}{A control list passed to R's optim() function
-(default = NULL, in which case the optim defaults are used)}
-
-\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
-censoring (default = NULL, in which case likelihoods are computed without
-censoring)}
-
-\item{MLSEh}{Small +/- increment to parameter values used in computing
-the Fisher information matrix (default = 1e-7)}
-
-\item{small_rcond}{The cutoff reciprocal condition number for deciding that
-a Fisher information matrix is ill-conditioned (default = 1e-15)}
-
-\item{optim_starting_parms}{A list or data frame of parameter combinations
-at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
-
-\item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
 
 \item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
 and jackknifing should always run optim() starting from the maximum likelihood
 parameter values, which is faster than running it from the starting value
 grid given by optim_starting_parms,}
+
+\item{MLSEh}{Small +/- increment to parameter values used in computing
+the Fisher information matrix (default = 1e-7)}
+
+\item{optim_control}{A control list passed to R's optim() function
+(default = NULL, in which case the optim defaults are used)}
+
+\item{optim_starting_parms}{A list or data frame of parameter combinations
+at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
+
+\item{p_seq_cdf}{Sequence of p values at which to compute predicted cdf
+values for plots (default same as pdf with added 10^(4:10))}
+
+\item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
+values for plots (default = seq(0.001, 0.999, 0.002))}
+
+\item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
+
+\item{round_to}{Number of decimal places to display (default = 3)}
+
+\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
+censoring (default = NULL, in which case likelihoods are computed without
+censoring)}
+
+\item{small_rcond}{The cutoff reciprocal condition number for deciding that
+a Fisher information matrix is ill-conditioned (default = 1e-15)}
 
 \item{reset_to_defaults}{Boolean; if true, reset all values to their
 defaults before applying the other arguments}

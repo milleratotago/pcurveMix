@@ -56,7 +56,7 @@ print(ps)
 ## Getting started
 
 The best way to start is by starting the shiny app and looking at the vignette 'Intro'.
-The commands for that are:
+The commands for that (which should be done in this order) are:
 
 ```r
 vignette("Intro", package = "pcurveMix")

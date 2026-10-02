@@ -130,7 +130,8 @@ tails <- 2
 
 n_boot_samples <- 100  # Increase for any real analysis
 
-# Optionally set pcurveMix globals: see "set_globals" vignette
+# Optionally set pcurveMix globals: see "set_globals" arguments for a list
+# of globals and their descriptions/defaults.
 pcurveMix::set_globals(fast_boot_jack = TRUE)
 ```
 
@@ -226,7 +227,7 @@ progressr::with_progress({
 )
 jack_pct_converged <- 100 * mean(ests_tbl$converged)
 summaries <- get_parm_summaries(ests_tbl)
-jack_tbl <- jackknife_computations(fit_results_list, summaries, full_sample_n)
+jack_tbl <- make_jackknife_tbl(fit_results_list, summaries, full_sample_n)
 ```
 
 ```{r print_jackknife_estimates, echo = FALSE}
@@ -401,7 +402,7 @@ Typically, users would have their own datasets of $p$ values to which the model 
 ### Fit the model to the example dataset
 
 Fit the mixture model to these $p$'s with the default values of `alpha` and `tails`.
-The `fit_p_curve` function has a number of other optional arguments (for details, see the `fit_p_curve_details` vignette).
+The `fit_p_curve` function has a number of other optional arguments (for details, see the `fit_p_curve_arguments` vignette).
 
 ```{r ref.label = "fit_model", eval = FALSE, echo = TRUE}
 ```
@@ -482,7 +483,7 @@ mat_of_ps <- generate_jackknife_subsamples(real_ps)
 ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
 jack_pct_converged <- 100 * mean(ests_tbl$converged)
 summaries <- get_parm_summaries(ests_tbl)
-jack_tbl <- jackknife_computations(fit_results_list, summaries, full_sample_n)
+jack_tbl <- make_jackknife_tbl(fit_results_list, summaries, full_sample_n)
 print(jack_tbl)
 ```
 

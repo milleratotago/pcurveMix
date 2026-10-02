@@ -12,7 +12,8 @@ fit_p_curve(
   tails = 2,
   alpha_sig = 0.05,
   want_optim_hessian = TRUE,
-  start_parms = pcm_env$optim_starting_parms
+  start_parms = pcm_env$optim_starting_parms,
+  show_shiny_error = TRUE
 )
 }
 \arguments{
@@ -32,6 +33,9 @@ hessian is not used)}
 \item{start_parms}{Either a list of starting parameter values for the optim search,
 or else a data frame where each row is a combination of starting parameter values
 and the function tries all combinations (defaults to optim_starting_parms).}
+
+\item{show_shiny_error}{Show error message on shiny if any p value is out of
+bounds (default TRUE)}
 }
 \value{
 List including estimated parameter values, their standard errors

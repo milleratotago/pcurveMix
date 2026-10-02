@@ -13,14 +13,19 @@ server <- function(input, output, session) {
   # Import some analysis parameters from the package environment
   # and save them as "entry" variables so that they can be restored
   # when the shiny app finishes.
-  entry_confidence_level <- pcm_env$confidence_level
-  entry_round_to <- pcm_env$round_to
-  entry_fast_boot_jack <- pcm_env$fast_boot_jack
-  entry_bias_correct_ci_bounds <- pcm_env$bias_correct_ci_bounds
-  updateNumericInput(session = session, inputId = "confidence_level", value = pcm_env$confidence_level)
-  updateNumericInput(session = session, inputId = "round_to", value = pcm_env$round_to)
-  updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = pcm_env$fast_boot_jack)
-  updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = pcm_env$bias_correct_ci_bounds)
+  entry_global <- pcurveMix::set_globals()
+  updateNumericInput(session = session, inputId = "confidence_level", value = entry_global$confidence_level)
+  updateNumericInput(session = session, inputId = "round_to", value = entry_global$round_to)
+  updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = entry_global$fast_boot_jack)
+  updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = entry_global$bias_correct_ci_bounds)
+  # entry_confidence_level <- pcm_env$confidence_level
+  # entry_round_to <- pcm_env$round_to
+  # entry_fast_boot_jack <- pcm_env$fast_boot_jack
+  # entry_bias_correct_ci_bounds <- pcm_env$bias_correct_ci_bounds
+  # updateNumericInput(session = session, inputId = "confidence_level", value = pcm_env$confidence_level)
+  # updateNumericInput(session = session, inputId = "round_to", value = pcm_env$round_to)
+  # updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = pcm_env$fast_boot_jack)
+  # updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = pcm_env$bias_correct_ci_bounds)
 
   v <- reactiveValues(fit_completed = FALSE,
                       p_filename = NULL,
@@ -101,12 +106,12 @@ server <- function(input, output, session) {
     v$jack_pct_converged <- 100 * mean(ests_tbl$converged)
     v$jack_confidence_level <- get_globals("confidence_level")  # NEWJEFF: / 100 was inconsistent to use 0-1 here
     summaries <- get_parm_summaries(ests_tbl)
-    v$jack_tbl <- jackknife_computations(v$fit_list, summaries, full_sample_n)  # NEWJEFF: superfluous?
+    v$jack_tbl <- make_jackknife_tbl(v$fit_list, summaries, full_sample_n)  # NEWJEFF: superfluous?
     jack_title <- paste0("Jackknife analysis (",
-                         round(v$jack_confidence_level,pcm_env$round_to),
+                         round(v$jack_confidence_level,input$round_to),
                          "% confidence)")
     output$jackknife_title <- renderText(jack_title)
-    output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE, digits = pcm_env$round_to)
+    output$jackknife_tbl <- renderTable(v$jack_tbl, rownames = FALSE, digits = input$round_to)
     v$jack_notes <- pcurveMix:::jackknife_table_notes(full_sample_n,v$jack_pct_converged)
     output$jackknife_notes <- render_strings_as_bullets(v$jack_notes)
   } # do_jackknifing
@@ -158,7 +163,7 @@ server <- function(input, output, session) {
                          round(v$boot_confidence_level,2),
                          "% confidence)")
     output$boot_title <- renderText(boot_title)
-    output$boot_tbl <- renderTable(v$boot_tbl, rownames = FALSE, digits = pcm_env$round_to)
+    output$boot_tbl <- renderTable(v$boot_tbl, rownames = FALSE, digits = input$round_to)
     v$boot_notes <- pcurveMix:::boot_table_notes(v$n_boot_samples,v$boot_pct_converged)
     output$boot_notes <- render_strings_as_bullets(v$boot_notes)
   } # do_bootstrapping
@@ -204,7 +209,7 @@ server <- function(input, output, session) {
                            round(v$np_boot_confidence_level,2),
                            "% confidence)")
     output$np_boot_title <- renderText(npboot_title)
-    output$np_boot_tbl <- renderTable(v$np_boot_tbl, rownames = FALSE, digits = pcm_env$round_to)
+    output$np_boot_tbl <- renderTable(v$np_boot_tbl, rownames = FALSE, digits = input$round_to)
     v$np_boot_notes <- pcurveMix:::boot_table_notes(v$np_n_boot_samples,v$boot_pct_converged)
     output$np_boot_notes <- render_strings_as_bullets(v$np_boot_notes)
   } # do_npbootstrapping
@@ -259,7 +264,7 @@ server <- function(input, output, session) {
     # Show results in UI mainPanel
     removeNotification(notif_id)
     profileCI_title <- paste0("Profile CIs (",
-                              round(100*v$profile_ci_confidence_level,pcm_env$round_to),
+                              round(100*v$profile_ci_confidence_level,input$round_to),
                               "% confidence)")
     output$profileCI_title <- renderText(profileCI_title)
     # tbl <- v$profileCI_std$tabl
@@ -291,7 +296,7 @@ server <- function(input, output, session) {
     # } # if tails == 2
     # rownames(ci_tbl) <- NULL
     v$profile_tbl <- ci_tbl
-    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = pcm_env$round_to)
+    output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = input$round_to)
     output$profile_notes <- render_strings_as_bullets( pcurveMix:::profile_table_notes() )
 
     l <- make_profile_plots(v$profileCI_std, v$profileCI_power, v$profileCI_folded_normal_mu, v$profileCI_folded_normal_sigma)
@@ -374,11 +379,26 @@ server <- function(input, output, session) {
   } # profile_manager
 
   assign_input_globals <- function() {
-    pcm_env$confidence_level <- input$confidence_level
-    pcm_env$round_to <- input$round_to
-    pcm_env$fast_boot_jack <- input$fast_boot_jack
-    pcm_env$bias_correct_ci_bounds <- input$bias_correct_ci_bounds
+    pcurveMix::set_globals(confidence_level = input$confidence_level,
+                round_to = input$round_to,
+                fast_boot_jack = input$fast_boot_jack,
+                bias_correct_ci_bounds = input$bias_correct_ci_bounds)
+    # pcm_env$confidence_level <- input$confidence_level
+    # pcm_env$round_to <- input$round_to
+    # pcm_env$fast_boot_jack <- input$fast_boot_jack
+    # pcm_env$bias_correct_ci_bounds <- input$bias_correct_ci_bounds
   }
+
+  onStop(function() {
+    pcurveMix::set_globals(confidence_level = entry_global$confidence_level,
+                round_to = entry_global$round_to,
+                fast_boot_jack = entry_global$fast_boot_jack,
+                bias_correct_ci_bounds = entry_global$bias_correct_ci_bounds)
+    # pcm_env$confidence_level <- entry_confidence_level
+    # pcm_env$round_to <- entry_round_to
+    # pcm_env$fast_boot_jack <- entry_fast_boot_jack
+    # pcm_env$bias_correct_ci_bounds <- entry_bias_correct_ci_bounds
+  })
 
   observeEvent(input$p_file, {
     # req() prevents the code from running on app launch when input is NULL
@@ -418,7 +438,8 @@ server <- function(input, output, session) {
         )
       ) # showNotification
       shinyjs::enable(id = "btnFit")
-      shinyjs::runjs('document.getElementById("analysis_options_panel").scrollIntoView({behavior: "smooth", block: "start"});')
+      # Following line jumps to analysis options; problematic because it hides input p's tails & alpha
+      # shinyjs::runjs('document.getElementById("analysis_options_panel").scrollIntoView({behavior: "smooth", block: "start"});')
     } else {
       shiny::showModal(shiny::modalDialog(title = "No p values found",
                                           "Error: The file must contain a column named 'p'",
@@ -461,8 +482,8 @@ server <- function(input, output, session) {
       v$descriptor_tbl <- pcurveMix::fit_to_descriptor_tbl(v$fit_list, file_name = v$p_filename)
       output$descriptor_tbl <- renderTable(v$descriptor_tbl, rownames = FALSE)
       v$estimates_tbl <- pcurveMix::fit_to_estimates_tbl(v$fit_list)
-      v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],pcm_env$round_to) # Round numeric columns to avoid line wrapping
-      output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE, digits = pcm_env$round_to)
+      # v$estimates_tbl[,-1] <- round(v$estimates_tbl[,-1],pcm_env$round_to) # Round numeric columns to avoid line wrapping
+      output$estimates_tbl <- renderTable(v$estimates_tbl, rownames = FALSE, digits = input$round_to)
       v$estimates_notes <- pcurveMix:::estimates_table_notes(v$fit_list$converged)
       output$estimates_notes <- render_strings_as_bullets(v$estimates_notes)
 
@@ -472,15 +493,18 @@ server <- function(input, output, session) {
 
       profile_manager(v$fit_list)
 
-      v$p_seq_pdf <- pcurveMix:::pcm_env$p_seq_pdf
-      v$p_seq_cdf <- pcurveMix:::pcm_env$p_seq_cdf
+      p_seq <- pcurveMix:::get_p_seq(v$fit_list$alpha)
+      p_hist_bin_width <- v$fit_list$alpha / 50  # NEWJEFF: HARD-CODED
+      v$p_seq_pdf <- p_seq # pcurveMix:::pcm_env$p_seq_pdf
+      v$p_seq_cdf <- p_seq # pcurveMix:::pcm_env$p_seq_cdf
       v$pred_pdfs <- pdf(v$p_seq_pdf, mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi,
                          alpha = alpha_cutoff, tails = tails)
       v$pred_cdfs <- cdf(v$p_seq_cdf, mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi,
                          alpha = alpha_cutoff, tails = tails)
 
+
       v$pdf_plot <- ggplot2::ggplot() +
-        ggplot2::geom_histogram(ggplot2::aes(x = ps_in_bounds, y = ggplot2::after_stat(density)), binwidth = 0.02) +
+        ggplot2::geom_histogram(ggplot2::aes(x = ps_in_bounds, y = ggplot2::after_stat(density)), binwidth = p_hist_bin_width) +
         ggplot2::geom_line(ggplot2::aes(x = v$p_seq_pdf, y = v$pred_pdfs), color = "red") +
         ggplot2::labs(title = "Observed (black) vs predicted (red) PDFs",
                       x = "p value",
@@ -607,7 +631,7 @@ server <- function(input, output, session) {
           profile_power_plot = v$profile_power_plot,
           profile_sigma_plot = v$profile_sigma_plot,
           profile_tbl = v$profile_tbl,
-          round_to = pcm_env$round_to,
+          round_to = input$round_to,
           tails = tails
         )
         if (tails == 2) {
@@ -677,13 +701,6 @@ server <- function(input, output, session) {
 
   observeEvent(input$btnquit, {
     stopApp()
-  })
-
-  onStop(function() {
-    pcm_env$confidence_level <- entry_confidence_level
-    pcm_env$round_to <- entry_round_to
-    pcm_env$fast_boot_jack <- entry_fast_boot_jack
-    pcm_env$bias_correct_ci_bounds <- entry_bias_correct_ci_bounds
   })
 
 } # end server function
