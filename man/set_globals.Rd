@@ -28,7 +28,7 @@ are adjusted to correct for estimated bias.}
 \item{confidence_level}{Used in computing confidence intervals (default = 95)}
 
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
-change p==1 to 1-edge_p (default = 1e-12)}
+change p==1 to 1-edge_p (default = 1e-20)}
 
 \item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
 and jackknifing should always run optim() starting from the maximum likelihood

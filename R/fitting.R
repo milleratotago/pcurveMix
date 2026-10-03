@@ -91,7 +91,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
   ## print(check_ps_list)  # NWJEFF
   if (!check_ps_list$all_in_bounds) {
     p <- check_ps_list$ps_in_bounds
-    if (shiny::isRunning()&& show_shiny_error) { # (pcm_env$shiny_running) {
+    if (pcm_env$shiny_is_installed && shiny::isRunning()&& show_shiny_error) { # (pcm_env$shiny_running) {
       problem_string <- bad_ps_report_string(check_ps_list)
       shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
       # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
@@ -186,7 +186,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NWJEFF These look wrong
   # est <- c(parms$pi, parms$mu, parms$sigma)
   # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: OBSOLETE make_se_ci no longer used
-  l <- real_to_nat_se_ci(opt$par, opt$hessian)
+  # l <- real_to_nat_se_ci(opt$par, opt$hessian)  # NWJEFF PROGRAM NOTE: Wald_se etc; more hessian could be removed
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
               se = l$se, conf_int = l$ci, logLik = -opt$value,
@@ -228,9 +228,11 @@ fit_to_estimates_tbl <- function(fit, round_to = pcm_env$round_to) {
   mle_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
     estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power),
-    Wald_se   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
-    Wald_lwr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_LOWER_BOUND_LABEL] else c(NA,NA,NA), NA),
-    Wald_upr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_UPPER_BOUND_LABEL] else c(NA,NA,NA), NA),
+    # NWJEFF PROGRAM NOTE: Wald_se etc removed because Hessian on nonlinear scale, but remember
+    #  that profileCI uses Hessian results
+    # Wald_se   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
+    # Wald_lwr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_LOWER_BOUND_LABEL] else c(NA,NA,NA), NA),
+    # Wald_upr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_UPPER_BOUND_LABEL] else c(NA,NA,NA), NA),
     row.names = NULL
   )
   if (fit$tails == 2) {
@@ -239,9 +241,9 @@ fit_to_estimates_tbl <- function(fit, round_to = pcm_env$round_to) {
     folded_normal_cols <- data.frame(
       parameter = c(FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL),
       estimate  = c(folded_normal_mu, folded_normal_sigma),
-      Wald_se   = c(NA, NA),
-      Wald_lwr  = c(NA, NA),
-      Wald_upr  = c(NA, NA),
+      # Wald_se   = c(NA, NA),
+      # Wald_lwr  = c(NA, NA),
+      # Wald_upr  = c(NA, NA),
       row.names = NULL
     )
     mle_tbl <- rbind(mle_tbl, folded_normal_cols)
@@ -249,15 +251,15 @@ fit_to_estimates_tbl <- function(fit, round_to = pcm_env$round_to) {
   derived_tbl <- data.frame(
     parameter = c(PR_TP, PR_FN, PR_FP, PR_TN, R_FP, R_FN),
     estimate  = c(fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]], fit[[R_FP]], fit[[R_FN]]),
-    Wald_se   = c(NA, NA, NA, NA, NA, NA),
-    Wald_lwr  = c(NA, NA, NA, NA, NA, NA),
-    Wald_upr  = c(NA, NA, NA, NA, NA, NA),
+    # Wald_se   = c(NA, NA, NA, NA, NA, NA),
+    # Wald_lwr  = c(NA, NA, NA, NA, NA, NA),
+    # Wald_upr  = c(NA, NA, NA, NA, NA, NA),
     row.names = NULL
   )
   mle_tbl <- rbind(mle_tbl, derived_tbl)
-  names(mle_tbl)[names(mle_tbl) == "Wald_se"] <- "se"
-  names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- CI_LOWER_BOUND_LABEL # paste0("Wald_",CI_LOWER_BOUND_LABEL)
-  names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- CI_UPPER_BOUND_LABEL # paste0("Wald_",CI_UPPER_BOUND_LABEL)
+  # names(mle_tbl)[names(mle_tbl) == "Wald_se"] <- "se"
+  # names(mle_tbl)[names(mle_tbl) == "Wald_lwr"] <- CI_LOWER_BOUND_LABEL # paste0("Wald_",CI_LOWER_BOUND_LABEL)
+  # names(mle_tbl)[names(mle_tbl) == "Wald_upr"] <- CI_UPPER_BOUND_LABEL # paste0("Wald_",CI_UPPER_BOUND_LABEL)
   mle_tbl <- mle_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi", "power")))
   if (!is.null(round_to)) {
     mle_tbl[,-1] <- round(mle_tbl[,-1], round_to)
@@ -292,6 +294,8 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
 #' @export
 fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   descriptor_tbl <- data.frame()
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("** pcurveMix version:",
+                                                     as.character(utils::packageVersion("pcurveMix"))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING OPTIONS---", "-------------"))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,3))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))
@@ -302,7 +306,8 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   if (any(!is.na(fit$start_parm_set))) {
     descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit$start_parm_set) )
   }
-  # descriptor_tbl <- rbind(descriptor_tbl, descriptor("edge_p",as.character(pcm_env$edge_p)))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 0 replaced with",as.character(pcm_env$edge_p)))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 1 replaced with 1 -",as.character(pcm_env$edge_p)))
   if (is.null(pcm_env$small_p_bin_cutoff)) {
     descriptor_tbl <- rbind(descriptor_tbl, descriptor("Low p censoring", "Unused"))
   } else {

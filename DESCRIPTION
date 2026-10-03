@@ -1,7 +1,7 @@
 Type: Package
 Package: pcurveMix
 Title: Computations and Fitting with the P-Curve Mixture Model
-Version: 1.0.16
+Version: 1.0.17
 Authors@R: c(
     person("Rolf", "Ulrich", , "ulrich@uni-tuebingen.de", role = "aut"),
     person("Jeff", "Miller", , "miller@psy.otago.ac.nz", role = c("aut", "cre"))
@@ -32,7 +32,6 @@ Imports:
     profileCI,
     progressr,
     rlang,
-    shiny,
     stats,
     tidyr
 Suggests: 
@@ -40,6 +39,7 @@ Suggests:
     ggplot2,
     knitr,
     rmarkdown,
+    shiny,
     shinyalert,
     shinyjs,
     shinyFeedback,

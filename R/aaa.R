@@ -51,7 +51,7 @@ initialize_globals <- function() {
   #                          class = "profCI_model")
   pcm_env$bias_correct_ci_bounds <- TRUE
   pcm_env$confidence_level <- 95  # NOTE ALWAYS ON 0-100 scale
-  pcm_env$edge_p <- 1e-12  # Literal also used in set_globals roxygen
+  pcm_env$edge_p <- 1e-20  # Literal also used in set_globals roxygen
   pcm_env$fast_boot_jack <- TRUE
   pcm_env$MLSEh <- 1e-7
   pcm_env$optim_control <- list(maxit = 1000)  # Use other optim defaults
@@ -63,16 +63,17 @@ initialize_globals <- function() {
   pcm_env$small_p_bin_cutoff <- NULL  # NEWJEFF: Should be NA
   pcm_env$small_rcond <- 1e-15
 
+  # Check if shiny is installed (returns TRUE or FALSE)
+  pcm_env$shiny_is_installed <- requireNamespace("shiny", quietly = TRUE)
   pcm_env$shiny_running <- FALSE
 }
 
 #' Function to override defaults of some global variables.
-#' @param confidence_level Used in computing confidence intervals (default = 95)
-#' @param round_to Number of decimal places to display (default = 3)
 #' @param bias_correct_ci_bounds Boolean; if true (default), confidence interval bounds
 #'  are adjusted to correct for estimated bias.
+#' @param confidence_level Used in computing confidence intervals (default = 95)
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
-#'  change p==1 to 1-edge_p (default = 1e-12)
+#'  change p==1 to 1-edge_p (default = 1e-20)
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
 #'  values for plots (default = seq(0.001, 0.999, 0.002))
 #' @param p_seq_cdf Sequence of p values at which to compute predicted cdf
@@ -95,6 +96,7 @@ initialize_globals <- function() {
 #'  grid given by optim_starting_parms,
 #' @param reset_to_defaults Boolean; if true, reset all values to their
 #'  defaults before applying the other arguments
+#' @param round_to Number of decimal places to display (default = 3)
 #' @returns A list of the values of the global variables, after changing any
 #'  of the values as indicated.
 #' @export

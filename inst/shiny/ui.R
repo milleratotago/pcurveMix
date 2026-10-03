@@ -102,7 +102,7 @@ ui <- tagList(
 
     # wellPanel: Specify p values ====
     wellPanel(
-      h2("p values to be fit:"),
+      h2("Choose ",tags$i("p")," values to be fit:"),
       ## Input file ====
       # conditionalPanel(
       #   condition = "input.use_demo == false",
@@ -110,7 +110,7 @@ ui <- tagList(
       # ),
       # checkboxInput("use_demo", label = strong("Use demo file of p values"), FALSE),
       fileInput(inputId = "p_file",
-                label = "Browse to load your CSV file with a 'p' column or click 'Read demo file' to use demo_data",
+                label = "Browse to load your CSV file with a 'p' column or click 'Read demo file' to use demo data",
                 placeholder = "demo_data.csv", # Custom placeholder text
                 accept = ".csv"),
       actionButton("btnUploadDemo","Read demo file"),
@@ -118,13 +118,15 @@ ui <- tagList(
       radioButtons("tails", "File has 1- or 2-tailed p's?",
                    choices = c("1-tailed", "2-tailed"), selected = "2-tailed"),
       inlineNumericInput("custom_cutoff", "Upper p cutoff for inclusion in file ('alpha'):",
-                         value = "1", min = 0, max = 1, step = 0.05, label_width = "400px")
+                         value = "1", min = 0, max = 1, step = 0.05, label_width = "400px"),
+      actionButton("btn_choose_analysis_options","Choose analysis options")
     ), # wellPanel
     #                                                                ====
     # wellPanel: Analysis options ====
+    shinyjs::hidden(
     wellPanel(
       id = "analysis_options_panel",
-      h2("Analysis options:"),
+      h2("Choose analysis options:"),
       inlineNumericInput("alpha_sig", "Alpha level to use for power computations ('alpha_sig'):",
                          value = "0.05", min = 0, max = 1, step = 0.01, label_width = "400px"),
 
@@ -185,7 +187,8 @@ ui <- tagList(
 
       # end Specify p values panel
       actionButton("btnFit","Fit model & compute requested CIs")
-    ), # wellPanel Analysis options
+    ) # wellPanel Analysis options
+    ), # hidden
     #                                                                ====
     # wellPanel: Results ====
     shinyjs::hidden(  # use shinyjs function to start with this panel hidden

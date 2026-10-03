@@ -8,7 +8,9 @@ server <- function(input, output, session) {
   # Grab the package environment for server use
   pcm_env <- as.list(pcurveMix:::pcm_env)
 
+  shinyjs::hide("analysis_options_panel")
   shinyjs::disable(id = "btnFit")
+  shinyjs::disable(id = "btn_choose_analysis_options")
 
   # Import some analysis parameters from the package environment
   # and save them as "entry" variables so that they can be restored
@@ -45,7 +47,7 @@ server <- function(input, output, session) {
 
   restart <- function()  {  # NEWJEFF: Must null out additional fields such as jackknifing & np_boot
     v$fit_completed = FALSE
-    v$p_filename <- NULL
+    # v$p_filename <- NULL
     v$fit_list <- NULL
     v$p_seq_pdf <- NULL
     v$p_seq_cdf <- NULL
@@ -409,6 +411,11 @@ server <- function(input, output, session) {
     check_input()
   })
 
+  observeEvent(input$btn_choose_analysis_options, {
+    req(input$btn_choose_analysis_options)
+    shinyjs::show("analysis_options_panel")
+  })
+
   observeEvent(input$btnUploadDemo, {
     demo_file_name <- "demo_data.csv"  # NEWJEFF: HARD-CODED FILE NAME IN UI & Intro.Rmd
     full_file_path <- system.file("extdata", demo_file_name, package = "pcurveMix")
@@ -451,6 +458,7 @@ server <- function(input, output, session) {
       removeNotification(id)
 #    }, once = TRUE) # once = TRUE ensures the observer cleans itself up
     }, ignoreInit = TRUE) # skips execution on app startup, but continues listening indefinitely for future user actions
+    shinyjs::enable(id = "btn_choose_analysis_options")
   }   # end check_input
 
   observeEvent(input$btnFit, {
@@ -527,7 +535,8 @@ server <- function(input, output, session) {
   output$btnReport <- downloadHandler(
 
     filename = function() {
-      outfile_name = paste0("pcurveMix_report_",
+      in_file_name <- tools::file_path_sans_ext(basename(v$p_filename))
+      outfile_name <- paste0(in_file_name,"_pcurveMix_report_",
                             format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), ".zip")
       return(outfile_name)
     },
