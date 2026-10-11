@@ -10,7 +10,8 @@
 #' @returns Real PDF value or vector of PDF values
 #' @export
 pdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
-  p2 <- pmin(pmax(as.numeric(p), pcm_env$edge_p), min(1 - pcm_env$edge_p, alpha) )
+  edge_p <- get_ao("edge_p")
+  p2 <- pmin(pmax(as.numeric(p), edge_p), min(1 - edge_p, alpha) )
   pdfs <- switch(
     case_id(alpha, tails, pi),
     "uncond_2t_h1"  = f_uncond_2t_h1  (p2, mu, sigma),

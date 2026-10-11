@@ -111,19 +111,26 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 # @returns A list all_in_bounds, n_too_small, etc
 # DO NOT export
 check_ps <- function(ps, alpha_cutoff) {
+  # These p's are simply out of bounds and must be excluded:
   too_small <- ps < 0
-  equal_zero <- ps == 0
-  too_large <- (ps > alpha_cutoff) | (ps == 1)
+  too_large <- (ps > alpha_cutoff) # | (ps == 1)
   n_too_small <- sum(too_small)
-  n_equal_zero <- sum(equal_zero)
   n_too_large <- sum(too_large)
-  all_in_bounds <- (n_too_small + n_equal_zero + n_too_large == 0)
-  if (n_equal_zero > 0) ps[equal_zero] <- pcm_env$edge_p
+  # These p's are at the extreme 0/1 edges and must be replaced:
+  edge_p <- get_ao("edge_p")
+  nearly_zero <- ps < edge_p
+  nearly_one <- ps > 1 - edge_p
+  n_nearly_zero <- sum(nearly_zero)
+  n_nearly_one <- sum(nearly_one)
+  if (n_nearly_zero > 0) ps[nearly_zero] <- edge_p
+  if (n_nearly_one > 0) ps[nearly_one] <- 1 - edge_p
+  all_in_bounds <- (n_too_small + n_too_large == 0)
   l <- list(all_in_bounds = all_in_bounds,
             alpha_cutoff = alpha_cutoff,
             n_too_small = n_too_small,
-            n_equal_zero = n_equal_zero,
             n_too_large = n_too_large,
+            n_nearly_zero = n_nearly_zero,
+            n_nearly_one = n_nearly_one,
             ps_too_small = ps[too_small],
             ps_too_large = ps[too_large],
             ps_in_bounds = ps[ !(too_small | too_large) ]
@@ -134,15 +141,26 @@ check_ps <- function(ps, alpha_cutoff) {
 # Construct a string describing the problems found by check_ps
 # @param l List produced by check_ps
 # @returns String
-# DO NOT exp  ort
+# DO NOT export
 bad_ps_report_string <- function(l) {
-  s <- "Check p's; found and altered or eliminated"
-  if (l$n_too_small > 0) s <- paste(s,l$n_too_small,"p's < 0")
-  if ( (l$n_too_small > 0) && (l$n_equal_zero > 0) ) s <- paste(s,"and")
-  if (l$n_equal_zero > 0) s <- paste(s,l$n_equal_zero,"p's == 0")
-  if ( (l$n_too_small + l$n_equal_zero > 0) && (l$n_too_large > 0) ) s <- paste(s,"and")
-  if (l$n_too_large > 0) s <- paste(s,l$n_too_large,"p's >", l$alpha_cutoff,"cutoff")
-  if ( (l$n_too_small == 0) && (l$n_equal_zero == 0) && (l$n_too_large == 0) ) s <- paste(s,"no problematic p's")
+  err <- rep(NULL, 4)
+  if (l$n_too_small > 0) err[1] <- paste(l$n_too_small,"p's < 0")
+  if (l$n_too_large > 0) err[2] <- paste(l$n_too_large,"p's >",l$alpha_cutoff)
+  edge_p <- get_ao("edge_p")
+  if (l$n_nearly_zero > 0) err[3] <- paste0("replaced p's 0--",edge_p," with ",edge_p)
+  if (l$n_nearly_one > 0) err[4] <- paste0("replaced p's ",1-edge_p,"--1 with ",1-edge_p)
+  if (all(is.null(err))) {
+    s <- "Check p's; found no problematic p's"
+  } else {
+    words <- paste(err, collapse = " and ")
+    s <- paste("Check p's found problems:",words)
+  }
+  # if (l$n_too_small > 0) s <- paste(s,l$n_too_small,"p's < 0")
+  # if ( (l$n_too_small > 0) && (l$n_equal_zero > 0) ) s <- paste(s,"and")
+  # if (l$n_equal_zero > 0) s <- paste(s,l$n_equal_zero,"p's == 0")
+  # if ( (l$n_too_small + l$n_equal_zero > 0) && (l$n_too_large > 0) ) s <- paste(s,"and")
+  # if (l$n_too_large > 0) s <- paste(s,l$n_too_large,"p's >", l$alpha_cutoff,"cutoff")
+  # if ( (l$n_too_small == 0) && (l$n_equal_zero == 0) && (l$n_too_large == 0) ) s <- paste(s,"no problematic p's")
   return(s)
 }
 
@@ -185,4 +203,23 @@ quantile_name <- function(base_name) {
 get_p_seq <- function(alpha) {
   ps <- seq(from = 0.001, to = alpha, length.out = 100)  # NEWJEFF: HARD-CODED
   return(ps)
+}
+
+# Function to get analysis option that is determined
+# by shiny if shiny is running, and otherwise is determined
+# by package environment
+get_ao <- function(name) {
+  # 1. Check if there's a session-level setting (e.g. session$userData)
+  # 2. Fallback to package option or package environment default
+  shiny_session <- shiny::getDefaultReactiveDomain()
+  if (!is.null(shiny_session)) {
+    if ( !is.null(shiny_session$input[[name]])) {
+      return( shiny_session$input[[name]] )  # This is a value
+    }
+    if (!is.null(shiny_session$userData[[name]])) {
+      return( shiny_session$userData[[name]]() )  # This is a function call
+    }
+  }
+  # Default fallback use package environment value
+  return(pcm_env[[name]])
 }

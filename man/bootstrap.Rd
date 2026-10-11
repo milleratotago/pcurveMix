@@ -9,6 +9,7 @@ bootstrap(
   fit_list,
   n_boot_samples,
   show_progress_bar = TRUE,
+  fast_boot_jack = get_ao("fast_boot_jack"),
   cond_method = "rejection",
   tol = 1e-08
 )
@@ -21,6 +22,11 @@ bootstrap(
 \item{n_boot_samples}{Number of bootstrap samples to take}
 
 \item{show_progress_bar}{Boolean determining whether progress bar is used (default = TRUE)}
+
+\item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
+and jackknifing should always run optim() starting from the maximum likelihood
+parameter values, which is faster than running it from the starting value
+grid given by optim_starting_parms,}
 
 \item{cond_method}{Set to string "rejection" (default) or "inversion" to generate random
 p's from conditional distribution via rejection or quantile method. Rejection generates

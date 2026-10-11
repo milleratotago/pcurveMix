@@ -3,6 +3,7 @@
 #' Function for parametric bootstrapping of fitted model.
 #' @inheritParams random
 #' @inheritParams fit_p_curve
+#' @inheritParams set_globals fast_boot_jack
 #' @param fit_list Fitted model list returned by fit_p_curve
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
@@ -11,6 +12,7 @@
 bootstrap <- function(n, fit_list, n_boot_samples,
                       # alpha = 1, tails = 2, alpha_sig = 0.05, -- these are taken from "fit_list"
                       show_progress_bar = TRUE,
+                      fast_boot_jack = get_ao("fast_boot_jack"),
                       cond_method = "rejection", tol = 1e-8) {
   alpha <- fit_list$alpha
   tails <- fit_list$tails
@@ -25,7 +27,7 @@ bootstrap <- function(n, fit_list, n_boot_samples,
   ps_mat <- generate_parametric_subsamples(n_boot_samples, n, fit_list$mu, fit_list$sigma,
                                            pi = fit_list$pi, alpha = alpha, tails = tails,
                                            cond_method = cond_method, tol = tol)
-  if (pcm_env$fast_boot_jack) {
+  if (fast_boot_jack) {
     start_list <- list(mu = fit_list$mu, sigma = fit_list$sigma, pi = fit_list$pi)
   } else {
     start_list <- pcm_env$optim_starting_parms
@@ -36,14 +38,14 @@ bootstrap <- function(n, fit_list, n_boot_samples,
   return(boot_df)
 }
 
-get_ci_half_width <- function(sds, confidence_level = pcm_env$confidence_level) {
+get_ci_half_width <- function(sds, confidence_level = get_ao("confidence_level") ) {
   upper_q <- get_upper_q(confidence_level)
   zcrit <- stats::qnorm(upper_q)
   hw <- zcrit * sds
   return(hw)
 }
 
-get_ci_bounds <- function(means, sds, confidence_level = pcm_env$confidence_level) {
+get_ci_bounds <- function(means, sds, confidence_level = get_ao("confidence_level") ) {
   hw <- get_ci_half_width(sds, confidence_level)
   df <- data.frame(lower = means - hw, upper = means + hw)
   names(df) <- c(CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
@@ -60,8 +62,8 @@ get_ci_bounds <- function(means, sds, confidence_level = pcm_env$confidence_leve
 #'  parameter estimates, plus confidence interval boundss.
 #' @export
 make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_tbl is named differently elsewhere
-                                  confidence_level = pcm_env$confidence_level,
-                                  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+                                  confidence_level = get_ao("confidence_level"),
+                                  bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
                                   round_to = pcm_env$round_to) {
   mn_sd_df <- get_parm_summaries(ests_tbl, summary_fns = list(mean = mean, sd = sd))
 
@@ -70,7 +72,6 @@ make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_t
   # bias is the extent to which the estimates of the samples depart from those
   # true values.
   bias_df <- data.frame(bias = mn_sd_df$mean - mle_estimates_tbl$estimate)
-  bias_df$bc_estimate <- mle_estimates_tbl$estimate - bias_df$bias
 
   # Nonparametric bootstrapping:
   # In this case it works out the same
@@ -81,6 +82,7 @@ make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_t
   target_quantiles <- symmetric_tail_quantiles_from_confidence(confidence_level)
   q_df <- get_parm_quantiles(ests_tbl, quantiles = target_quantiles)
   if (bias_correct_ci_bounds) {
+    bias_df$bc_estimate <- mle_estimates_tbl$estimate - bias_df$bias
     ci_df[[CI_LOWER_BOUND_LABEL]] <- ci_df[[CI_LOWER_BOUND_LABEL]] - bias_df$bias
     ci_df[[CI_UPPER_BOUND_LABEL]] <- ci_df[[CI_UPPER_BOUND_LABEL]] - bias_df$bias
     names(ci_df)[names(ci_df) == CI_LOWER_BOUND_LABEL] <- bias_corrected_name(CI_LOWER_BOUND_LABEL)

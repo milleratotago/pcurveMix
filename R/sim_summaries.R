@@ -84,8 +84,8 @@ get_parm_quantiles <- function(estimates, parms_to_summarize = "All",
   return(as.data.frame(quantiles_df))
 }
 
-jackknife_comps1 <- function(est_orig, jack_mean, jack_se, full_sample_n, t_or_z = 2,
-                             bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds) {
+jackknife_comps1 <- function(est_orig, jack_mean, jack_se, full_sample_n, t_crit,
+                             bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds") ) {
   bias <- (full_sample_n - 1) * (jack_mean - est_orig)
   bias_corrected_estimate <- est_orig - bias
   if (bias_correct_ci_bounds) {
@@ -94,35 +94,45 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_se, full_sample_n, t_or_z
     center_ci <- est_orig
   }
   # jack_se <- jack_sd * (full_sample_n - 1) /  sqrt(full_sample_n)
-  lower_bound <- center_ci - t_or_z * jack_se
-  upper_bound <- center_ci + t_or_z * jack_se
-  tbl <- data.frame(mean = jack_mean, se = jack_se, bias = bias,
-                    bc_estimate = bias_corrected_estimate, # jack_se = jack_se,
-                    lower_bound = lower_bound, upper_bound = upper_bound)
-  names(tbl)[names(tbl) == "lower_bound"] <- bias_corrected_name(CI_LOWER_BOUND_LABEL)
-  names(tbl)[names(tbl) == "upper_bound"] <- bias_corrected_name(CI_UPPER_BOUND_LABEL)
+  lower_bound <- center_ci - t_crit * jack_se
+  upper_bound <- center_ci + t_crit * jack_se
+  if (bias_correct_ci_bounds) {
+    tbl <- data.frame(mean = jack_mean, se = jack_se, bias = bias,
+                      bc_estimate = bias_corrected_estimate,
+                      lower_bound = lower_bound, upper_bound = upper_bound)
+    names(tbl)[names(tbl) == "lower_bound"] <- bias_corrected_name(CI_LOWER_BOUND_LABEL)
+    names(tbl)[names(tbl) == "upper_bound"] <- bias_corrected_name(CI_UPPER_BOUND_LABEL)
+  } else {
+    tbl <- data.frame(mean = jack_mean, se = jack_se, bias = bias,
+                      lower_bound = lower_bound, upper_bound = upper_bound)
+    names(tbl)[names(tbl) == "lower_bound"] <- CI_LOWER_BOUND_LABEL
+    names(tbl)[names(tbl) == "upper_bound"] <- CI_UPPER_BOUND_LABEL
+  }
   return(tbl)
 }
 
-#' Function to make a data frame with rows for parms and cols
-#'  for jackknife stats associated with each parameter.
+#' Function to make a data frame with rows for parms and cols for
+#'  jackknife stats associated with each parameter & t confidence intervals.
 #' @param ests_orig A list with numerical values of the full-sample estimates
 #'  for each parameter
 #' @param jackknife_summaries Data frame produced by get_parm_summaries() from
 #'  the jackknife subsample parameter estimates
 #' @param full_sample_n Number of observations in the original dataset from
 #'  which est_orig values were computed
-#' @param t_or_z Multiplier of the jackknife standard error used to compute
-#'  confidence interval halfwidth
+#' @param confidence_level Confidence level used to find t confidence interval
+#'  bounds & quantile bounds.
 #' @param bias_correct_ci_bounds Boolean indicating whether confidence interval
 #'  bounds are corrected for the bias in the original estimate (default = TRUE)
 #' @inheritParams fit_to_estimates_tbl round_to
 #' @returns data frame with rows for parms and cols for bias_corrected_estimate,
 #'  bias, jack_se, lower_bound, and upper_bound
 #' @export
-make_jackknife_tbl <- function(ests_orig, jackknife_summaries, full_sample_n, t_or_z = 2,
-                                   bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
-                                   round_to = pcm_env$round_to) {
+make_jackknife_tbl <- function(ests_orig, jackknife_summaries, full_sample_n,
+                               confidence_level = get_ao("confidence_level"),
+                               bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
+                               round_to = get_ao("round_to") ) {
+  p <- 1 - (1 - confidence_level/100) / 2
+  t_crit <- stats::qt(p, full_sample_n - 1)
   parms_to_summarize <- unique(jackknife_summaries$parameter)
   jack_df <- data.frame()
   for (parm in parms_to_summarize) {
@@ -132,7 +142,7 @@ make_jackknife_tbl <- function(ests_orig, jackknife_summaries, full_sample_n, t_
     parm_jack_sd <- jackknife_summaries$sd[jackknife_summary_row]
     parm_jack_se <- parm_jack_sd * (full_sample_n - 1) /  sqrt(full_sample_n)
     jack_1_parm <- jackknife_comps1(parm_est_orig, parm_jack_mean, parm_jack_se,
-                                    full_sample_n, t_or_z = t_or_z,
+                                    full_sample_n, t_crit = t_crit,
                                     bias_correct_ci_bounds = bias_correct_ci_bounds)
     jack1_df <- cbind( data.frame(parameter = parm), jack_1_parm)
     jack_df <- rbind(jack_df, jack1_df)

@@ -5,30 +5,81 @@
 
 server <- function(input, output, session) {
 
+  # Special handling for scientific notation:
+  # This block runs automatically EXACTLY ONCE when the app loads
+  observe({
+    # Send the value and the appropriate step size back to the UI immediately
+    updateNumericInput(session = session, inputId = "edge_p",
+      value =  pcm_env$edge_p,
+      step = 1e-11 # Allows the browser to handle the small scientific decimal
+    )
+    # updateNumericInput(session = session, inputId = "optim_reltol",
+    #   value =  pcm_env$optim_reltol,
+    #   step = 1e-11 # Allows the browser to handle the small scientific decimal
+    # )
+  })
+
+  # Initialize UI analysis options fields with package settings.
+  initialize_ui_with_package_vals <- function(package_settings) {
+    updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = package_settings$bias_correct_ci_bounds)
+    updateNumericInput(session = session,  inputId = "confidence_level", value = package_settings$confidence_level)
+    updateTextInput(session = session, inputId = "text_edge_p",
+      value = format(package_settings$edge_p, scientific = TRUE) )
+    # updateTextInput(session = session, inputId = "text_optim_reltol",
+    #   value = format(package_settings$optim_reltol, scientific = TRUE) )
+    list_as_string <- deparse(pcm_env$optim_control)
+    updateTextAreaInput(session, "optim_control", value = list_as_string)
+
+    updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = package_settings$fast_boot_jack)
+    updateNumericInput(session = session,  inputId = "round_to", value = package_settings$round_to)
+    updateNumericInput(session = session,  inputId = "small_p_bin_cutoff", value = package_settings$small_p_bin_cutoff)
+    # Analysis options for which program has been modified to use new get_ao()
+    # NEWJEFF: Make sure all of these are in analysis descriptor table.
+    #  bias_correct_ci_bounds
+    #  confidence_level
+    #  fast_boot_jack
+    #  edge_p
+    #  optim_control
+    #  round_to
+    #  small_p_bin_cutoff
+    # Analysis options that cannot yet be set by UI:
+    #  MLSEh UNUSED
+    #  ??? n_bootstrap & np_n_boot NOT IN pcm_env
+    #  optim_starting_parms
+    #  profileCI_args
+    #  small_rcond UNUSED
+  }
+
+  session$userData$edge_p <- eventReactive(input$edge_p, {
+    return( as.numeric(input$text_edge_p) )
+  })
+  session$userData$optim_reltol <- eventReactive(input$optim_control, {
+    result <- tryCatch({
+      # NEWJEFF: security risk here
+      safe_env <- new.env(parent = emptyenv())
+      # Explicitly copy over safe primitives and data types
+      assign("list", base::list, envir = safe_env)
+      eval(parse(text = input$optim_control), envir = safe_env )
+    }, error = function(e) {
+      stop("syntax error in optim_control string:", e$message)
+    })
+    print( paste("NEWJEFF result =",result))
+    return( result )
+  })
+
+
+
   # Grab the package environment for server use
-  pcm_env <- as.list(pcurveMix:::pcm_env)
+  # Remember: Some of these variables will change later
+  #  based on ui inputs
+  pcm_env <- pcurveMix:::pcm_env
+  initialize_ui_with_package_vals(pcm_env)
 
   shinyjs::hide("analysis_options_panel")
   shinyjs::disable(id = "btnFit")
   shinyjs::disable(id = "btn_choose_analysis_options")
 
-  # Import some analysis parameters from the package environment
-  # and save them as "entry" variables so that they can be restored
-  # when the shiny app finishes.
-  entry_global <- pcurveMix::set_globals()
-  updateNumericInput(session = session, inputId = "confidence_level", value = entry_global$confidence_level)
-  updateNumericInput(session = session, inputId = "round_to", value = entry_global$round_to)
-  updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = entry_global$fast_boot_jack)
-  updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = entry_global$bias_correct_ci_bounds)
-  # entry_confidence_level <- pcm_env$confidence_level
-  # entry_round_to <- pcm_env$round_to
-  # entry_fast_boot_jack <- pcm_env$fast_boot_jack
-  # entry_bias_correct_ci_bounds <- pcm_env$bias_correct_ci_bounds
-  # updateNumericInput(session = session, inputId = "confidence_level", value = pcm_env$confidence_level)
-  # updateNumericInput(session = session, inputId = "round_to", value = pcm_env$round_to)
-  # updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = pcm_env$fast_boot_jack)
-  # updateCheckboxInput(session = session, inputId = "bias_correct_ci_bounds", value = pcm_env$bias_correct_ci_bounds)
-
+  # analysis results
   v <- reactiveValues(fit_completed = FALSE,
                       p_filename = NULL,
                       fit_list = NULL,
@@ -85,12 +136,12 @@ server <- function(input, output, session) {
     real_ps <- v$fit_list$check_ps$ps_in_bound
     full_sample_n <- length(real_ps)
     mat_of_ps <- generate_jackknife_subsamples(real_ps)
-    if (pcm_env$fast_boot_jack) {
+    if (input$fast_boot_jack) {
       start_list <- list(mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi)
     } else {
+      print("Using pcm_env$optim_starting_parms NEWJEFF")
       start_list <- pcm_env$optim_starting_parms
     }
-    # print( paste("do_jackknifing start_list:", start_list))
     progressr::withProgressShiny(
       message = "Jackknifing in progress...",
       detail = "Starting...",
@@ -132,7 +183,7 @@ server <- function(input, output, session) {
     v$n_boot_samples <- input$n_boot_samples
     # NEWJEFF: cond_method & tol cannot be changed in next line; should be settable in environment
     mat_of_ps <- generate_parametric_subsamples(v$n_boot_samples, n_ps, mu, sigma, pi, alpha, tails)
-    if (pcm_env$fast_boot_jack) {
+    if (input$fast_boot_jack) {
       start_list <- list(mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi)
     } else {
       start_list <- pcm_env$optim_starting_parms
@@ -157,8 +208,8 @@ server <- function(input, output, session) {
     # original_ests <- fit_to_parms_vec(v$fit_list, want_converged = FALSE)
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
-                                        confidence_level = pcm_env$confidence_level,
-                                        bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds)
+                                        confidence_level = input$confidence_level,
+                                        bias_correct_ci_bounds = input$bias_correct_ci_bounds)
 
     # v$boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$boot_tbl$mean)
     boot_title <- paste0("Parametric bootstrap analysis (",
@@ -179,7 +230,7 @@ server <- function(input, output, session) {
     full_sample_n <- length(real_ps)
     v$np_n_boot_samples <- input$np_n_boot_samples
     mat_of_ps <- generate_nonparametric_subsamples(v$np_n_boot_samples, full_sample_n, real_ps)
-    if (pcm_env$fast_boot_jack) {
+    if (input$fast_boot_jack) {
       start_list <- list(mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi)
     } else {
       start_list <- pcm_env$optim_starting_parms
@@ -204,8 +255,8 @@ server <- function(input, output, session) {
     # original_ests <- fit_to_parms_vec(v$fit_list, want_converged = FALSE)
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$np_boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
-                                           confidence_level = pcm_env$confidence_level,
-                                           bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds)
+                                           confidence_level = input$confidence_level,
+                                           bias_correct_ci_bounds = input$bias_correct_ci_bounds)
     # v$np_boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$np_boot_tbl$mean)
     npboot_title <- paste0("Nonparametric bootstrap analysis (",
                            round(v$np_boot_confidence_level,2),
@@ -224,7 +275,7 @@ server <- function(input, output, session) {
       v$profile_analysis <- 1
     }
     # Computations:
-    v$profile_ci_confidence_level <- pcm_env$confidence_level / 100  # profileCI package wants 0-1 confidence level
+    v$profile_ci_confidence_level <- input$confidence_level / 100  # profileCI package wants 0-1 confidence level
     notif_id <- "profileCI_std_notif_id"
     showNotification(
       "Profiling mu, sigma, and pi ...",
@@ -380,26 +431,20 @@ server <- function(input, output, session) {
     # } # if tails == 2
   } # profile_manager
 
-  assign_input_globals <- function() {
-    pcurveMix::set_globals(confidence_level = input$confidence_level,
-                round_to = input$round_to,
-                fast_boot_jack = input$fast_boot_jack,
-                bias_correct_ci_bounds = input$bias_correct_ci_bounds)
-    # pcm_env$confidence_level <- input$confidence_level
-    # pcm_env$round_to <- input$round_to
-    # pcm_env$fast_boot_jack <- input$fast_boot_jack
-    # pcm_env$bias_correct_ci_bounds <- input$bias_correct_ci_bounds
-  }
+  # NEWJEFF: This is not allowed in shiny; must use get_ao() instead
+  # assign_input_globals <- function() {
+  #   pcurveMix::set_globals(
+  #     bias_correct_ci_bounds = input$bias_correct_ci_bounds,
+  #     confidence_level = input$confidence_level,
+  #     edge_p = input$edge_p,
+  #     fast_boot_jack = input$fast_boot_jack,
+  #     optim_control = input$optim_control,
+  #     round_to = input$round_to
+  #   )
+  # }
 
   onStop(function() {
-    pcurveMix::set_globals(confidence_level = entry_global$confidence_level,
-                round_to = entry_global$round_to,
-                fast_boot_jack = entry_global$fast_boot_jack,
-                bias_correct_ci_bounds = entry_global$bias_correct_ci_bounds)
-    # pcm_env$confidence_level <- entry_confidence_level
-    # pcm_env$round_to <- entry_round_to
-    # pcm_env$fast_boot_jack <- entry_fast_boot_jack
-    # pcm_env$bias_correct_ci_bounds <- entry_bias_correct_ci_bounds
+    # Nothing yet
   })
 
   observeEvent(input$p_file, {
@@ -411,10 +456,10 @@ server <- function(input, output, session) {
     check_input()
   })
 
-  observeEvent(input$btn_choose_analysis_options, {
-    req(input$btn_choose_analysis_options)
-    shinyjs::show("analysis_options_panel")
-  })
+  # observeEvent(input$btn_choose_analysis_options, {
+  #   req(input$btn_choose_analysis_options)
+  #   shinyjs::show("analysis_options_panel")
+  # })
 
   observeEvent(input$btnUploadDemo, {
     demo_file_name <- "demo_data.csv"  # NEWJEFF: HARD-CODED FILE NAME IN UI & Intro.Rmd
@@ -429,21 +474,29 @@ server <- function(input, output, session) {
       n_ps <- length(v$df$p)
       ps_min <- round(min(v$df$p),4)
       ps_max <- round(max(v$df$p),4)
-      id <- "upload_notification"
-      showNotification(
-        paste("Successful upload of",n_ps,"p's; min =",ps_min," & max =",ps_max),
-        duration = 10,  # seconds
-        closeButton = TRUE,
-        type = "message",
-        id = id, # Explicit ID stops rapid dismissal/conflict
-        # Add a large, high-contrast dismiss button at the bottom
-        action = actionButton(
-          "dismiss_btn",
-          "OK"
-          # class = "btn-danger btn-sm",
-          # style = "width: 100%; font-weight: bold; border-radius: 4px;"
-        )
-      ) # showNotification
+      # showModal(modalDialog(
+      #   title = "Upload successful",
+      #   paste("File has",n_ps,"p's; min =",ps_min," & max =",ps_max),
+      #   easyClose = TRUE,
+      #   footer = modalButton("Choose analysis options")
+      # ))
+      # id <- "upload_notification"
+      # showNotification(
+      #   paste("Successful upload of",n_ps,"p's; min =",ps_min," & max =",ps_max),
+      #   duration = 10,  # seconds
+      #   closeButton = TRUE,
+      #   type = "message",
+      #   id = id, # Explicit ID stops rapid dismissal/conflict
+      #   # Add a large, high-contrast dismiss button at the bottom
+      #   action = actionButton(
+      #     "dismiss_btn",
+      #     "OK"
+      #     # class = "btn-danger btn-sm",
+      #     # style = "width: 100%; font-weight: bold; border-radius: 4px;"
+      #   )
+      # ) # showNotification
+      output$report_on_ps <- renderText(paste("Successful upload of",n_ps,"p's; min =",ps_min," & max =",ps_max))
+      shinyjs::show("analysis_options_panel")
       shinyjs::enable(id = "btnFit")
       # Following line jumps to analysis options; problematic because it hides input p's tails & alpha
       # shinyjs::runjs('document.getElementById("analysis_options_panel").scrollIntoView({behavior: "smooth", block: "start"});')
@@ -461,9 +514,18 @@ server <- function(input, output, session) {
     shinyjs::enable(id = "btn_choose_analysis_options")
   }   # end check_input
 
+  get_alpha_cutoff <- function() {
+    if (input$custom_cutoff2 == "custom") {
+      req(input$custom_cutoff3)
+      return(input$custom_cutoff3)
+    } else {
+      return(as.numeric(input$custom_cutoff2))
+    }
+  }
+
   observeEvent(input$btnFit, {
       restart()
-      assign_input_globals()
+      # assign_input_globals()
       shinyjs::show("results_panel")
       shinyjs::show("download_panel")
       shinyjs::runjs('document.getElementById("results_panel").scrollIntoView({behavior: "smooth", block: "start"});')
@@ -475,7 +537,7 @@ server <- function(input, output, session) {
       output$predicted_cdfs_title <- renderText("Observed/predicted CDFs:")
 
       tails <- get_tails()
-      alpha_cutoff <- input$custom_cutoff
+      alpha_cutoff <- get_alpha_cutoff()
       alpha_sig <- input$alpha_sig
       # if (input$specify_starting_values) {
       #   start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)

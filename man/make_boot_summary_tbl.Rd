@@ -7,8 +7,8 @@
 make_boot_summary_tbl(
   mle_estimates_tbl,
   ests_tbl,
-  confidence_level = pcm_env$confidence_level,
-  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+  confidence_level = get_ao("confidence_level"),
+  bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
   round_to = pcm_env$round_to
 )
 }
@@ -20,8 +20,8 @@ original MLE estimates used as parameter values for parametric bootstrapping}
 
 \item{confidence_level}{Used in computing confidence intervals (default = 95)}
 
-\item{bias_correct_ci_bounds}{Boolean; if true (default), confidence interval bounds
-are adjusted to correct for estimated bias.}
+\item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
+interval bounds to correct for estimated bias.}
 
 \item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
 }

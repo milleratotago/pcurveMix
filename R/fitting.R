@@ -12,7 +12,7 @@
 #' @returns Real negative log-likelihood of the p values
 #' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
-                small_p_bin_cutoff = pcm_env$small_p_bin_cutoff) {
+                small_p_bin_cutoff = get_ao("small_p_bin_cutoff") ) {
   # print( paste("nll thinks: mu =",mu, "sigma =",sigma, "pi =",pi) )
   # JEFF: profileCI gets confused if the flat region extends
   # to the lower bound, and the profile plots have a terrible y-axis
@@ -23,7 +23,7 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   # used uniformly (eg make sure profiling uses this).
   if (pi < 0 || pi > 1 || sigma < 0) return(1e12)
   # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
-  if (is.null(small_p_bin_cutoff)) {
+  if (is.na(small_p_bin_cutoff)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
     # print(pdfs) # NWJEFF
@@ -80,6 +80,7 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
                         start_parms = pcm_env$optim_starting_parms, show_shiny_error = TRUE) {
 # NEWJEFF: show_shiny_error is horrible. This function is not the right place to check p's.
+# NEWJEFF: Include option to show final estimates from all starting points?
 # @param lower List of lower bounds for the optim search
 #  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 # @param upper List of upper bounds for the optim search
@@ -140,21 +141,6 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
 fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                          want_optim_hessian = TRUE,
                          start = pcm_env$optim_starting_parms) {
-#                         lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
-#                         upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
-  # p <- as.numeric(p)
-  # check_ps_list <- check_ps(p, alpha_cutoff = alpha)
-  # ## print(check_ps_list)  # NWJEFF
-  # if (!check_ps_list$all_in_bounds) {
-  #   p <- check_ps_list$ps_in_bounds
-  #   if (shiny::isRunning()) { # (pcm_env$shiny_running) {
-  #     problem_string <- bad_ps_report_string(check_ps_list)
-  #     shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
-  #     # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
-  #   }
-  # }
-  #
-  # if (!length(p)) stop("No valid p-values in (0,1).")
   fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
@@ -179,8 +165,8 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
   opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                       method = "BFGS", hessian = want_optim_hessian,
-                      control = pcm_env$optim_control)
-  est <- opt$par;
+                      control = get_ao("optim_control") )
+  est <- opt$par
   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
   parms <- reals_to_parms(real_parms)
   # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NWJEFF These look wrong
@@ -290,9 +276,11 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
 #' Convert the fit_p_curve fit descriptors into a nice data frame.
 #' @param fit Output list from fit_p_curve
 #' @param file_name Optional string used to include p file name in table
+#' @param small_p_bin_cutoff Top of bin for small p's
 #' @returns A data frame
 #' @export
-fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
+fit_to_descriptor_tbl <- function(fit, file_name = NULL,
+                                  small_p_bin_cutoff = get_ao("small_p_bin_cutoff")) {
   descriptor_tbl <- data.frame()
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("** pcurveMix version:",
                                                      as.character(utils::packageVersion("pcurveMix"))))
@@ -306,19 +294,21 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL) {
   if (any(!is.na(fit$start_parm_set))) {
     descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit$start_parm_set) )
   }
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 0 replaced with",as.character(pcm_env$edge_p)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 1 replaced with 1 -",as.character(pcm_env$edge_p)))
-  if (is.null(pcm_env$small_p_bin_cutoff)) {
+  edge_p <- get_ao("edge_p")
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 0 replaced with",as.character(edge_p)))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 1 replaced with 1 -",as.character(edge_p)))
+  if (is.na(small_p_bin_cutoff)) {
     descriptor_tbl <- rbind(descriptor_tbl, descriptor("Low p censoring", "Unused"))
   } else {
     descriptor_tbl <- rbind(descriptor_tbl, descriptor( "Low p's censored at small_p_bin_cutoff =",
-                                                        pcm_env$small_p_bin_cutoff) )
+                                                        small_p_bin_cutoff) )
   }
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF p's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
   if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_small,"p's < 0")))
   if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_large,"p's > ",fit$alpha)))
-  if (fit$check_ps_list$n_equal_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit$check_ps_list$n_equal_zero,"small p's set to",pcm_env$edge_p)))
+  if (fit$check_ps_list$n_nearly_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit$check_ps_list$n_nearly_zero,"p's near 0 set to",pcm_env$edge_p)))
+  if (fit$check_ps_list$n_nearly_one > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit$check_ps_list$n_nearly_one,"p's near 1 set to 1 -",pcm_env$edge_p)))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit$n,0))))
   smin <- formatC(fit$min_p, format = "e", digits = 6)
   if (fit$max_p < 0.001) {
@@ -369,7 +359,8 @@ fit_to_parms_vec <- function(fit, want_names = TRUE, want_converged = TRUE) {
   # ORDER OF PARMS MUST MATCH IN fit_to_parms_vec() AND estimate_names()
   parms <- c(fit$mu, fit$sigma, fit$pi, fit$power)
   if (fit$tails == 2) parms <- c(parms, mean_folded_normal(fit$mu, fit$sigma), sd_folded_normal(fit$mu, fit$sigma))
-  parms <- c(parms, fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]], fit[[R_FP]], fit[[R_FN]])
+  parms <- c(parms, fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]],
+             fit[[R_FP]], fit[[R_FN]])
   if (want_converged)  parms <- c(parms, fit$converged)
   if (want_names) names(parms) <- estimate_names(fit$tails, want_converged = want_converged)
   return(parms)
@@ -388,11 +379,12 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                             start_parms = pcm_env$optim_starting_parms,
                             n_progress_bar_steps = 20 ) {
   n_samples <- nrow(mat_of_ps)
-  if (tails == 2) { # initial 1+ is for parm name
-    n_parms <- 1+ N_BASE_PARMS + N_DERIVED_PARMS + 2
+  if (tails == 2) { # initial 1 + is for parm name
+    n_parms <- 1 + N_BASE_PARMS + N_DERIVED_PARMS + 2
   } else {
-    n_parms <- 1+ N_BASE_PARMS + N_DERIVED_PARMS
+    n_parms <- 1 + N_BASE_PARMS + N_DERIVED_PARMS
   }
+  # n_parms <- n_parms + 1   # Would be needed to include logLik
   estimates <- matrix(NA, nrow = n_samples, ncol = n_parms)
   p <- progressr::progressor(steps = n_samples)
   step_size <- max(1,round(n_samples / n_progress_bar_steps))

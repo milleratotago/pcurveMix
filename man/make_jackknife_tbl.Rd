@@ -2,16 +2,16 @@
 % Please edit documentation in R/sim_summaries.R
 \name{make_jackknife_tbl}
 \alias{make_jackknife_tbl}
-\title{Function to make a data frame with rows for parms and cols
-for jackknife stats associated with each parameter.}
+\title{Function to make a data frame with rows for parms and cols for
+jackknife stats associated with each parameter & t confidence intervals.}
 \usage{
 make_jackknife_tbl(
   ests_orig,
   jackknife_summaries,
   full_sample_n,
-  t_or_z = 2,
-  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
-  round_to = pcm_env$round_to
+  confidence_level = get_ao("confidence_level"),
+  bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
+  round_to = get_ao("round_to")
 )
 }
 \arguments{
@@ -24,8 +24,8 @@ the jackknife subsample parameter estimates}
 \item{full_sample_n}{Number of observations in the original dataset from
 which est_orig values were computed}
 
-\item{t_or_z}{Multiplier of the jackknife standard error used to compute
-confidence interval halfwidth}
+\item{confidence_level}{Confidence level used to find t confidence interval
+bounds & quantile bounds.}
 
 \item{bias_correct_ci_bounds}{Boolean indicating whether confidence interval
 bounds are corrected for the bias in the original estimate (default = TRUE)}
@@ -37,6 +37,6 @@ data frame with rows for parms and cols for bias_corrected_estimate,
 bias, jack_se, lower_bound, and upper_bound
 }
 \description{
-Function to make a data frame with rows for parms and cols
-for jackknife stats associated with each parameter.
+Function to make a data frame with rows for parms and cols for
+jackknife stats associated with each parameter & t confidence intervals.
 }

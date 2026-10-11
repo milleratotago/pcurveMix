@@ -8,11 +8,11 @@ test_that("jackknife computations are correct", {
   jackknife_summaries <- data.frame(parameter = "sample_var",
                                     mean = 10.875, sd = sd(jacksample_ests)  )
   full_sample_n <- 5
-  answers <- make_jackknife_tbl(ests_orig, jackknife_summaries, full_sample_n, t_or_z = 1.96,
+  answers <- make_jackknife_tbl(ests_orig, jackknife_summaries, full_sample_n,
                                     bias_correct_ci_bounds = testing_with_bias_correction,
                                     round_to = NULL)
-  # Correct answers: bias = -2.9, estimate_bc = 14.5 jack_se = 8.372201,
-  #  bounds = -1.909514, 30.909514
+  # Correct answers for z confidence interval: bias = -2.9, estimate_bc = 14.5,
+  #  jack_se = 8.372201, bounds = -1.909514, 30.909514
   expect_equal(answers$bias, -2.9, tolerance = 0.001)
   expect_equal(answers$bc_estimate, 14.5, tolerance = 0.001)
   # expect_equal(answers$jack_se, 8.3722, tolerance = 0.0001) # no longer included in table
@@ -23,6 +23,11 @@ test_that("jackknife computations are correct", {
     lower_bound_name <- CI_LOWER_BOUND_LABEL
     upper_bound_name <- CI_UPPER_BOUND_LABEL
   }
-  expect_equal(answers[[lower_bound_name]], -1.9095, tolerance = 0.0001)
-  expect_equal(answers[[upper_bound_name]], 30.9095, tolerance = 0.0001)
+  # hw <- qt(.975, df = 4) * 8.372201
+  # lower <- answers$bc_estimate - hw
+  # expect_equal(answers[[lower_bound_name]], -1.9095, tolerance = 0.0001)   Z CI
+  # expect_equal(answers[[upper_bound_name]], 30.9095, tolerance = 0.0001)   Z CI
+  expect_equal(answers[[lower_bound_name]], -8.744956, tolerance = 0.0001) # t CI
+  expect_equal(answers[[upper_bound_name]], 37.74496, tolerance = 0.0001)  # t CI
+
 })

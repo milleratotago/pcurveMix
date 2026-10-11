@@ -1,5 +1,6 @@
 # real_to_nat_se_ci.R
 
+# NEWJEFF: OBSOLETE?
 # Function to compute the standard errors and confidence intervals
 #  for the model parameters on their natural scales from the
 #  estimates and Hessian returned by optim() when fitting on
@@ -83,7 +84,7 @@ real_to_nat_se_ci <- function(par_hat, H) {
   # As a result, the CIs for mu, sigma, and pi are generally asymmetric.
   # They also automatically respect the parameter boundaries.
 
-  upper_q_for_ci <- 1 - (1 - pcm_env$confidence_level/100) / 2
+  upper_q_for_ci <- 1 - (1 - get_ao("confidence_level") /100) / 2
   z <- stats::qnorm(upper_q_for_ci)
 
   # CI for log(mu).
@@ -110,7 +111,8 @@ real_to_nat_se_ci <- function(par_hat, H) {
   ci_pi    <- stats::plogis(ci_logit_pi)
 
   ci <- rbind(ci_pi, ci_mu, ci_sigma)
-  rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c(CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
+  rownames(ci) <- c("pi","mu","sigma");
+  colnames(ci) <- c(CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
 
   names(se) <- c("pi", "mu", "sigma")
 

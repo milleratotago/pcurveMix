@@ -9,21 +9,20 @@ set_globals(
   confidence_level = NA,
   edge_p = NA,
   fast_boot_jack = NA,
-  MLSEh = NA,
   optim_control = NA,
+  optim_reltol = NA,
   optim_starting_parms = NA,
   p_seq_cdf = NA,
   p_seq_pdf = NA,
   profileCI_args = NA,
   round_to = NA,
   small_p_bin_cutoff = NA,
-  small_rcond = NA,
   reset_to_defaults = FALSE
 )
 }
 \arguments{
-\item{bias_correct_ci_bounds}{Boolean; if true (default), confidence interval bounds
-are adjusted to correct for estimated bias.}
+\item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
+interval bounds to correct for estimated bias.}
 
 \item{confidence_level}{Used in computing confidence intervals (default = 95)}
 
@@ -35,11 +34,11 @@ and jackknifing should always run optim() starting from the maximum likelihood
 parameter values, which is faster than running it from the starting value
 grid given by optim_starting_parms,}
 
-\item{MLSEh}{Small +/- increment to parameter values used in computing
-the Fisher information matrix (default = 1e-7)}
-
 \item{optim_control}{A control list passed to R's optim() function
 (default = NULL, in which case the optim defaults are used)}
+
+\item{optim_reltol}{reltol value used by optim for parameter searching
+(default = 1e-10)}
 
 \item{optim_starting_parms}{A list or data frame of parameter combinations
 at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
@@ -55,11 +54,8 @@ values for plots (default = seq(0.001, 0.999, 0.002))}
 \item{round_to}{Number of decimal places to display (default = 3)}
 
 \item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
-censoring (default = NULL, in which case likelihoods are computed without
+censoring (default = NA, in which case likelihoods are computed without
 censoring)}
-
-\item{small_rcond}{The cutoff reciprocal condition number for deciding that
-a Fisher information matrix is ill-conditioned (default = 1e-15)}
 
 \item{reset_to_defaults}{Boolean; if true, reset all values to their
 defaults before applying the other arguments}

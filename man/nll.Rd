@@ -14,7 +14,7 @@ nll(
   pi = 1,
   alpha = 1,
   tails = 2,
-  small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+  small_p_bin_cutoff = get_ao("small_p_bin_cutoff")
 )
 }
 \arguments{
@@ -33,7 +33,7 @@ this function.}
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
 
 \item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
-censoring (default = NULL, in which case likelihoods are computed without
+censoring (default = NA, in which case likelihoods are computed without
 censoring)}
 }
 \value{

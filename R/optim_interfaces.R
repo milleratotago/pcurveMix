@@ -14,7 +14,7 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
   opt <- tryCatch(  # tryCatch 1
     { stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                    method = "BFGS", hessian = want_optim_hessian,
-                   control = pcm_env$optim_control)
+                   control = get_ao("optim_control") )
     }, # end of try 1
     error = function(cond) {
       backup_opt <- optim_error_recovery(cond, start_real_vec, p, alpha = alpha, tails = tails,
@@ -54,11 +54,12 @@ optim_error_recovery <- function(cond, start_real_vec, p, alpha, tails,
       if (method == "BFGS") {
         temp <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                              method = method, hessian = FALSE,
-                             control = pcm_env$optim_control)
+                             control = get_ao("optim_control") )
       } else if (method == "L-BFGS-B") {
         temp <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                              method = method, hessian = FALSE,
-                             control = pcm_env$optim_control, lower = lower_vec, upper = upper_vec)
+                             control = get_ao("optim_control"),
+                             lower = lower_vec, upper = upper_vec)
       } else {
         stop( paste("FATAL ERROR: optim_error_recovery does not recognize optim method",method) )
       }

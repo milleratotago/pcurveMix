@@ -5,12 +5,12 @@
 \title{Computations for profile-based confidence intervals of the basic model
 parameters mu, sigma, and pi (NOT the folded normal parameters).}
 \usage{
-compute_profileCI(fit_list, level = pcm_env$confidence_level/100)
+compute_profileCI(fit_list, level = get_ao("confidence_level")/100)
 }
 \arguments{
 \item{fit_list}{A list that was the output of fit_p_curve}
 
-\item{level}{Confidence level for the CI (0-1, default = pcm_env$confidence_level/100)}
+\item{level}{Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny}
 }
 \value{
 A list with: bounds_matrix = matrix of CI bounds;

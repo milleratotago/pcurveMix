@@ -16,7 +16,7 @@ inline_numericInput=function(ni){
 
 # Reusable helper function for accepting horizontal numeric inputs
 inlineNumericInput <- function(inputId, label, value, min = NA, max = NA,
-                               step = NA, width = "70px", label_width = "120px") {
+                               step = NA, width = "80px", label_width = "120px") {
   div(
     style = "display: flex; align-items: center; margin-bottom: 10px;",
     tags$label(
@@ -31,6 +31,24 @@ inlineNumericInput <- function(inputId, label, value, min = NA, max = NA,
       min = min,
       max = max,
       step = step,
+      width = width
+    )
+  )
+}
+
+# Reusable helper function for accepting horizontal text inputs
+inlineTextInput <- function(inputId, label, value, width = "80px", label_width = "120px") {
+  div(
+    style = "display: flex; align-items: center; margin-bottom: 10px;",
+    tags$label(
+      label,
+      `for` = inputId,
+      style = paste0("width: ", label_width, "; margin-bottom: 0; margin-right: 10px; font-weight: bold;")
+    ),
+    textInput(
+      inputId = inputId,
+      label = NULL,
+      value = value,
       width = width
     )
   )
@@ -117,77 +135,121 @@ ui <- tagList(
       h2(),
       radioButtons("tails", "File has 1- or 2-tailed p's?",
                    choices = c("1-tailed", "2-tailed"), selected = "2-tailed"),
-      inlineNumericInput("custom_cutoff", "Upper p cutoff for inclusion in file ('alpha'):",
-                         value = "1", min = 0, max = 1, step = 0.05, label_width = "400px"),
-      actionButton("btn_choose_analysis_options","Choose analysis options")
+      # inlineNumericInput("custom_cutoff", "Upper p cutoff for inclusion in file ('alpha'):",
+      #                    value = "1", min = 0, max = 1, step = 0.05, label_width = "400px"),
+      radioButtons(
+        inputId = "custom_cutoff2",
+        label = "Upper p cutoff for inclusion in file ('alpha'):",
+        choices = list(
+          "1" = "1",
+          "0.10" = "0.10",
+          "0.05" = "0.05",
+          "0.025" = "0.025",
+          "0.01" = "0.01",
+          "Custom" = "custom"
+        ),
+        inline = TRUE,
+        selected = "1"
+      ),
+      conditionalPanel(
+        condition = "input.custom_cutoff2 == 'custom'",
+        inlineNumericInput("custom_cutoff3", "Upper p cutoff for inclusion in file ('alpha'):",
+                           value = "1", min = 0, max = 1, step = 0.05, label_width = "400px")
+      ),
+      # actionButton("btn_choose_analysis_options","Choose analysis options")
+      tags$span(h4(textOutput("report_on_ps")), style = "font-style: italic;")
     ), # wellPanel
     #                                                                ====
     # wellPanel: Analysis options ====
     shinyjs::hidden(
-    wellPanel(
-      id = "analysis_options_panel",
-      h2("Choose analysis options:"),
-      inlineNumericInput("alpha_sig", "Alpha level to use for power computations ('alpha_sig'):",
-                         value = "0.05", min = 0, max = 1, step = 0.01, label_width = "400px"),
+      wellPanel(
+        id = "analysis_options_panel",
+        h2("Choose analysis options:"),
+        inlineNumericInput("alpha_sig", "Alpha level to use for power computations ('alpha_sig'):",
+                           value = "0.05", min = 0, max = 1, step = 0.01, label_width = "400px"),
 
-      inlineNumericInput("round_to", "Number of decimal places to display:",
-                         value = "3", min = 0, max = 9, step = 1,
-                         label_width = "400px"),
-
-      checkboxInput("jackknifing", label = strong("Compute jackknifing for bias correction & confidence interval"), TRUE),
-
-      checkboxInput("parametric_bootstrapping", label = strong("Compute parametric bootstrap confidence intervals"), TRUE),
-      conditionalPanel(
-        condition = "input.parametric_bootstrapping == true",
-        inlineNumericInput("n_boot_samples", "...N bootstrap samples (recommended min 2000 for real analyses):",
-                           value = "100", min = 0, step = 100,
-                           label_width = "400px")
-      ),
-
-      checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), TRUE),
-      conditionalPanel(
-        condition = "input.nonparametric_bootstrapping == true",
-        inlineNumericInput("np_n_boot_samples", "...N bootstrap samples (recommended min 2000 for real analyses):",
-                           value = "100", min = 0, step = 100,
-                           label_width = "400px")
-      ), # conditionalPanel
-
-      checkboxInput("profile_ci", label = strong("Compute likelihood profile confidence intervals"), TRUE),
-
-      conditionalPanel(
-        condition = "input.jackknifing == true || input.parametric_bootstrapping == true || input.nonparametric_bootstrapping == true || input.profile_ci == true",
-        inlineNumericInput("confidence_level", "Confidence level for confidence intervals:",
-                           value = "95", min = 0, max = 100, step = 6,
+        inlineNumericInput("round_to", "Number of decimal places to display:",
+                           value = "3", min = 0, max = 9, step = 1,
                            label_width = "400px"),
-      ),
 
-      conditionalPanel(
-        condition = "input.jackknifing == true || input.parametric_bootstrapping == true || input.nonparametric_bootstrapping == true",
-        checkboxInput("bias_correct_ci_bounds", label = strong("Use bias correction for jackknife & bootstrap confidence interval bounds"), TRUE),
+        checkboxInput("jackknifing", label = strong("Compute jackknifing for bias correction & confidence interval"), TRUE),
 
-        checkboxInput("fast_boot_jack", label = strong("Always start parameter search at ML estimates when jackknifing & bootstrapping (faster)"), TRUE)
-      ),
+        checkboxInput("parametric_bootstrapping", label = strong("Compute parametric bootstrap confidence intervals"), TRUE),
+        conditionalPanel(
+          condition = "input.parametric_bootstrapping == true",
+          inlineNumericInput("n_boot_samples", "...N bootstrap samples (recommended min 2000 for real analyses):",
+                             value = "100", min = 0, step = 100,
+                             label_width = "400px")
+        ),
 
-      # ## Adjust starting values ====  NEWJEFF: Move to advanced options
-      # h4(),
-      # checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),
-      # conditionalPanel(
-      #   condition = "input.specify_starting_values == true",
-      #   div(
-      #     style = "display: flex; align-items: center; flex-wrap: wrap; gap: 10px;",
-      #     inlineNumericInput("start_mu", "mu =", value = pcm_env$START_MU_DEFAULT,
-      #                        min = 0, max = 20, step = 0.1, label_width = "40px"),
-      #     inlineNumericInput("start_sigma", "sigma =", value = pcm_env$START_SIGMA_DEFAULT,
-      #                        min = 1e-6, max = 20, step = 0.1, label_width = "60px"),
-      #     inlineNumericInput("start_pi", "pi =", value = pcm_env$START_PI_DEFAULT,
-      #                        min = 0, max = 1, step = 0.1, label_width = "40px")
-      #   ) # div
-      # ), # conditionalPanel
-      ## end Adjust starting values ====
+        checkboxInput("nonparametric_bootstrapping", label = strong("Compute nonparametric bootstrap confidence intervals"), TRUE),
+        conditionalPanel(
+          condition = "input.nonparametric_bootstrapping == true",
+          inlineNumericInput("np_n_boot_samples", "...N bootstrap samples (recommended min 2000 for real analyses):",
+                             value = "100", min = 0, step = 100,
+                             label_width = "400px")
+        ), # conditionalPanel
 
-      # end Specify p values panel
-      actionButton("btnFit","Fit model & compute requested CIs")
-    ) # wellPanel Analysis options
+        checkboxInput("profile_ci", label = strong("Compute likelihood profile confidence intervals"), TRUE),
+
+        conditionalPanel(
+          condition = "input.jackknifing == true || input.parametric_bootstrapping == true || input.nonparametric_bootstrapping == true || input.profile_ci == true",
+          inlineNumericInput("confidence_level", "Confidence level for confidence intervals:",
+                             value = "95", min = 0, max = 100, step = 6,
+                             label_width = "400px"),
+        ),
+
+        conditionalPanel(
+          condition = "input.jackknifing == true || input.parametric_bootstrapping == true || input.nonparametric_bootstrapping == true",
+          checkboxInput("bias_correct_ci_bounds", label = strong("Use bias correction for jackknife & bootstrap confidence interval bounds"), TRUE),
+
+          checkboxInput("fast_boot_jack", label = strong("Always start parameter search at ML estimates when jackknifing & bootstrapping (faster)"), TRUE)
+        ),
+
+        # ## Adjust starting values ====  NEWJEFF: Move to advanced options
+        # h4(),
+        # checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),
+        # conditionalPanel(
+        #   condition = "input.specify_starting_values == true",
+        #   div(
+        #     style = "display: flex; align-items: center; flex-wrap: wrap; gap: 10px;",
+        #     inlineNumericInput("start_mu", "mu =", value = pcm_env$START_MU_DEFAULT,
+        #                        min = 0, max = 20, step = 0.1, label_width = "40px"),
+        #     inlineNumericInput("start_sigma", "sigma =", value = pcm_env$START_SIGMA_DEFAULT,
+        #                        min = 1e-6, max = 20, step = 0.1, label_width = "60px"),
+        #     inlineNumericInput("start_pi", "pi =", value = pcm_env$START_PI_DEFAULT,
+        #                        min = 0, max = 1, step = 0.1, label_width = "40px")
+        #   ) # div
+        # ), # conditionalPanel
+        ## end Adjust starting values ====
+
+        inlineNumericInput("small_p_bin_cutoff", "Top of small p's bin if binning:",
+                           value = "0", min = 0, max = 0.5, step = 0.001,
+                           label_width = "400px"),
+
+        textAreaInput("optim_control","Optim function control settings", value = "", width = '100%'),
+
+        inlineTextInput("text_edge_p", "Gap between 0 and min p and/or between max p and 1:",
+                        value = "", label_width = "400px"),
+
+        shinyjs::hidden(
+          inlineNumericInput("edge_p", "Gap between 0 and min p and/or between max p and 1:",
+                             value = "0", min = 0, max = 0.02, step = 1e-10,
+                             label_width = "400px")
+        ),
+
+        # inlineTextInput("text_optim_reltol", "optim function's 'reltol' parameter:",
+        #                 value = "", label_width = "400px"),
+        #
+        # shinyjs::hidden(
+        #   inlineNumericInput("optim_reltol", "optim function's 'reltol' parameter:",
+        #                      value = "0", min = 0, max = 0.02, step = 1e-10,
+        #                      label_width = "400px")
+        # ),
+
+        # end Specify p values panel
+        actionButton("btnFit","Fit model & compute requested CIs")
+      ) # wellPanel Analysis options
     ), # hidden
     #                                                                ====
     # wellPanel: Results ====
@@ -279,7 +341,7 @@ ui <- tagList(
                                         "Word (DOCX)" = "docx")
                             # choiceNames = c("html", "pdf (requires working Latex, e.g. tinytex package)",),
                             # choiceValues = c()
-                            )
+               )
         ),
 
         # This was previously a fluidRow with 2 4-column buttons

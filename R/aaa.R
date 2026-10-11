@@ -43,6 +43,8 @@ BOOTSTRAP_TABLE_NOTE <- paste("TABLE NOTES:",
 # are global within the package
 pcm_env <- new.env(parent = baseenv())
 
+#' Initialize the variables in pcm_env to their default values.
+#' @export
 initialize_globals <- function() {
   pwrs <- 4:12
   small_ps <- sort( 10^(-pwrs) )
@@ -52,16 +54,19 @@ initialize_globals <- function() {
   pcm_env$bias_correct_ci_bounds <- TRUE
   pcm_env$confidence_level <- 95  # NOTE ALWAYS ON 0-100 scale
   pcm_env$edge_p <- 1e-20  # Literal also used in set_globals roxygen
+  # pcm_env$optim_reltol <- 1e-10  # Literal also used in set_globals roxygen
   pcm_env$fast_boot_jack <- TRUE
-  pcm_env$MLSEh <- 1e-7
-  pcm_env$optim_control <- list(maxit = 1000)  # Use other optim defaults
+  #  pcm_env$MLSEh <- 1e-7
+  pcm_env$optim_control <- list(maxit = 2500, reltol = 1e-10)  # Use other optim defaults
   pcm_env$optim_starting_parms <- make_optim_starting_parms_df()
   pcm_env$p_seq_cdf <- c(0, small_ps, seq(0.001, 0.999, 0.002)) # p values for plotting predicted CDFs
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08, lb = rep(-200,3), ub = rep(200,3) )
   pcm_env$round_to <- 3
-  pcm_env$small_p_bin_cutoff <- NULL  # NEWJEFF: Should be NA
-  pcm_env$small_rcond <- 1e-15
+  pcm_env$small_p_bin_cutoff <- NA
+  # pcm_env$small_rcond <- 1e-15
+  # @param small_rcond The cutoff reciprocal condition number for deciding that
+  #  a Fisher information matrix is ill-conditioned (default = 1e-15)
 
   # Check if shiny is installed (returns TRUE or FALSE)
   pcm_env$shiny_is_installed <- requireNamespace("shiny", quietly = TRUE)
@@ -69,11 +74,13 @@ initialize_globals <- function() {
 }
 
 #' Function to override defaults of some global variables.
-#' @param bias_correct_ci_bounds Boolean; if true (default), confidence interval bounds
-#'  are adjusted to correct for estimated bias.
+#' @param bias_correct_ci_bounds Boolean; if true (default), adjust confidence
+#'  interval bounds to correct for estimated bias.
 #' @param confidence_level Used in computing confidence intervals (default = 95)
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-20)
+#' @param optim_reltol reltol value used by optim for parameter searching
+#'  (default = 1e-10)
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
 #'  values for plots (default = seq(0.001, 0.999, 0.002))
 #' @param p_seq_cdf Sequence of p values at which to compute predicted cdf
@@ -81,12 +88,8 @@ initialize_globals <- function() {
 #' @param optim_control A control list passed to R's optim() function
 #'  (default = NULL, in which case the optim defaults are used)
 #' @param small_p_bin_cutoff The cutoff point for computing likelihoods with
-#'  censoring (default = NULL, in which case likelihoods are computed without
+#'  censoring (default = NA, in which case likelihoods are computed without
 #'  censoring)
-#' @param MLSEh Small +/- increment to parameter values used in computing
-#'  the Fisher information matrix (default = 1e-7)
-#' @param small_rcond The cutoff reciprocal condition number for deciding that
-#'  a Fisher information matrix is ill-conditioned (default = 1e-15)
 #' @param optim_starting_parms A list or data frame of parameter combinations
 #'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
 #' @param profileCI_args A list of optional arguments to be passed to profileCI.
@@ -107,15 +110,18 @@ set_globals <- function(
                         confidence_level = NA,
                         edge_p = NA,
                         fast_boot_jack = NA,
-                        MLSEh = NA,
+                        # MLSEh = NA,
+                        # @param MLSEh Small +/- increment to parameter values used in computing
+                        #  the Fisher information matrix (default = 1e-7)
                         optim_control = NA,
+                        optim_reltol = NA,
                         optim_starting_parms = NA,
                         p_seq_cdf = NA,
                         p_seq_pdf = NA,
                         profileCI_args = NA,
                         round_to = NA,
                         small_p_bin_cutoff = NA,
-                        small_rcond = NA,
+                        # small_rcond = NA,
 
                         reset_to_defaults = FALSE
                         ) {
@@ -124,12 +130,13 @@ set_globals <- function(
   if (!is.na(round_to)) pcm_env$round_to <- round_to
   if (!is.na(bias_correct_ci_bounds)) pcm_env$bias_correct_ci_bounds <- bias_correct_ci_bounds
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
+  if (!is.na(optim_reltol)) pcm_env$optim_reltol <- optim_reltol
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
-  if (is.null(optim_control) || !is.na(optim_control)) pcm_env$optim_control <- optim_control
-  if (is.null(small_p_bin_cutoff) || !is.na(small_p_bin_cutoff)) pcm_env$small_p_bin_cutoff <- small_p_bin_cutoff
-  if (!is.na(MLSEh)) pcm_env$MLSEh <- MLSEh
-  if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
+  if (!identical(optim_control,NA)) pcm_env$optim_control <- optim_control
+  if (!is.na(small_p_bin_cutoff)) pcm_env$small_p_bin_cutoff <- small_p_bin_cutoff
+  # if (!is.na(MLSEh)) pcm_env$MLSEh <- MLSEh
+  # if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
   if (any(!is.na(profileCI_args))) pcm_env$profileCI_args <- profileCI_args
   if (!is.na(fast_boot_jack)) pcm_env$fast_boot_jack <- fast_boot_jack
@@ -137,16 +144,17 @@ set_globals <- function(
             bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
             confidence_level = pcm_env$confidence_level,
             edge_p = pcm_env$edge_p,
+            optim_reltol = pcm_env$optim_reltol,
             fast_boot_jack = pcm_env$fast_boot_jack,
-            MLSEh = pcm_env$MLSEh,
+            # MLSEh = pcm_env$MLSEh,
             optim_control = pcm_env$optim_control,
             optim_starting_parms = pcm_env$optim_starting_parms,
             p_seq_cdf = pcm_env$p_seq_cdf,
             p_seq_pdf = pcm_env$p_seq_pdf,
             profileCI_args = pcm_env$profileCI_args,
             round_to = pcm_env$round_to,
-            small_p_bin_cutoff = pcm_env$small_p_bin_cutoff,
-            small_rcond = pcm_env$small_rcond
+            small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+            # small_rcond = pcm_env$small_rcond
             )
   invisible(l)
 }
@@ -182,7 +190,7 @@ get_globals <- function(variable_names = c() ) {
   n_vars <- length(variable_names)
   if (n_vars == 0) return( set_globals() )
   if (n_vars == 1) { return(pcm_env[[variable_names]]) }
-  l <- pcm_env[variable_names]
+  l <- mget(variable_names, envir = pcm_env)
   return(l)
 }
 

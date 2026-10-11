@@ -54,12 +54,12 @@ extract_profile_plot_columns <- function(profileCI_output, param_number) {
 #' Computations for profile-based confidence intervals of the basic model
 #'  parameters mu, sigma, and pi (NOT the folded normal parameters).
 #' @inheritParams fit_list_to_df
-#' @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100)
+#' @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny
 #' @returns A list with: bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI <- function(fit_list, level = pcm_env$confidence_level / 100) {
+compute_profileCI <- function(fit_list, level = get_ao("confidence_level") / 100) {
   coefficients <- c(mu = 0, sigma = 0, pi = 0)
   profCI_model <- list(coefficients = coefficients)
   class(profCI_model) <- "profCI_model"
@@ -177,7 +177,8 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_folded <- function(fit_list, target_folded_normal_mu, level = pcm_env$confidence_level / 100) {
+compute_profileCI_folded <- function(fit_list, target_folded_normal_mu,
+                                     level = get_ao("confidence_level") / 100) {
   alpha <- fit_list$alpha
   tails <- fit_list$tails
   p_values <- fit_list$check_ps_list$ps_in_bounds
@@ -344,7 +345,7 @@ parameters_from_power <- function(power, log_ratio, alpha_sig, tails) {
 }
 
 profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
-                             tails = 2, level = pcm_env$confidence_level / 100) {
+                             tails = 2, level = get_ao("confidence_level") / 100) {
   p_values <- p_values[
     is.finite(p_values) & p_values >= 0 & p_values <= alpha
   ]
@@ -586,7 +587,7 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_power <- function(fit_list, level = pcm_env$confidence_level / 100) {
+compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level") / 100) {
   alpha <- fit_list$alpha
   tails <- fit_list$tails
   p_values <- fit_list$check_ps_list$ps_in_bounds
