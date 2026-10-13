@@ -152,9 +152,8 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
       pars["mu"] <= 0 || pars["sigma"] <= 0 ||
       pars["mu"] > 1e4 || pars["sigma"] > 1e4) return(-Inf)
 
-  # NEWJEFF: No censoring here
   density <- pcurveMix::pdf(
-    p = p_values,
+    p = p_values,  # Already censored in compute_profileCI_folded()
     pi = pars["pi"],
     mu = pars["mu"],
     sigma = pars["sigma"],

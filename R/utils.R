@@ -104,13 +104,15 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
     return(s)
 }
 
-# Check a vector of p values to see whether they are
-#   all >0 and <=alpha_cutoff as expected.
-# @param ps Vector of p values
-# @param alpha_cutoff Maximum p value allowed in file
-# @returns A list all_in_bounds, n_too_small, etc
-# DO NOT export
-check_ps <- function(ps, alpha_cutoff) {
+#' Check a vector of p values to see whether they are
+#'   all >0 and <=alpha_cutoff as expected.
+#' @param ps Vector of p values
+#' @param alpha_cutoff Maximum p value allowed in file
+#' @param show_error Show error message if any p value is out of
+#'  bounds (default TRUE)
+#' @returns A list all_in_bounds, n_too_small, etc
+#' @export
+check_ps <- function(ps, alpha_cutoff, show_error = TRUE) {
   # These p's are simply out of bounds and must be excluded:
   too_small <- ps < 0
   too_large <- (ps > alpha_cutoff) # | (ps == 1)
@@ -135,6 +137,14 @@ check_ps <- function(ps, alpha_cutoff) {
             ps_too_large = ps[too_large],
             ps_in_bounds = ps[ !(too_small | too_large) ]
   )
+  if (!l$all_in_bounds && show_error) {
+    problem_string <- bad_ps_report_string(l)
+    if (pcm_env$shiny_is_installed && shiny::isRunning() ) {
+      shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
+    } else {
+      print(problem_string)
+    }
+  }
   return(l)
 }
 
@@ -147,20 +157,15 @@ bad_ps_report_string <- function(l) {
   if (l$n_too_small > 0) err[1] <- paste(l$n_too_small,"p's < 0")
   if (l$n_too_large > 0) err[2] <- paste(l$n_too_large,"p's >",l$alpha_cutoff)
   edge_p <- get_ao("edge_p")
-  if (l$n_nearly_zero > 0) err[3] <- paste0("replaced p's 0--",edge_p," with ",edge_p)
-  if (l$n_nearly_one > 0) err[4] <- paste0("replaced p's ",1-edge_p,"--1 with ",1-edge_p)
+  if (l$n_nearly_zero > 0) err[3] <- paste0("Replaced p's in [0,",edge_p,"] with ",edge_p)
+  s_edge_p <- paste0("(",edge_p,")")
+  if (l$n_nearly_one > 0) err[4] <- paste0("Replaced p's in [1-",s_edge_p,",1] with 1-",s_edge_p)
   if (all(is.null(err))) {
     s <- "Check p's; found no problematic p's"
   } else {
-    words <- paste(err, collapse = " and ")
+    words <- paste(err, collapse = "; ")
     s <- paste("Check p's found problems:",words)
   }
-  # if (l$n_too_small > 0) s <- paste(s,l$n_too_small,"p's < 0")
-  # if ( (l$n_too_small > 0) && (l$n_equal_zero > 0) ) s <- paste(s,"and")
-  # if (l$n_equal_zero > 0) s <- paste(s,l$n_equal_zero,"p's == 0")
-  # if ( (l$n_too_small + l$n_equal_zero > 0) && (l$n_too_large > 0) ) s <- paste(s,"and")
-  # if (l$n_too_large > 0) s <- paste(s,l$n_too_large,"p's >", l$alpha_cutoff,"cutoff")
-  # if ( (l$n_too_small == 0) && (l$n_equal_zero == 0) && (l$n_too_large == 0) ) s <- paste(s,"no problematic p's")
   return(s)
 }
 
@@ -205,19 +210,18 @@ get_p_seq <- function(alpha) {
   return(ps)
 }
 
-# Function to get analysis option that is determined
-# by shiny if shiny is running, and otherwise is determined
-# by package environment
+# Function to get analysis option that is determined by shiny when shiny
+# is running, and otherwise is determined by package environment.
 get_ao <- function(name) {
   # 1. Check if there's a session-level setting (e.g. session$userData)
   # 2. Fallback to package option or package environment default
   shiny_session <- shiny::getDefaultReactiveDomain()
   if (!is.null(shiny_session)) {
-    if ( !is.null(shiny_session$input[[name]])) {
-      return( shiny_session$input[[name]] )  # This is a value
-    }
     if (!is.null(shiny_session$userData[[name]])) {
       return( shiny_session$userData[[name]]() )  # This is a function call
+    }
+    if ( !is.null(shiny_session$input[[name]])) {
+      return( shiny_session$input[[name]] )  # This is a value
     }
   }
   # Default fallback use package environment value

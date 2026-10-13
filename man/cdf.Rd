@@ -7,7 +7,7 @@
 cdf(p, mu, sigma, pi = 1, alpha = 1, tails = 2)
 }
 \arguments{
-\item{p}{Real 0-1 p value or vector for which function values are to be computed}
+\item{p}{Real 0-1 single p value or vector of p's for which function values are to be computed}
 
 \item{mu}{Mean of noncentrality parameters when H1 is true}
 

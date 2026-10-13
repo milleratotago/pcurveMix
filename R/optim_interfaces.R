@@ -11,10 +11,11 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
                                     want_optim_hessian) {
   start_reals <- parms_to_reals(start_list)
   start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
+  control <- get_ao("optim_control")
   opt <- tryCatch(  # tryCatch 1
     { stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
                    method = "BFGS", hessian = want_optim_hessian,
-                   control = get_ao("optim_control") )
+                   control = control )
     }, # end of try 1
     error = function(cond) {
       backup_opt <- optim_error_recovery(cond, start_real_vec, p, alpha = alpha, tails = tails,
@@ -23,12 +24,11 @@ optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
       return(backup_opt)
     }
   ) # end tryCatch 1
-  est <- opt$par;
+  est <- opt$par
   real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
   parms <- reals_to_parms(real_parms)
-  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NEWJEFF These look wrong
+  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NWJEFF These look wrong
   # est <- c(parms$pi, parms$mu, parms$sigma)
-  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: make_se_ci no longer used
   l <- real_to_nat_se_ci(opt$par, opt$hessian)
   fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
               pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,

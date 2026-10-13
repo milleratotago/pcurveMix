@@ -206,7 +206,7 @@ ui <- tagList(
           checkboxInput("fast_boot_jack", label = strong("Always start parameter search at ML estimates when jackknifing & bootstrapping (faster)"), TRUE)
         ),
 
-        # ## Adjust starting values ====  NEWJEFF: Move to advanced options
+        # ## Adjust starting values ====  NWJEFF: Move to advanced options or let user provide file
         # h4(),
         # checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),
         # conditionalPanel(
@@ -223,11 +223,11 @@ ui <- tagList(
         # ), # conditionalPanel
         ## end Adjust starting values ====
 
-        inlineNumericInput("small_p_bin_cutoff", "Top of small p's bin if binning:",
-                           value = "0", min = 0, max = 0.5, step = 0.001,
-                           label_width = "400px"),
+        textAreaInput("text_optim_control","Optim function control settings", value = "", width = '100%'),
 
-        textAreaInput("optim_control","Optim function control settings", value = "", width = '100%'),
+        shinyjs::hidden(
+          textAreaInput("optim_control", "never shown", value = "", width = "40px")
+        ),
 
         inlineTextInput("text_edge_p", "Gap between 0 and min p and/or between max p and 1:",
                         value = "", label_width = "400px"),
@@ -238,16 +238,13 @@ ui <- tagList(
                              label_width = "400px")
         ),
 
-        # inlineTextInput("text_optim_reltol", "optim function's 'reltol' parameter:",
-        #                 value = "", label_width = "400px"),
-        #
-        # shinyjs::hidden(
-        #   inlineNumericInput("optim_reltol", "optim function's 'reltol' parameter:",
-        #                      value = "0", min = 0, max = 0.02, step = 1e-10,
-        #                      label_width = "400px")
-        # ),
+        inlineNumericInput("small_p_bin_cutoff",
+                           HTML("OPTIONAL: Top of small p's bin if binning is needed to counter numerical<br> errors (e.g., 1e-10 to 1e-15; smaller is better if there are no errors):"),
+                           value = "0", min = 0, max = 1e-7, step = 1e-10,
+                           label_width = "500px"),
+        # h6("(binning is not recommended unless there are numerical errors, in that case try 1e-10."),
 
-        # end Specify p values panel
+        # end analysis options panel
         actionButton("btnFit","Fit model & compute requested CIs")
       ) # wellPanel Analysis options
     ), # hidden

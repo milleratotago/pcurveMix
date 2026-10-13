@@ -26,7 +26,6 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   if (is.na(small_p_bin_cutoff)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
-    # print(pdfs) # NWJEFF
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
@@ -37,7 +36,7 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
     # this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
     #   n_in_small_bin * log(cdf_at_cutoff)
     # print( paste("Cens:", small_p_bin_cutoff, mu, sigma, pi, n_in_small_bin, log(cdf_at_cutoff), sum(log(pdfs))))
-    this_nll <- -n_in_small_bin * log(cdf_at_cutoff) - sum(log(pdfs))
+    this_nll <- -n_in_small_bin * log(cdf_at_cutoff) - sum(log(pmax(pdfs, .Machine$double.xmin)))
   }
   return(this_nll)
 }
@@ -71,15 +70,14 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' @param start_parms Either a list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
 #'  and the function tries all combinations (defaults to optim_starting_parms).
-#' @param show_shiny_error Show error message on shiny if any p value is out of
-#'  bounds (default TRUE)
 #' @returns List including estimated parameter values, their standard errors
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more
 #' @export
 fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
-                        start_parms = pcm_env$optim_starting_parms, show_shiny_error = TRUE) {
-# NEWJEFF: show_shiny_error is horrible. This function is not the right place to check p's.
+                        start_parms = pcm_env$optim_starting_parms) {
+# NWJEFF: Maybe it would be better to check p's separately, but it is convenient to do it here
+#  to make sure that the fitted p's are always in range.
 # NEWJEFF: Include option to show final estimates from all starting points?
 # @param lower List of lower bounds for the optim search
 #  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
@@ -89,16 +87,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
 #                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   p <- as.numeric(p)
   check_ps_list <- check_ps(p, alpha_cutoff = alpha)
-  ## print(check_ps_list)  # NWJEFF
-  if (!check_ps_list$all_in_bounds) {
-    p <- check_ps_list$ps_in_bounds
-    if (pcm_env$shiny_is_installed && shiny::isRunning()&& show_shiny_error) { # (pcm_env$shiny_running) {
-      problem_string <- bad_ps_report_string(check_ps_list)
-      shiny::showModal(shiny::modalDialog(title = "Problematic p values", problem_string, easyClose = TRUE))
-      # shiny::showNotification(problem_string, type = "warning", duration = NULL) # NULL leaves it on screen permanently
-    }
-  }
-
+  p <- check_ps_list$ps_in_bounds
   if (!length(p)) stop("No valid p-values in (0,1).")
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
@@ -158,45 +147,6 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   # print( paste(start$mu, start$sigma, start$pi, fit$mu, fit$sigma, fit$pi, fit$logLik) ) # NWJEFF
   return(fit)
 } # fit_p_curve1
-
-optim_fit_unconstrained <- function(p, alpha, tails, alpha_sig, start_list,
-                                    want_optim_hessian) {
-  start_reals <- parms_to_reals(start_list)
-  start_real_vec <- c(start_reals$pi, start_reals$mu, start_reals$sigma)
-  opt <- stats::optim(par = start_real_vec, fn = nll_optim, p = p, alpha = alpha, tails = tails,
-                      method = "BFGS", hessian = want_optim_hessian,
-                      control = get_ao("optim_control") )
-  est <- opt$par
-  real_parms <- list(mu = est[2], sigma = est[3], pi = est[1])
-  parms <- reals_to_parms(real_parms)
-  # MLSE <- pcm_MLSE(p, parms$mu, parms$sigma, parms$pi, alpha, tails)  # NWJEFF These look wrong
-  # est <- c(parms$pi, parms$mu, parms$sigma)
-  # l <- make_se_ci(est, MLSE$SE)  # NEWJEFF: OBSOLETE make_se_ci no longer used
-  # l <- real_to_nat_se_ci(opt$par, opt$hessian)  # NWJEFF PROGRAM NOTE: Wald_se etc; more hessian could be removed
-  fit <- list(alpha = alpha, alpha_sig = alpha_sig, tails = tails,
-              pi = parms$pi, mu = parms$mu, sigma = parms$sigma, start = start_list,
-              se = l$se, conf_int = l$ci, logLik = -opt$value,
-              converged = (opt$convergence == 0))
-  return(fit)
-}
-
-# make_se_ci <- function(est, se) {  # OBSOLETE ???
-#   if (!any(is.na(se))) {
-#     z <- 1.96
-#     ci <- cbind(est - z*se, est + z*se)
-#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c(CI_LOWER_BOUND_LABEL,CI_UPPER_BOUND_LABEL)
-#     ci["pi",]    <- pmin(pmax(ci["pi",], 1e-6), 1 - 1e-6)
-#     ci["mu",]    <- pmax(ci["mu",], 0)
-#     ci["sigma",] <- pmax(ci["sigma",], 1e-6)
-#   } else {
-#     # Ensure that there is _something_ in these positions.
-#     se <- c(NA, NA, NA);
-#     ci <- matrix(rep(NA,6), nrow = 3, ncol = 2);
-#     rownames(ci) <- c("pi","mu","sigma"); colnames(ci) <- c(CI_LOWER_BOUND_LABEL,CI_UPPER_BOUND_LABEL)
-#   }
-#   names(se) <- c("pi","mu","sigma")
-#   return( list(se = se, ci = ci) )
-# }
 
 # Helper: KS with tiny jitter to avoid ties warnings
 ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
@@ -281,22 +231,24 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
 #' @export
 fit_to_descriptor_tbl <- function(fit, file_name = NULL,
                                   small_p_bin_cutoff = get_ao("small_p_bin_cutoff")) {
+  round_to <- get_ao("round_to")
   descriptor_tbl <- data.frame()
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("** pcurveMix version:",
                                                      as.character(utils::packageVersion("pcurveMix"))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING OPTIONS---", "-------------"))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,round_to))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,3))))
-  # rounded <- lapply(fit$start_parm_set, round, digits = 3)
-  # start_str <- paste(names(fit$start_parm_set), rounded, sep = " = ", collapse = ", ")
-  # descriptor_tbl <- rbind(descriptor_tbl, descriptor("starting values",start_str))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,round_to))))
   if (any(!is.na(fit$start_parm_set))) {
     descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit$start_parm_set) )
   }
   edge_p <- get_ao("edge_p")
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 0 replaced with",as.character(edge_p)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 1 replaced with 1 -",as.character(edge_p)))
+  s_edge_p <- paste(edge_p)
+  desc1 <- paste("p's <=",s_edge_p,"replaced with:")
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor(desc1,s_edge_p))
+  desc2 <- paste0("p's in [1 - (",s_edge_p,"), 1] replaced with:")
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor(desc2,paste("1 -",s_edge_p)))
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 1 replaced with 1 minus",as.character(edge_p)))
   if (is.na(small_p_bin_cutoff)) {
     descriptor_tbl <- rbind(descriptor_tbl, descriptor("Low p censoring", "Unused"))
   } else {
@@ -391,7 +343,8 @@ fits_for_matrix <- function(mat_of_ps, alpha = 1, tails = 2, alpha_sig = 0.05,
   for (isample in 1:n_samples) {
     one_fit <- fit_p_curve(mat_of_ps[isample,], alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                            want_optim_hessian = want_optim_hessian,
-                           start_parms = start_parms, show_shiny_error = FALSE)
+                           start_parms = start_parms)
+                           # , show_shiny_error = FALSE)
                            # lower = lower,
                            # upper = upper)
     estimates[isample,] <- fit_to_parms_vec(one_fit, want_names = FALSE)

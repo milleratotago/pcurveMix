@@ -28,7 +28,7 @@ server <- function(input, output, session) {
     # updateTextInput(session = session, inputId = "text_optim_reltol",
     #   value = format(package_settings$optim_reltol, scientific = TRUE) )
     list_as_string <- deparse(pcm_env$optim_control)
-    updateTextAreaInput(session, "optim_control", value = list_as_string)
+    updateTextAreaInput(session, "text_optim_control", value = list_as_string)
 
     updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = package_settings$fast_boot_jack)
     updateNumericInput(session = session,  inputId = "round_to", value = package_settings$round_to)
@@ -53,17 +53,17 @@ server <- function(input, output, session) {
   session$userData$edge_p <- eventReactive(input$edge_p, {
     return( as.numeric(input$text_edge_p) )
   })
-  session$userData$optim_reltol <- eventReactive(input$optim_control, {
+  session$userData$optim_control <- eventReactive(input$optim_control, {
     result <- tryCatch({
-      # NEWJEFF: security risk here
+      # Using safe_env avoids security risk here by not allowing
+      # evil-doers to inject harmful commands (e.g., via "system()")
       safe_env <- new.env(parent = emptyenv())
       # Explicitly copy over safe primitives and data types
       assign("list", base::list, envir = safe_env)
-      eval(parse(text = input$optim_control), envir = safe_env )
+      eval(parse(text = input$text_optim_control), envir = safe_env )
     }, error = function(e) {
       stop("syntax error in optim_control string:", e$message)
     })
-    print( paste("NEWJEFF result =",result))
     return( result )
   })
 
