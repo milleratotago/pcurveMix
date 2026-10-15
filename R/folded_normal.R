@@ -21,23 +21,31 @@ rfolded_normal <- function(n, mu, sigma) {
 }
 
 mean_folded_normal <- function(mu, sigma) {
+  mu <- unname(mu)
+  sigma <- unname(sigma)
   two_sig_sqr <- 2 * sigma^2
   val <- sigma * sqrt(2/pi) * exp( -mu^2/(two_sig_sqr) ) + mu * pracma::erf( mu/sqrt(two_sig_sqr) )
   return(val)
 }
 
 variance_folded_normal <- function(mu, sigma) {
+  mu <- unname(mu)
+  sigma <- unname(sigma)
   val <- mu^2 + sigma^2 - mean_folded_normal(mu, sigma)^2
   return(val)
 }
 
 sd_folded_normal <- function(mu, sigma) {
+  mu <- unname(mu)
+  sigma <- unname(sigma)
   val <- sqrt( variance_folded_normal(mu, sigma) )
   return(val)
 }
 
 # Compute folded mu & sigma from unfolded mu & sigma.
 folded_moments <- function(mu, sigma) {
+  mu <- unname(mu)
+  sigma <- unname(sigma)
   c(mean = mean_folded_normal(mu, sigma), sd = sd_folded_normal(mu, sigma) )
 }
 

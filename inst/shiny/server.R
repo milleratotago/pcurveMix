@@ -1,22 +1,40 @@
 # server.R
 
-# Note: This file uses pcurveMix::: references to unexported pcurveMix
-#  constants and functions; the shiny can't see those otherwise.
+# Programming notes:
+# - server() is not allowed to set global package variables in pcm_env
+#   via set_globals() or any other means. If package code needs
+#   values that are either in pcm_env or set by shiny user,
+#   these values should be retrieved via get_ao(), which checks
+#   to see if the values were set in shiny, returning them if so,
+#   and returning pcm_env values if not.
+#
+# - This file uses pcurveMix::: references to unexported pcurveMix
+#   constants and functions; the shiny can't see those otherwise.
+#
+# - Analysis options that cannot yet be set by UI:
+#   These must be preset via set_global before starting shiny.
+#   - MLSEh & small_rcond: both UNUSED
+#   - optim_starting_parms & profileCI_args: must be preset in global pcm_env
+#   - For parametric bootstrapping, cond_method & tol used to generate random p's.
+#
+# - An interesting unexpected behavior of ggplot plots:
+#   If you assign different values to local x & y variables, changing them
+#   across multiple ggplots, all of the plots end up showing the final x & y
+#   variables. Maybe this is because the plots are stored in reactiveValues?
+
 
 server <- function(input, output, session) {
 
+  # Some initial setup
+  {
   # Special handling for scientific notation:
   # This block runs automatically EXACTLY ONCE when the app loads
   observe({
     # Send the value and the appropriate step size back to the UI immediately
     updateNumericInput(session = session, inputId = "edge_p",
-      value =  pcm_env$edge_p,
+      value = pcm_env$edge_p,
       step = 1e-11 # Allows the browser to handle the small scientific decimal
     )
-    # updateNumericInput(session = session, inputId = "optim_reltol",
-    #   value =  pcm_env$optim_reltol,
-    #   step = 1e-11 # Allows the browser to handle the small scientific decimal
-    # )
   })
 
   # Initialize UI analysis options fields with package settings.
@@ -25,31 +43,17 @@ server <- function(input, output, session) {
     updateNumericInput(session = session,  inputId = "confidence_level", value = package_settings$confidence_level)
     updateTextInput(session = session, inputId = "text_edge_p",
       value = format(package_settings$edge_p, scientific = TRUE) )
-    # updateTextInput(session = session, inputId = "text_optim_reltol",
-    #   value = format(package_settings$optim_reltol, scientific = TRUE) )
+
+    # Convert optim_control list to string for display in UI
     list_as_string <- deparse(pcm_env$optim_control)
     updateTextAreaInput(session, "text_optim_control", value = list_as_string)
 
     updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = package_settings$fast_boot_jack)
     updateNumericInput(session = session,  inputId = "round_to", value = package_settings$round_to)
     updateNumericInput(session = session,  inputId = "small_p_bin_cutoff", value = package_settings$small_p_bin_cutoff)
-    # Analysis options for which program has been modified to use new get_ao()
-    # NEWJEFF: Make sure all of these are in analysis descriptor table.
-    #  bias_correct_ci_bounds
-    #  confidence_level
-    #  fast_boot_jack
-    #  edge_p
-    #  optim_control
-    #  round_to
-    #  small_p_bin_cutoff
-    # Analysis options that cannot yet be set by UI:
-    #  MLSEh UNUSED
-    #  ??? n_bootstrap & np_n_boot NOT IN pcm_env
-    #  optim_starting_parms
-    #  profileCI_args
-    #  small_rcond UNUSED
   }
 
+  # Special functions needed to return values computed from UI settings
   session$userData$edge_p <- eventReactive(input$edge_p, {
     return( as.numeric(input$text_edge_p) )
   })
@@ -67,49 +71,27 @@ server <- function(input, output, session) {
     return( result )
   })
 
-
-
   # Grab the package environment for server use
-  # Remember: Some of these variables will change later
-  #  based on ui inputs
+  # Remember: Some of these variables will be overridden by ui inputs
   pcm_env <- pcurveMix:::pcm_env
   initialize_ui_with_package_vals(pcm_env)
 
+  # Hide some stuff that should not appear initially
   shinyjs::hide("analysis_options_panel")
   shinyjs::disable(id = "btnFit")
   shinyjs::disable(id = "btn_choose_analysis_options")
 
-  # analysis results
-  v <- reactiveValues(fit_completed = FALSE,
-                      p_filename = NULL,
-                      fit_list = NULL,
-                      p_seq_pdf = NULL,
-                      p_seq_cdf = NULL,
-                      pred_pdfs = NULL,
-                      pred_cdfs = NULL,
-                      descriptor_tbl = NULL,
-                      estimates_tbl = NULL,
-                      boot_tbl = NULL,
-                      boot_pct_converged = NULL,
-                      pdf_plot = NULL,
-                      cdf_plot = NULL,
-                      profile_list = NULL,
-                      df = NULL)
+  # A dynamic list to hold analysis results; fields will be added.
+  v <- reactiveValues(fit_completed = FALSE)
+  }   # End initial setup
 
-  restart <- function()  {  # NEWJEFF: Must null out additional fields such as jackknifing & np_boot
+  restart <- function()  {
     v$fit_completed = FALSE
-    # v$p_filename <- NULL
-    v$fit_list <- NULL
-    v$p_seq_pdf <- NULL
-    v$p_seq_cdf <- NULL
-    v$pred_pdfs <- NULL
-    v$pred_cdfs <- NULL
-    v$descriptor_tbl <- NULL
-    v$estimates_tbl <- NULL
-    v$boot_tbl <- NULL
-    v$boot_pct_converged <- NULL
-    v$pdf_plot <- NULL
-    v$cdf_plot <- NULL
+    fields <- names(v)
+    fields_to_save <- c("fit_completed", "p_filename", "df")
+    for (field in fields) {
+      if ( !(field %in% fields_to_save) ) v[[field]] <- NULL
+    }
     output$model_fit_title <- renderText(NULL)
     output$parameter_estimates_title <- renderText(NULL)
     output$predicted_pdfs_title <- renderText(NULL)
@@ -124,26 +106,20 @@ server <- function(input, output, session) {
     output$cdf_plot <- renderPlot(NULL)
   } # restart
 
+  # Helper function for bullet-point display of a vector of strings.
   render_strings_as_bullets <- function(my_strings) {
     return( renderUI(  tags$ul( lapply(my_strings, tags$li) )  ) )
   }
 
-  do_jackknifing <- function() {
-    if (!input$jackknifing) {
-      v$n_jack_samples <- 0
-      return()
-    }
-    real_ps <- v$fit_list$check_ps$ps_in_bound
-    full_sample_n <- length(real_ps)
-    mat_of_ps <- generate_jackknife_subsamples(real_ps)
+  # Helper function to get estimates for jackknife or bootstrap samples
+  get_ests <- function(mat_of_ps, title) {
     if (input$fast_boot_jack) {
       start_list <- list(mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi)
     } else {
-      print("Using pcm_env$optim_starting_parms NEWJEFF")
       start_list <- pcm_env$optim_starting_parms
     }
     progressr::withProgressShiny(
-      message = "Jackknifing in progress...",
+      message = paste(title,"in progress..."),
       detail = "Starting...",
       expr = {
         ests_tbl <- fits_for_matrix(mat_of_ps,
@@ -154,12 +130,24 @@ server <- function(input, output, session) {
                                     start_parms = start_list,
                                     n_progress_bar_steps = 20)
       }
-    )
+    ) # progressr:withProgressShiny
+    return(ests_tbl)
+  } # get_ests
+
+  do_jackknifing <- function() {
+    if (!input$jackknifing) {
+      v$n_jack_samples <- 0
+      return()
+    }
+    real_ps <- v$fit_list$check_ps$ps_in_bound
+    full_sample_n <- length(real_ps)
+    mat_of_ps <- generate_jackknife_subsamples(real_ps)
+    ests_tbl <- get_ests(mat_of_ps, "Jackknifing")
     v$n_jack_samples <- full_sample_n
     v$jack_pct_converged <- 100 * mean(ests_tbl$converged)
-    v$jack_confidence_level <- get_globals("confidence_level")  # NEWJEFF: / 100 was inconsistent to use 0-1 here
+    v$jack_confidence_level <- get_globals("confidence_level")
     summaries <- get_parm_summaries(ests_tbl)
-    v$jack_tbl <- make_jackknife_tbl(v$fit_list, summaries, full_sample_n)  # NEWJEFF: superfluous?
+    v$jack_tbl <- make_jackknife_tbl(v$fit_list, summaries, full_sample_n)
     jack_title <- paste0("Jackknife analysis (",
                          round(v$jack_confidence_level,input$round_to),
                          "% confidence)")
@@ -181,37 +169,14 @@ server <- function(input, output, session) {
     tails <- v$fit_list$tails
     n_ps <- length(v$fit_list$check_ps$ps_in_bound)
     v$n_boot_samples <- input$n_boot_samples
-    # NEWJEFF: cond_method & tol cannot be changed in next line; should be settable in environment
     mat_of_ps <- generate_parametric_subsamples(v$n_boot_samples, n_ps, mu, sigma, pi, alpha, tails)
-    if (input$fast_boot_jack) {
-      start_list <- list(mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi)
-    } else {
-      start_list <- pcm_env$optim_starting_parms
-    }
-    progressr::withProgressShiny(
-      message = "Parametric bootstrapping in progress...",
-      detail = "Starting...",
-      expr = {
-        ests_tbl <- fits_for_matrix(mat_of_ps,
-                                    alpha = v$fit_list$alpha,
-                                    tails = v$fit_list$tails,
-                                    alpha_sig = v$fit_list$alpha_sig,
-                                    want_optim_hessian = FALSE,
-                                    start_parms = start_list,
-                                    n_progress_bar_steps = 20)
-      }
-    )
+    ests_tbl <- get_ests(mat_of_ps, "Parametric bootstrapping")
     v$boot_pct_converged <- 100 * mean(ests_tbl$converged)
     v$boot_confidence_level <- get_globals("confidence_level")  # NEWJEFF: was inconsistent to use 0-1 here
-    # v$boot_tbl <- get_parm_mn_sd_quan(ests_tbl,
-    #                                              confidence_level = v$boot_confidence_level)
-    # original_ests <- fit_to_parms_vec(v$fit_list, want_converged = FALSE)
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
                                         confidence_level = input$confidence_level,
                                         bias_correct_ci_bounds = input$bias_correct_ci_bounds)
-
-    # v$boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$boot_tbl$mean)
     boot_title <- paste0("Parametric bootstrap analysis (",
                          round(v$boot_confidence_level,2),
                          "% confidence)")
@@ -230,34 +195,13 @@ server <- function(input, output, session) {
     full_sample_n <- length(real_ps)
     v$np_n_boot_samples <- input$np_n_boot_samples
     mat_of_ps <- generate_nonparametric_subsamples(v$np_n_boot_samples, full_sample_n, real_ps)
-    if (input$fast_boot_jack) {
-      start_list <- list(mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi)
-    } else {
-      start_list <- pcm_env$optim_starting_parms
-    }
-    progressr::withProgressShiny(
-      message = "Nonparametric bootstrapping in progress...",
-      detail = "Starting...",
-      expr = {
-        ests_tbl <- fits_for_matrix(mat_of_ps,
-                                    alpha = v$fit_list$alpha,
-                                    tails = v$fit_list$tails,
-                                    alpha_sig = v$fit_list$alpha_sig,
-                                    want_optim_hessian = FALSE,
-                                    start_parms = start_list,
-                                    n_progress_bar_steps = 20)
-      }
-    )
+    ests_tbl <- get_ests(mat_of_ps, "Nonparametric bootstrapping")
     v$np_boot_pct_converged <- 100 * mean(ests_tbl$converged)
-    v$np_boot_confidence_level <- get_globals("confidence_level") # was NEWJEFF: inconsistent to use 0-1 here
-    # v$np_boot_tbl <- get_parm_mn_sd_quan(ests_tbl,
-    #                                                 confidence_level = v$np_boot_confidence_level)
-    # original_ests <- fit_to_parms_vec(v$fit_list, want_converged = FALSE)
+    v$np_boot_confidence_level <- get_globals("confidence_level")
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$np_boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
                                            confidence_level = input$confidence_level,
                                            bias_correct_ci_bounds = input$bias_correct_ci_bounds)
-    # v$np_boot_tbl[[BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL]] <- compute_bias_corrected_estimates(original_ests, v$np_boot_tbl$mean)
     npboot_title <- paste0("Nonparametric bootstrap analysis (",
                            round(v$np_boot_confidence_level,2),
                            "% confidence)")
@@ -267,48 +211,39 @@ server <- function(input, output, session) {
     output$np_boot_notes <- render_strings_as_bullets(v$np_boot_notes)
   } # do_npbootstrapping
 
+  # Helper function to display profiling notifications
+  profiling_notification <- function(notif_id, parameter_name) {
+    showNotification(
+      paste("Profiling",parameter_name,"..."),
+      id = notif_id,
+      duration = NULL,
+      closeButton = TRUE,
+      type = "message"
+    )
+  }
+
   profile_manager <- function(fit_list) {
     if (!input$profile_ci) {
-      v$profile_analysis <- 0  # Needed to pass to Rmd
+      v$want_profile_cis <- FALSE  # Needed to pass to Rmd
       return(NULL)
     } else {
-      v$profile_analysis <- 1
+      v$want_profile_cis <- TRUE
     }
     # Computations:
     v$profile_ci_confidence_level <- input$confidence_level / 100  # profileCI package wants 0-1 confidence level
-    notif_id <- "profileCI_std_notif_id"
-    showNotification(
-      "Profiling mu, sigma, and pi ...",
-      id = notif_id,
-      duration = NULL,
-      closeButton = TRUE,
-      type = "message"
-    )
+    notif_id <- "profileCI_std_notif_id" # Use the same id for all notifications to overwrite them
+
+    profiling_notification(notif_id, "mu, sigma, and pi")
     v$profileCI_std <- compute_profileCI(fit_list, level = v$profile_ci_confidence_level)
-    showNotification(
-      "Profiling power ...",
-      id = notif_id,
-      duration = NULL,
-      closeButton = TRUE,
-      type = "message"
-    )
+
+    profiling_notification(notif_id, "power")
     v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
+
     if (fit_list$tails == 2) {
-      showNotification(
-        paste("Profiling",pcurveMix:::FOLDED_NORMAL_MU_LABEL,"..."),
-        id = notif_id,
-        duration = NULL,
-        closeButton = TRUE,
-        type = "message"
-      )
+      profiling_notification(notif_id, pcurveMix:::FOLDED_NORMAL_MU_LABEL)
       v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
-      showNotification(
-        paste("Profiling",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,"..."),
-        id = notif_id,
-        duration = NULL,
-        closeButton = TRUE,
-        type = "message"
-      )
+
+      profiling_notification(notif_id, pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL)
       v$profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
     } else {
       v$profileCI_folded_normal_mu <- NA
@@ -320,46 +255,21 @@ server <- function(input, output, session) {
                               round(100*v$profile_ci_confidence_level,input$round_to),
                               "% confidence)")
     output$profileCI_title <- renderText(profileCI_title)
-    # tbl <- v$profileCI_std$tabl
-    # v$profileCI_tbl <- tbl
     ci_tbl <- make_profile_ci_tbl(v$profileCI_std,v$profileCI_power,
                                   v$profileCI_folded_normal_mu,v$profileCI_folded_normal_sigma)
-    # ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"), row.names = NULL)
-    # ci_tbl <- cbind(ci_tbl,v$profileCI_std$bounds_matrix)
-    # names(ci_tbl) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    #
-    # power_row <- data.frame(parameter = "power",
-    #                         c2 = v$profileCI_power$table[[pcurveMix:::CI_LOWER_BOUND_LABEL]],
-    #                         c3 = v$profileCI_power$table[[pcurveMix:::CI_UPPER_BOUND_LABEL]])
-    # names(power_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    # ci_tbl <- rbind(ci_tbl, power_row)
-    #
-    # if (fit_list$tails == 2) {
-    #   folded_normal_mu_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
-    #                                      c2 = v$profileCI_folded_normal_mu$table[[pcurveMix:::CI_LOWER_BOUND_LABEL]],
-    #                                      c3 = v$profileCI_folded_normal_mu$table[[pcurveMix:::CI_UPPER_BOUND_LABEL]])
-    #   names(folded_normal_mu_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    #   ci_tbl <- rbind(ci_tbl, folded_normal_mu_row)
-    #
-    #   folded_normal_sigma_row <- data.frame(parameter = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
-    #                                         c2 = v$profileCI_folded_normal_sigma$table[[pcurveMix:::CI_LOWER_BOUND_LABEL]],
-    #                                         c3 = v$profileCI_folded_normal_sigma$table[[pcurveMix:::CI_UPPER_BOUND_LABEL]])
-    #   names(folded_normal_sigma_row) <- c("parameter", pcurveMix:::CI_LOWER_BOUND_LABEL, pcurveMix:::CI_UPPER_BOUND_LABEL)
-    #   ci_tbl <- rbind(ci_tbl, folded_normal_sigma_row)
-    # } # if tails == 2
-    # rownames(ci_tbl) <- NULL
     v$profile_tbl <- ci_tbl
+    v$profile_notes <- profile_table_notes()
     output$profileCI_tbl <- renderTable(ci_tbl, rownames = FALSE, digits = input$round_to)
     output$profile_notes <- render_strings_as_bullets( pcurveMix:::profile_table_notes() )
 
     l <- make_profile_plots(v$profileCI_std, v$profileCI_power, v$profileCI_folded_normal_mu, v$profileCI_folded_normal_sigma)
-    output$profile_mu_plot <- renderPlot(l$mu) # v$profile_mu_plot)
-    output$profile_sigma_plot <- renderPlot(l$sigma) # v$profile_sigma_plot)
-    output$profile_pi_plot <- renderPlot(l$pi) # v$profile_pi_plot)
-    output$profile_power_plot <- renderPlot(l$power) # v$profile_power_plot)
+    output$profile_mu_plot <- renderPlot(l$mu)
+    output$profile_sigma_plot <- renderPlot(l$sigma)
+    output$profile_pi_plot <- renderPlot(l$pi)
+    output$profile_power_plot <- renderPlot(l$power)
     if (fit_list$tails == 2) {
-      output$profile_folded_normal_mu_plot <- renderPlot(l$folded_normal_mu) # v$profile_folded_normal_mu_plot)
-      output$profile_folded_normal_sigma_plot <- renderPlot(l$folded_normal_sigma) # v$profile_folded_normal_sigma_plot)
+      output$profile_folded_normal_mu_plot <- renderPlot(l$folded_normal_mu)
+      output$profile_folded_normal_sigma_plot <- renderPlot(l$folded_normal_sigma)
     }
     v$profile_mu_plot <- l$mu
     v$profile_sigma_plot <- l$sigma
@@ -369,79 +279,7 @@ server <- function(input, output, session) {
       v$profile_folded_normal_mu_plot <- l$folded_normal_mu
       v$profile_folded_normal_sigma_plot <- l$folded_normal_sigma
     }
-    # # Interesting: you can't re-use plain x & y across multiple ggplots.
-    # # If you do, all plots show the final x & y values.
-    # mu_x <- v$profileCI_std$profile_curves$mu[,1]
-    # mu_y <- v$profileCI_std$profile_curves$mu[,2]
-    # v$profile_mu_plot <- ggplot2::ggplot() +
-    #   ggplot2::geom_line(ggplot2::aes(x = mu_x, y = mu_y), color = "black") +
-    #   ggplot2::labs(title = "profile for mu",
-    #                 x = "mu",
-    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
-    # output$profile_mu_plot <- renderPlot(v$profile_mu_plot)
-    #
-    # sigma_x <- v$profileCI_std$profile_curves$sigma[,1]
-    # sigma_y <- v$profileCI_std$profile_curves$sigma[,2]
-    # v$profile_sigma_plot <- ggplot2::ggplot() +
-    #   ggplot2::geom_line(ggplot2::aes(x = sigma_x, y = sigma_y), color = "black") +
-    #   ggplot2::labs(title = "profile for sigma",
-    #                 x = "sigma",
-    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
-    # output$profile_sigma_plot <- renderPlot(v$profile_sigma_plot)
-    #
-    # pi_x <- v$profileCI_std$profile_curves$pi[,1]
-    # pi_y <- v$profileCI_std$profile_curves$pi[,2]
-    # v$profile_pi_plot <- ggplot2::ggplot() +
-    #   ggplot2::geom_line(ggplot2::aes(x = pi_x, y = pi_y), color = "black") +
-    #   ggplot2::labs(title = "profile for pi",
-    #                 x = "pi",
-    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
-    # output$profile_pi_plot <- renderPlot(v$profile_pi_plot)
-    #
-    # profile_curves <- as.matrix(attr(v$profileCI_power$profile,"for_plot")[["logit_relative_power"]])
-    # power_x <- pcurveMix:::reals_to_powers(profile_curves[,1])
-    # power_y <- profile_curves[,2]
-    # v$profile_power_plot <- ggplot2::ggplot() +
-    #   ggplot2::geom_line(ggplot2::aes(x = power_x, y = power_y), color = "black") +
-    #   ggplot2::labs(title = "profile for power",
-    #                 x = "power",
-    #                 y = pcurveMix:::LIKELIHOOD_LABEL)
-    # output$profile_power_plot <- renderPlot(v$profile_power_plot)
-    #
-    # if (fit_list$tails == 2) {
-    #   profile_curves <- as.matrix(attr(v$profileCI_folded_normal_mu$profile,"for_plot")[["log_folded_normal_mu"]])
-    #   folded_normal_mus_x <- pcurveMix:::reals_to_mus(profile_curves[,1])
-    #   folded_normal_mus_y <- profile_curves[,2]
-    #   v$profile_folded_normal_mu_plot <- ggplot2::ggplot() +
-    #     ggplot2::geom_line(ggplot2::aes(x = folded_normal_mus_x, y = folded_normal_mus_y), color = "black") +
-    #     ggplot2::labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_MU_LABEL),
-    #                   x = pcurveMix:::FOLDED_NORMAL_MU_LABEL,
-    #                   y = pcurveMix:::LIKELIHOOD_LABEL)
-    #   output$profile_folded_normal_mu_plot <- renderPlot(v$profile_folded_normal_mu_plot)
-    #
-    #   profile_curves <- as.matrix(attr(v$profileCI_folded_normal_sigma$profile,"for_plot")[["log_folded_normal_sigma"]])
-    #   folded_normal_sigma_x <- pcurveMix:::reals_to_sigmas(profile_curves[,1])
-    #   folded_normal_sigma_y <- profile_curves[,2]
-    #   v$profile_folded_normal_sigma_plot <- ggplot2::ggplot() +
-    #     ggplot2::geom_line(ggplot2::aes(x = folded_normal_sigma_x, y = folded_normal_sigma_y), color = "black") +
-    #     ggplot2::labs(title = paste("profile for",pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL),
-    #                   x = pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL,
-    #                   y = pcurveMix:::LIKELIHOOD_LABEL)
-    #   output$profile_folded_normal_sigma_plot <- renderPlot(v$profile_folded_normal_sigma_plot)
-    # } # if tails == 2
   } # profile_manager
-
-  # NEWJEFF: This is not allowed in shiny; must use get_ao() instead
-  # assign_input_globals <- function() {
-  #   pcurveMix::set_globals(
-  #     bias_correct_ci_bounds = input$bias_correct_ci_bounds,
-  #     confidence_level = input$confidence_level,
-  #     edge_p = input$edge_p,
-  #     fast_boot_jack = input$fast_boot_jack,
-  #     optim_control = input$optim_control,
-  #     round_to = input$round_to
-  #   )
-  # }
 
   onStop(function() {
     # Nothing yet
@@ -525,7 +363,6 @@ server <- function(input, output, session) {
 
   observeEvent(input$btnFit, {
       restart()
-      # assign_input_globals()
       shinyjs::show("results_panel")
       shinyjs::show("download_panel")
       shinyjs::runjs('document.getElementById("results_panel").scrollIntoView({behavior: "smooth", block: "start"});')
@@ -539,12 +376,12 @@ server <- function(input, output, session) {
       tails <- get_tails()
       alpha_cutoff <- get_alpha_cutoff()
       alpha_sig <- input$alpha_sig
-      # if (input$specify_starting_values) {
-      #   start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
-      # } else {
-      #   start_list <- pcm_env$optim_starting_parms
-      # }
-      start_list <- pcm_env$optim_starting_parms
+      if (input$specify_starting_values) {
+        start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
+      } else {
+        start_list <- pcm_env$optim_starting_parms
+      }
+      # start_list <- pcm_env$optim_starting_parms
 
       v$fit_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start_parms = start_list)
       ps_in_bounds <- v$fit_list$check_ps_list$ps_in_bounds
@@ -572,7 +409,6 @@ server <- function(input, output, session) {
       v$pred_cdfs <- cdf(v$p_seq_cdf, mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi,
                          alpha = alpha_cutoff, tails = tails)
 
-
       v$pdf_plot <- ggplot2::ggplot() +
         ggplot2::geom_histogram(ggplot2::aes(x = ps_in_bounds, y = ggplot2::after_stat(density)), binwidth = p_hist_bin_width) +
         ggplot2::geom_line(ggplot2::aes(x = v$p_seq_pdf, y = v$pred_pdfs), color = "red") +
@@ -590,7 +426,6 @@ server <- function(input, output, session) {
                       y = "cumulative proportion")
       output$cdf_plot <- renderPlot(v$cdf_plot)
       v$fit_completed <- TRUE
-#    } # end else (file name not null)
   }) # end observeEvent fit modelbutton
 
   # source("btn_gen_report.R")
@@ -696,12 +531,13 @@ server <- function(input, output, session) {
           np_n_boot_samples = v$np_n_boot_samples,
           p_filename = v$p_filename,
           pdf_plot = v$pdf_plot,
-          profile_analysis = v$profile_analysis,
+          want_profile_cis = v$want_profile_cis,
           profile_mu_plot = v$profile_mu_plot,
           profile_pi_plot = v$profile_pi_plot,
           profile_power_plot = v$profile_power_plot,
           profile_sigma_plot = v$profile_sigma_plot,
           profile_tbl = v$profile_tbl,
+          profile_notes = v$profile_notes,
           round_to = input$round_to,
           tails = tails
         )

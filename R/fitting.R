@@ -255,6 +255,8 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL,
     descriptor_tbl <- rbind(descriptor_tbl, descriptor( "Low p's censored at small_p_bin_cutoff =",
                                                         small_p_bin_cutoff) )
   }
+  # bias_correct_ci_bounds & confidence_level are not shown because they appear elsewhere in output.
+  # NEWJEFF: fast_boot_jack & optim_control not shown in descriptor table
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF p's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
   if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_small,"p's < 0")))

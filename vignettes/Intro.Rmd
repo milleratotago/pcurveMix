@@ -35,6 +35,10 @@ library(progressr)
 
 # Handlers now defined later in with_progress
 # progressr::handlers(handler_txtprogressbar(file = stderr()))
+
+# Set this switch to TRUE for testing to make sure the demo code works.
+# 2026-10-15 version 1.0.19: Checked demo code and all looks good
+eval_demo_code <- !TRUE
 ```
 
 # Introduction to `pcurveMix`
@@ -47,19 +51,11 @@ Specifically, this is the use case in which:
 -   you would like to fit the mixture model to those $p$ values in order to get estimates of the three model parameters describing the research area from which those $p$ values were obtained:
 
     -   `pi` or $\pi$, the proportion of studies in which real effects are present (i.e., H1 is true).
-    -   `mu` or $\mu$, the mean of those studies' effect sizes.
+    -   `mu` or $\mu$, the mean of those studies' effect sizes in noncentrality units.
     -   `sigma` or $\sigma$, the standard deviation of those studies' effect sizes.
 
 The fitting process provides estimates, standard errors, and confidence intervals for those model parameters, as well as plots of observed and fitted frequency distributions and cumulative frequency distributions of $p$ values.
-It also provides estimates of many derived parameters that can be computed from the estimates of `pi`, `mu`, and `sigma`:
-
--   `power`: the probability of a significant result when a real effect is present.
--   `Pr_TP`: the probability of a true positive result in a randomly selected study.
--   `Pr_FN`: the probability of a false negative result in a randomly selected study.
--   `Pr_FP`: the probability of a false positive result in a randomly selected study.
--   `Pr_TN`: the probability of a true negative result in a randomly selected study.
--   `R_FP`: the rate of false positives across all studies, Pr_FP / (Pr_FP + Pr_TP).
--   `R_FN`: the rate of false negatives across all studies, Pr_FN / (Pr_FN + Pr_TN).
+It also provides estimates of many derived parameters that can be computed from the estimates of `pi`, `mu`, and `sigma`, as described in more detail below.
 
 # Option 1: Fitting with the shiny app
 
@@ -112,6 +108,7 @@ run_shiny_app()
 ```
 
 After you have set the above arguments, click the `Fit model...` button and the results will appear as shown next.
+
 
 ## Maximum-likelihood fitting results
 
@@ -202,14 +199,14 @@ Many additional parameter estimates are shown that can be derived from the estim
 
 The next output is a (density-scaled) histogram of the sample $p$ values superimposed over the predicted density at each $p$ from the fitted model:
 
-```{r, fig.width=6, echo = FALSE}
+```{r show_pdf_plot, fig.width=6, echo = FALSE}
 pdf_plot <- make_pdf_plot(fit_results_list)
 print(pdf_plot)
 ```
 
 The subsequent plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
-```{r, fig.width=6, echo = FALSE}
+```{r show_cdf_plot, fig.width=6, echo = FALSE}
 cdf_plot <- make_cdf_plot(fit_results_list)
 print(cdf_plot)
 ```
@@ -382,7 +379,7 @@ For automation or finer-grained control over the fitting process, you can fit th
 
 ### Initial setup
 
-```{r user_setup, eval = FALSE, echo = TRUE}
+```{r user_setup, eval = eval_demo_code, echo = TRUE}
 library(pcurveMix)  # of course...
 
 # Also include the next 2 lines if you want progress bars
@@ -396,7 +393,7 @@ progressr::handlers(handler_txtprogressbar(file = stderr()))
 
 Typically, users would have their own datasets of $p$ values to which the model should be fit.
 
-```{r ref.label = "read_ps_etc", eval = FALSE, echo = TRUE}
+```{r ref.label = "read_ps_etc", eval = eval_demo_code, echo = TRUE}
 ```
 
 ### Fit the model to the example dataset
@@ -404,46 +401,44 @@ Typically, users would have their own datasets of $p$ values to which the model 
 Fit the mixture model to these $p$'s with the default values of `alpha` and `tails`.
 The `fit_p_curve` function has a number of other optional arguments (for details, see the `fit_p_curve_arguments` vignette).
 
-```{r ref.label = "fit_model", eval = FALSE, echo = TRUE}
+```{r ref.label = "fit_model", eval = eval_demo_code, echo = TRUE}
 ```
 
 Note that the `fit_p_curve` output is called `fit_results_list`; this list is used as input to several subsequent functions.
 
-### Print a table summarizing the model fit:
+### Print table summarizing the model fit:
 
-This prints the table summarizing the fitting conditions and overall results.
+This prints the table summarizing the fitting conditions and overall results (e.g., likelihood).
 
-```{r print_descriptors_show, eval = FALSE, echo = TRUE}
+```{r print_descriptors_show, eval = eval_demo_code, echo = TRUE}
 descriptor_tbl <- fit_to_descriptor_tbl(fit_results_list, file_name = p_file_name)
 print(descriptor_tbl)
 ```
 
-### Print a table summarizing the parameter estimates:
+### Print table summarizing the parameter estimates:
 
-```{r print_parameter_estimates_show, eval = FALSE, echo = TRUE}
+```{r print_parameter_estimates_show, eval = eval_demo_code, echo = TRUE}
 estimates_tbl <- fit_to_estimates_tbl(fit_results_list)
 print(estimates_tbl)
+table_notes <- estimates_table_notes(converged = fit_results_list$converged)
+print(table_notes)
 ```
 
 ### Make predicted & observed PDF and CDF plots
 
 This command makes a (density-scaled) histogram of the sample $p$ values and superimposes over it the predicted density at each $p$ from the fitted model:
 
-```{r, fig.width=6, echo = TRUE, eval = FALSE}
-pdf_plot <- make_pdf_plot(sample_ps, fit_results_list)
-print(pdf_plot)
+```{r ref.label = "show_pdf_plot", fig.width=6, echo = TRUE, eval = eval_demo_code}
 ```
 
 This command plots the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
-```{r, fig.width=6, echo = TRUE, eval = FALSE}
-cdf_plot <- make_cdf_plot(sample_ps, fit_results_list)
-print(cdf_plot)
+```{r ref.label = "show_cdf_plot", fig.width=6, echo = TRUE, eval = eval_demo_code}
 ```
 
 Incidentally, here are alternative methods of making the PDF and CDF plots that give you more control over the output formats:
 
-```{r, eval = FALSE}
+```{r, eval = eval_demo_code}
 library(ggplot2)
 
 # Define a sequence of p values at which to get predicted PDFs and CDFs:
@@ -477,46 +472,56 @@ print(cdf_plot)
 
 ### Perform jackknifing analysis
 
-```{r jack_analysis_show, eval = FALSE, echo = TRUE, comment = ""}
+```{r jack_analysis_show, eval = eval_demo_code, echo = TRUE, comment = ""}
 cat("\nJackknifing\n", file = stderr())
 mat_of_ps <- generate_jackknife_subsamples(real_ps)
-ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)
 jack_pct_converged <- 100 * mean(ests_tbl$converged)
 summaries <- get_parm_summaries(ests_tbl)
 jack_tbl <- make_jackknife_tbl(fit_results_list, summaries, full_sample_n)
 print(jack_tbl)
+table_notes <- jackknife_table_notes(n_samples = length(real_ps), pct_converged = jack_pct_converged)
+print(table_notes)
 ```
 
 ### Perform parametric bootstrapping using the fitted parameters:
 
-```{r boot_analysis_show, eval = FALSE, echo = TRUE}
+```{r boot_analysis_show, eval = eval_demo_code, echo = TRUE}
 cat("\nParametric bootstrapping\n", file = stderr())
 mat_of_ps <- generate_parametric_subsamples(n_boot_samples, full_sample_n,
                                             fit_results_list$mu, fit_results_list$sigma,
                                             pi = fit_results_list$pi,
                                             alpha = fit_results_list$alpha,
                                             tails = fit_results_list$tails)
-ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)
 boot_pct_converged <- 100 * mean(ests_tbl$converged)
 boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 print(boot_tbl)
+table_notes <- boot_table_notes(n_samples = n_boot_samples, pct_converged = boot_pct_converged)
+print(table_notes)
 ```
 
 ### Perform nonparametric bootstrapping:
 
-```{r np_boot_analysis_show, eval = FALSE, echo = TRUE}
+```{r np_boot_analysis_show, eval = eval_demo_code, echo = TRUE}
 cat("\nNonparametric bootstrapping\n", file = stderr())
 mat_of_ps <- generate_nonparametric_subsamples(n_boot_samples, full_sample_n,real_ps)
-ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)},
+ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)
 boot_pct_converged <- 100 * mean(ests_tbl$converged)
 boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 print(boot_tbl)
+table_notes <- boot_table_notes(n_samples = n_boot_samples, pct_converged = boot_pct_converged)
+print(table_notes)
 ```
 
 ### Likelihood profiling
 
-```{r ref.label = "profiling_computations", eval = FALSE, echo = TRUE}
+```{r ref.label = "profiling_computations", eval = eval_demo_code, echo = TRUE}
+# NEWJEFF
+table_notes <- profile_table_notes()
+print(table_notes)
 ```
 
-```{r ref.label = "profile_plots", eval = FALSE, echo = TRUE}
+```{r ref.label = "profile_plots", eval = eval_demo_code, echo = TRUE}
+# NEWJEFF
 ```

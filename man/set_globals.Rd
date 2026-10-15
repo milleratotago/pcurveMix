@@ -10,7 +10,6 @@ set_globals(
   edge_p = NA,
   fast_boot_jack = NA,
   optim_control = NA,
-  optim_reltol = NA,
   optim_starting_parms = NA,
   p_seq_cdf = NA,
   p_seq_pdf = NA,
@@ -36,9 +35,6 @@ grid given by optim_starting_parms,}
 
 \item{optim_control}{A control list passed to R's optim() function
 (default = NULL, in which case the optim defaults are used)}
-
-\item{optim_reltol}{reltol value used by optim for parameter searching
-(default = 1e-10)}
 
 \item{optim_starting_parms}{A list or data frame of parameter combinations
 at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}

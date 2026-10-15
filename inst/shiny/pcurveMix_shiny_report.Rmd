@@ -20,7 +20,7 @@ params:
   np_n_boot_samples: NA
   p_filename: NA
   pdf_plot: NA
-  profile_analysis: NA
+  want_profile_cis: NA
   profile_folded_normal_mu_plot: NA
   profile_folded_normal_sigma_plot: NA
   profile_mu_plot: NA
@@ -28,6 +28,7 @@ params:
   profile_power_plot: NA
   profile_sigma_plot: NA
   profile_tbl: NA
+  profile_notes: NA
   round_to: NA
   tails : NA
 ---
@@ -108,15 +109,20 @@ knitr::asis_output(bullet_list)
 
 
 
-```{asis, echo = params$profile_analysis > 0}
+```{asis, echo = params$want_profile_cis}
 ## Profile analysis
 ```
 
-```{r profile_tbl, echo=FALSE, results='asis', eval = params$profile_analysis > 0}
+```{r profile_tbl, echo=FALSE, results='asis', eval = params$want_profile_cis}
 print(knitr::kable(params$profile_tbl, digits = params$round_to))
 ```
 
-```{r profile_plots, echo=FALSE, eval = params$profile_analysis > 0}
+```{r echo = FALSE}
+bullet_list <- paste("-", params$profile_notes, collapse = "\n")  # paste adds space after "-"
+knitr::asis_output(bullet_list)
+```
+
+```{r profile_plots, echo=FALSE, eval = params$want_profile_cis}
 plot(params$profile_mu_plot)
 plot(params$profile_sigma_plot)
 plot(params$profile_pi_plot)

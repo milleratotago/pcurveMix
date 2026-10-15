@@ -54,7 +54,6 @@ initialize_globals <- function() {
   pcm_env$bias_correct_ci_bounds <- TRUE
   pcm_env$confidence_level <- 95  # NOTE ALWAYS ON 0-100 scale
   pcm_env$edge_p <- 1e-20  # Literal also used in set_globals roxygen
-  # pcm_env$optim_reltol <- 1e-10  # Literal also used in set_globals roxygen
   pcm_env$fast_boot_jack <- TRUE
   #  pcm_env$MLSEh <- 1e-7
   pcm_env$optim_control <- list(maxit = 2500, reltol = 1e-10)  # Use other optim defaults
@@ -79,8 +78,6 @@ initialize_globals <- function() {
 #' @param confidence_level Used in computing confidence intervals (default = 95)
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-20)
-#' @param optim_reltol reltol value used by optim for parameter searching
-#'  (default = 1e-10)
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
 #'  values for plots (default = seq(0.001, 0.999, 0.002))
 #' @param p_seq_cdf Sequence of p values at which to compute predicted cdf
@@ -114,11 +111,10 @@ set_globals <- function(
                         # @param MLSEh Small +/- increment to parameter values used in computing
                         #  the Fisher information matrix (default = 1e-7)
                         optim_control = NA,
-                        optim_reltol = NA,
                         optim_starting_parms = NA,
                         p_seq_cdf = NA,
                         p_seq_pdf = NA,
-                        profileCI_args = NA,
+                        profileCI_args = NA,  # NEWJEFF: Obsolete?
                         round_to = NA,
                         small_p_bin_cutoff = NA,
                         # small_rcond = NA,
@@ -130,7 +126,6 @@ set_globals <- function(
   if (!is.na(round_to)) pcm_env$round_to <- round_to
   if (!is.na(bias_correct_ci_bounds)) pcm_env$bias_correct_ci_bounds <- bias_correct_ci_bounds
   if (!is.na(edge_p)) pcm_env$edge_p <- edge_p
-  if (!is.na(optim_reltol)) pcm_env$optim_reltol <- optim_reltol
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
   if (!identical(optim_control,NA)) pcm_env$optim_control <- optim_control
@@ -144,7 +139,6 @@ set_globals <- function(
             bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
             confidence_level = pcm_env$confidence_level,
             edge_p = pcm_env$edge_p,
-            optim_reltol = pcm_env$optim_reltol,
             fast_boot_jack = pcm_env$fast_boot_jack,
             # MLSEh = pcm_env$MLSEh,
             optim_control = pcm_env$optim_control,
@@ -211,7 +205,7 @@ utils::globalVariables(c("density"))
   packageStartupMessage(s) # NEWJEFF combine strings into one call and export it in a separate function available to users with just a short note here to call that function for help
   packageStartupMessage('Get help with these RStudio console commands:')
   packageStartupMessage('  ?',pkgname,'    # shows a summary of the package.')
-  packageStartupMessage('  vignette("Intro", package = ',pkgname,')   # shows a basic introductory vignette illustrating the package and its shiny app.')
+  packageStartupMessage('  vignette("Intro", package = ',pkgname,') # basic intro to package & shiny app.')
   packageStartupMessage('  browseVignettes("',pkgname,'")    # shows a catalog of all vignettes.')
   packageStartupMessage('  help(package = "',pkgname,'")   # shows a manual of all functions exported from the package.')
   packageStartupMessage('  run_shiny_app()  # starts the shiny app')
@@ -221,10 +215,11 @@ utils::globalVariables(c("density"))
   # If it is turned off or unconfigured, print a polite tip
   # \u2139\ufe0f produces a non-ascii information source emoji,
   # use "\u2139" for the standard information icon
+  # This code breaks knitting to pdf, however.
   if (is.na(is_global_active) || !is_global_active) {
     packageStartupMessage(
-      "\u2139 [", pkgname, "] This package supports real-time progress bars!\n",
-      "   To enable them, run: progressr::handlers(global = TRUE)"  )
+      # "\u2139 [", pkgname, "] This package supports real-time progress bars!\n",
+      '  To enable real-time progress bars, run: progressr::handlers(global = TRUE)'  )
   }
 } # .onAttach
 
