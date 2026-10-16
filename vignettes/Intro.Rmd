@@ -200,14 +200,14 @@ Many additional parameter estimates are shown that can be derived from the estim
 The next output is a (density-scaled) histogram of the sample $p$ values superimposed over the predicted density at each $p$ from the fitted model:
 
 ```{r show_pdf_plot, fig.width=6, echo = FALSE}
-pdf_plot <- make_pdf_plot(fit_results_list)
+pdf_plot <- make_pdf_plot(fit_results_list)[["pdf_plot"]]
 print(pdf_plot)
 ```
 
 The subsequent plot shows the empirical CDF of the $p$ values and the predicted CDF from the fitted model:
 
 ```{r show_cdf_plot, fig.width=6, echo = FALSE}
-cdf_plot <- make_cdf_plot(fit_results_list)
+cdf_plot <- make_cdf_plot(fit_results_list)[["cdf_plot"]]
 print(cdf_plot)
 ```
 

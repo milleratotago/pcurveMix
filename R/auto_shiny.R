@@ -55,8 +55,10 @@ auto_shiny_compute <- function(ps, tails, alpha,
   est_sigma <- estimates_tbl$estimate[estimates_tbl$parameter == "sigma"]
   est_pi <- estimates_tbl$estimate[estimates_tbl$parameter == "pi"]
 
-  pdf_plot <- make_pdf_plot(fit_results_list)
-  cdf_plot <- make_cdf_plot(fit_results_list)
+  pdf_plot_list <- make_pdf_plot(fit_results_list)
+  pdf_plot <- pdf_plot_list$pdf_plot
+  cdf_plot_list <- make_cdf_plot(fit_results_list)
+  cdf_plot <- cdf_plot_list$cdf_plot
 
   if (want_jackknifing) {
     cat("\nJackknifing\n", file = stderr())
@@ -138,6 +140,10 @@ auto_shiny_compute <- function(ps, tails, alpha,
                                         profileCI_folded_normal_mu,
                                         profileCI_folded_normal_sigma)
   } else {
+    profileCI_std <- NA
+    profileCI_power <- NA
+    profileCI_folded_normal_mu <- NA
+    profileCI_folded_normal_sigma <- NA
     profile_ci_tbl <- NA
     profile_tbl_notes <- NA
     profile_plots <- list(folded_normal_mu = NA, folded_normal_sigma = NA,
@@ -159,7 +165,13 @@ auto_shiny_compute <- function(ps, tails, alpha,
                  np_n_boot_samples = n_bootstrap_nonparametric,
                  p_filename = ps_label,
                  pdf_plot = pdf_plot,
+                 pred_cdfs = cdf_plot_list$pred_cdfs,
+                 pred_pdfs = pdf_plot_list$pred_pdfs,
                  want_profile_cis = want_profile_cis,
+                 profileCI_std = profileCI_std,
+                 profileCI_power = profileCI_power,
+                 profileCI_folded_normal_mu = profileCI_folded_normal_mu,
+                 profileCI_folded_normal_sigma = profileCI_folded_normal_sigma,
                  profile_folded_normal_mu_plot = profile_plots$folded_normal_mu,
                  profile_folded_normal_sigma_plot = profile_plots$folded_normal_sigma,
                  profile_mu_plot = profile_plots$mu,
@@ -186,7 +198,7 @@ auto_shiny_report <- function(params, output_file_name, output_format, output_di
                           htm = "html_document",
                           pdf = "pdf_document",
                           docx = "word_document") # NEWJEFF: Need otherwise
-  # rmd_outfile_name <- paste0(output_directory_name, "/",
+  # rmd_outfile_name <- paste0(output_dir, "/",
   #                            "pcurveMix_report_", time_stamp, ext)
   # NEWJEFF: Check output_file_name extention
   package_path <- system.file(package = "pcurveMix")
@@ -198,3 +210,121 @@ auto_shiny_report <- function(params, output_file_name, output_format, output_di
                     params = params,
                     envir = new.env(parent = globalenv()))
 }
+
+#' Function to write output files like shiny (unzipped).
+#' @param params Output list produced by auto_shiny function.
+#' @param output_dir Directory where the output files should go
+#'  (default = current working directory).
+#' @param file_name_prefix String prepended to output file names (default = "").
+#' @param use_time_stamp Boolean; TRUE says add a date_time_stamp string to
+#'  output file names (default = TRUE).
+#' @returns A string vector with the names of the output files.
+#' @export
+auto_shiny_files <- function(params, output_dir = ".", file_name_prefix = "", use_time_stamp = TRUE) {
+  if (!dir.exists(output_dir)) dir.create(output_dir)
+  # Dirty trick (sorry Patricia): if use_time_stamp is a string, use that for the time_stamp.
+  if (is.character(use_time_stamp)) {
+    time_stamp <- use_time_stamp
+  } else {
+    # Assume it is a Boolean
+    if (use_time_stamp) {
+      # Create time stamp to mark output file names
+      time_stamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
+    } else {
+      time_stamp <- ""
+    }
+  } # else
+  if (nchar(file_name_prefix) > 0) file_name_prefix <- paste0(file_name_prefix,"_")
+
+  # Helper function to generate file names
+  csv_name <- function(contents) {
+    s <- paste0(output_dir, "/",file_name_prefix,contents,"_", time_stamp, ".csv")
+  }
+
+  # Write CSV files of tables that must be present
+  csv_descriptor_outfile_name <- csv_name("descriptor_tbl")
+  utils::write.csv(params$descriptor_tbl, csv_descriptor_outfile_name, row.names = FALSE)
+  csv_estimates_outfile_name <- csv_name("estimates_tbl")
+  utils::write.csv(params$estimates_tbl, csv_estimates_outfile_name, row.names = FALSE)
+
+  # Write CSV files of predicted pdf and cdf values
+  csv_pdf_outfile_name <- csv_name("pred_pdf")
+  utils::write.csv(params$pred_pdfs, csv_pdf_outfile_name, row.names = FALSE)
+  csv_cdf_outfile_name <- csv_name("pred_cdf")
+  utils::write.csv(params$pred_cdfs, csv_cdf_outfile_name, row.names = FALSE)
+
+  csv_file_list <- c(csv_descriptor_outfile_name, csv_estimates_outfile_name,
+                     csv_pdf_outfile_name, csv_cdf_outfile_name)
+
+  print("try jack")
+  # Write CSV files of tables that may be present
+  if (!is.null(params$jack_tbl) && !identical(params$jack_tbl,NA)) {
+    csv_jack_outfile_name <- csv_name("jack_tbl")
+    utils::write.csv(params$jack_tbl, csv_jack_outfile_name, row.names = FALSE)
+    csv_file_list <- c(csv_file_list, csv_jack_outfile_name)
+  }
+  print("try boot_tbl")
+  if (!is.null(params$boot_tbl) && !identical(params$boot_tbl,NA)) {
+    csv_boot_outfile_name <- csv_name("boot_tbl")
+    utils::write.csv(params$boot_tbl, csv_boot_outfile_name, row.names = FALSE)
+    csv_file_list <- c(csv_file_list, csv_boot_outfile_name)
+  }
+  if (!is.null(params$np_boot_tbl) && !identical(params$np_boot_tbl,NA)) {
+    csv_np_boot_outfile_name <- csv_name("np_boot_tbl")
+    utils::write.csv(params$np_boot_tbl, csv_np_boot_outfile_name, row.names = FALSE)
+    csv_file_list <- c(csv_file_list, csv_np_boot_outfile_name)
+  }
+  if (!is.null(params$profile_tbl) && !identical(params$profile_tbl,NA)) {
+    csv_profile_outfile_name <- csv_name("profile_tbl")
+    utils::write.csv(params$profile_tbl, csv_profile_outfile_name, row.names = FALSE)
+    csv_file_list <- c(csv_file_list, csv_profile_outfile_name)
+  }
+
+  # Write CSV files of profile curves if these were requested:
+  if ( !is.null(params$profile_tbl) && !identical(params$profile_tbl,NA) ) {
+
+    csv_profile_mu_outfile_name <- csv_name("profile_mu")
+    profile_mu <- data.frame(mu = params$profileCI_std$profile_curves$mu[,1],
+                             likelihood = params$profileCI_std$profile_curves$mu[,2])
+    utils::write.csv(profile_mu, csv_profile_mu_outfile_name, row.names = FALSE)
+
+    csv_profile_sigma_outfile_name <- csv_name("profile_sigma")
+    profile_sigma <- data.frame(sigma = params$profileCI_std$profile_curves$sigma[,1],
+                                likelihood = params$profileCI_std$profile_curves$sigma[,2])
+    utils::write.csv(profile_sigma, csv_profile_sigma_outfile_name, row.names = FALSE)
+
+    csv_profile_pi_outfile_name <- csv_name("profile_pi")
+    profile_pi <- data.frame(pi = params$profileCI_std$profile_curves$pi[,1],
+                             likelihood = params$profileCI_std$profile_curves$pi[,2])
+    utils::write.csv(profile_pi, csv_profile_pi_outfile_name, row.names = FALSE)
+
+    csv_profile_power_outfile_name <- csv_name("profile_power")
+    temp_mat <- extract_profile_plot_columns(params$profileCI_power,1) # 1st profiled parm
+    temp_mat[,1] <- reals_to_powers(temp_mat[,1])
+    profile_power <- data.frame(power = temp_mat[,1],
+                                likelihood = temp_mat[,2])
+    utils::write.csv(profile_power, csv_profile_power_outfile_name, row.names = FALSE)
+
+    csv_file_list <- c(csv_file_list, csv_profile_mu_outfile_name, csv_profile_sigma_outfile_name,
+                       csv_profile_pi_outfile_name, csv_profile_power_outfile_name)
+
+    if ( !is.null(params$profile_folded_normal_mu_plot) ) {
+      csv_profile_folded_normal_mu_outfile_name <- csv_name("profile_folded_normal_mu")
+      temp_mat <- extract_profile_plot_columns(params$profileCI_folded_normal_mu,1) # 1st profiled parm
+      temp_mat[,1] <- reals_to_mus(temp_mat[,1])
+      profile_folded_normal_mu <- data.frame(folded_normal_mu = temp_mat[,1],
+                                             likelihood = temp_mat[,2])
+      utils::write.csv(profile_folded_normal_mu, csv_profile_folded_normal_mu_outfile_name, row.names = FALSE)
+
+      csv_profile_folded_normal_sigma_outfile_name <- csv_name("profile_folded_normal_sigma")
+      temp_mat <- extract_profile_plot_columns(params$profileCI_folded_normal_sigma,1) # 1st profiled parm
+      temp_mat[,1] <- reals_to_sigmas(temp_mat[,1])
+      profile_folded_normal_sigma <- data.frame(folded_normal_sigma = temp_mat[,1],
+                                                likelihood = temp_mat[,2])
+      utils::write.csv(profile_folded_normal_sigma, csv_profile_folded_normal_sigma_outfile_name, row.names = FALSE)
+
+      csv_file_list <- c(csv_file_list, csv_profile_folded_normal_mu_outfile_name, csv_profile_folded_normal_sigma_outfile_name)
+    } # if ( !is.null(params$profile_folded_normal_mu_plot) )
+  } # if ( !identical(params$profile_tbl,NA) )
+  return(csv_file_list)
+} # auto_shiny_files

@@ -444,74 +444,79 @@ server <- function(input, output, session) {
         showNotification("You must fit the model before downloading the results.",
                          closeButton = TRUE)
       } else {
-        tails <- get_tails()
-
-        # Create time stamp to mark output file names
-        time_stamp <- timestamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
-
         id <- showNotification("Preparing report & csv files...", duration = NULL)
         # Path is relative to the Rmd folder
         output_directory_name <- "outputs"
-        if (!dir.exists(output_directory_name)) dir.create(output_directory_name)
+        v_as_list <- reactiveValuesToList(v)
+        # print(v_as_list)
+        # # Create time stamp to mark output file names
+        time_stamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
+        all_file_paths <- auto_shiny_files(v_as_list, output_directory_name, use_time_stamp = time_stamp)
+        tails <- get_tails()
 
-        # Write CSV files of predicted pdf and cdf values
-        csv_pdf_outfile_name <- paste0(output_directory_name, "/",
-                                       "pred_pdf_", time_stamp, ".csv")
-        pred_pdf <- data.frame(p = v$p_seq_pdf, pdf = v$pred_pdfs)
-        write.csv(pred_pdf, csv_pdf_outfile_name, row.names = FALSE)
-        csv_cdf_outfile_name <- paste0(output_directory_name, "/",
-                                       "pred_cdf_", time_stamp, ".csv")
-        pred_cdf <- data.frame(p = v$p_seq_cdf, cdf = v$pred_cdfs)
-        write.csv(pred_cdf, csv_cdf_outfile_name, row.names = FALSE)
-
-        # Write CSV files of profile curves if these were requested:
-        if (input$profile_ci) {
-
-          csv_profile_mu_outfile_name <- paste0(output_directory_name, "/",
-                                                "profile_mu_", time_stamp, ".csv")
-          profile_mu <- data.frame(mu = v$profileCI_std$profile_curves$mu[,1],
-                                   likelihood = v$profileCI_std$profile_curves$mu[,2])
-          write.csv(profile_mu, csv_profile_mu_outfile_name, row.names = FALSE)
-
-          csv_profile_sigma_outfile_name <- paste0(output_directory_name, "/",
-                                                   "profile_sigma_", time_stamp, ".csv")
-          profile_sigma <- data.frame(sigma = v$profileCI_std$profile_curves$sigma[,1],
-                                      likelihood = v$profileCI_std$profile_curves$sigma[,2])
-          write.csv(profile_sigma, csv_profile_sigma_outfile_name, row.names = FALSE)
-
-          csv_profile_pi_outfile_name <- paste0(output_directory_name, "/",
-                                                "profile_pi_", time_stamp, ".csv")
-          profile_pi <- data.frame(pi = v$profileCI_std$profile_curves$pi[,1],
-                                   likelihood = v$profileCI_std$profile_curves$pi[,2])
-          write.csv(profile_pi, csv_profile_pi_outfile_name, row.names = FALSE)
-
-          # NEWJEFF: I WANT POWER, FOLDED_MU, FOLDED_SIGMA in natural units
-          csv_profile_power_outfile_name <- paste0(output_directory_name, "/",
-                                                   "profile_power_", time_stamp, ".csv")
-          temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
-          temp_mat[,1] <- pcurveMix:::reals_to_powers(temp_mat[,1])
-          profile_power <- data.frame(power = temp_mat[,1],
-                                      likelihood = temp_mat[,2])
-          write.csv(profile_power, csv_profile_power_outfile_name, row.names = FALSE)
-
-          if (tails == 2) {
-            csv_profile_folded_normal_mu_outfile_name <- paste0(output_directory_name, "/",
-                                                                "profile_folded_normal_mu_", time_stamp, ".csv")
-            temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_mu,1) # 1st profiled parm
-            temp_mat[,1] <- pcurveMix:::reals_to_mus(temp_mat[,1])
-            profile_folded_normal_mu <- data.frame(folded_normal_mu = temp_mat[,1],
-                                                   likelihood = temp_mat[,2])
-            write.csv(profile_folded_normal_mu, csv_profile_folded_normal_mu_outfile_name, row.names = FALSE)
-
-            csv_profile_folded_normal_sigma_outfile_name <- paste0(output_directory_name, "/",
-                                                                   "profile_folded_normal_sigma_", time_stamp, ".csv")
-            temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_sigma,1) # 1st profiled parm
-            temp_mat[,1] <- pcurveMix:::reals_to_sigmas(temp_mat[,1])
-            profile_folded_normal_sigma <- data.frame(folded_normal_sigma = temp_mat[,1],
-                                                      likelihood = temp_mat[,2])
-            write.csv(profile_folded_normal_sigma, csv_profile_folded_normal_sigma_outfile_name, row.names = FALSE)
-          } # if tails == 2
-        } # if (input$profile_ci)
+        # ### Replaced by auto_shiny_files: START
+        #
+        # if (!dir.exists(output_directory_name)) dir.create(output_directory_name)
+        #
+        #
+        # # Write CSV files of predicted pdf and cdf values
+        # csv_pdf_outfile_name <- paste0(output_directory_name, "/",
+        #                                "pred_pdf_", time_stamp, ".csv")
+        # pred_pdf <- data.frame(p = v$p_seq_pdf, pdf = v$pred_pdfs)
+        # write.csv(pred_pdf, csv_pdf_outfile_name, row.names = FALSE)
+        # csv_cdf_outfile_name <- paste0(output_directory_name, "/",
+        #                                "pred_cdf_", time_stamp, ".csv")
+        # pred_cdf <- data.frame(p = v$p_seq_cdf, cdf = v$pred_cdfs)
+        # write.csv(pred_cdf, csv_cdf_outfile_name, row.names = FALSE)
+        #
+        # # Write CSV files of profile curves if these were requested:
+        # if (input$profile_ci) {
+        #
+        #   csv_profile_mu_outfile_name <- paste0(output_directory_name, "/",
+        #                                         "profile_mu_", time_stamp, ".csv")
+        #   profile_mu <- data.frame(mu = v$profileCI_std$profile_curves$mu[,1],
+        #                            likelihood = v$profileCI_std$profile_curves$mu[,2])
+        #   write.csv(profile_mu, csv_profile_mu_outfile_name, row.names = FALSE)
+        #
+        #   csv_profile_sigma_outfile_name <- paste0(output_directory_name, "/",
+        #                                            "profile_sigma_", time_stamp, ".csv")
+        #   profile_sigma <- data.frame(sigma = v$profileCI_std$profile_curves$sigma[,1],
+        #                               likelihood = v$profileCI_std$profile_curves$sigma[,2])
+        #   write.csv(profile_sigma, csv_profile_sigma_outfile_name, row.names = FALSE)
+        #
+        #   csv_profile_pi_outfile_name <- paste0(output_directory_name, "/",
+        #                                         "profile_pi_", time_stamp, ".csv")
+        #   profile_pi <- data.frame(pi = v$profileCI_std$profile_curves$pi[,1],
+        #                            likelihood = v$profileCI_std$profile_curves$pi[,2])
+        #   write.csv(profile_pi, csv_profile_pi_outfile_name, row.names = FALSE)
+        #
+        #   csv_profile_power_outfile_name <- paste0(output_directory_name, "/",
+        #                                            "profile_power_", time_stamp, ".csv")
+        #   temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
+        #   temp_mat[,1] <- pcurveMix:::reals_to_powers(temp_mat[,1])
+        #   profile_power <- data.frame(power = temp_mat[,1],
+        #                               likelihood = temp_mat[,2])
+        #   write.csv(profile_power, csv_profile_power_outfile_name, row.names = FALSE)
+        #
+        #   if (tails == 2) {
+        #     csv_profile_folded_normal_mu_outfile_name <- paste0(output_directory_name, "/",
+        #                                                         "profile_folded_normal_mu_", time_stamp, ".csv")
+        #     temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_mu,1) # 1st profiled parm
+        #     temp_mat[,1] <- pcurveMix:::reals_to_mus(temp_mat[,1])
+        #     profile_folded_normal_mu <- data.frame(folded_normal_mu = temp_mat[,1],
+        #                                            likelihood = temp_mat[,2])
+        #     write.csv(profile_folded_normal_mu, csv_profile_folded_normal_mu_outfile_name, row.names = FALSE)
+        #
+        #     csv_profile_folded_normal_sigma_outfile_name <- paste0(output_directory_name, "/",
+        #                                                            "profile_folded_normal_sigma_", time_stamp, ".csv")
+        #     temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_sigma,1) # 1st profiled parm
+        #     temp_mat[,1] <- pcurveMix:::reals_to_sigmas(temp_mat[,1])
+        #     profile_folded_normal_sigma <- data.frame(folded_normal_sigma = temp_mat[,1],
+        #                                               likelihood = temp_mat[,2])
+        #     write.csv(profile_folded_normal_sigma, csv_profile_folded_normal_sigma_outfile_name, row.names = FALSE)
+        #   } # if tails == 2
+        # } # if (input$profile_ci)
+        # ### Replaced by auto_shiny_files: END
 
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
@@ -563,18 +568,19 @@ server <- function(input, output, session) {
                           params = params,
                           envir = new.env(parent = globalenv()))
 
-        all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
-        if (input$profile_ci) {
-          all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name,
-                              csv_profile_mu_outfile_name, csv_profile_sigma_outfile_name,
-                              csv_profile_pi_outfile_name, csv_profile_power_outfile_name,
-                              rmd_outfile_name)
-          if (tails == 2) {  # folded normal only for 2-tailed
-            all_file_paths <- c(all_file_paths, csv_profile_folded_normal_mu_outfile_name, csv_profile_folded_normal_sigma_outfile_name)
-          }
-        } else {
-          all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
-        }
+        # all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
+        # if (input$profile_ci) {
+        #   all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name,
+        #                       csv_profile_mu_outfile_name, csv_profile_sigma_outfile_name,
+        #                       csv_profile_pi_outfile_name, csv_profile_power_outfile_name,
+        #                       rmd_outfile_name)
+        #   if (tails == 2) {  # folded normal only for 2-tailed
+        #     all_file_paths <- c(all_file_paths, csv_profile_folded_normal_mu_outfile_name, csv_profile_folded_normal_sigma_outfile_name)
+        #   }
+        # } else {
+        #   all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
+        # }
+        all_file_paths <- c(all_file_paths, rmd_outfile_name)
 
         removeNotification(id)
 
