@@ -30,13 +30,22 @@ pdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
 
 # Compute PDF of 2-sided p value under H1 for random-effects model.
 f_uncond_2t_h1 <- function(p, mu, sigma) {
-  z <- stats::qnorm(p/2)
+  log_two <- log(2)
+  z <- stats::qnorm(log(p) - log_two, log.p = TRUE)
   s2 <- sigma^2
-  pref <- 1 / (2 * sqrt(1 + s2))
-  base <- (s2 * z^2 - mu^2) / (2 * (1 + s2))
-  t    <- (mu * z) / (1 + s2)
-  m <- pmax(t, -t)  # log-sum-exp stabilization
-  pref * exp(base + m) * (exp(t - m) + exp(-t - m))
+  d <- 1 + s2
+  base <- (s2 * z^2 - mu^2) / (2 * d)
+  t <- abs(mu * z / d)
+  log_pdfs <- -log_two - 0.5 * log1p(s2) + base + t + log1p(exp(-2 * t))
+  exp(log_pdfs)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # z <- stats::qnorm(p/2)
+  # s2 <- sigma^2
+  # pref <- 1 / (2 * sqrt(1 + s2))
+  # base <- (s2 * z^2 - mu^2) / (2 * (1 + s2))
+  # t    <- (mu * z) / (1 + s2)
+  # m <- pmax(t, -t)  # log-sum-exp stabilization
+  # pref * exp(base + m) * (exp(t - m) + exp(-t - m))
 }
 
 # Compute PDF of 2-sided p value for mixture of H0 & H1 random-effects model.
@@ -44,13 +53,19 @@ f_uncond_2t_mix  <- function(p, mu, sigma, pi) (1 - pi) + pi * f_uncond_2t_h1(p,
 
 # Compute PDF of 1-sided p value under H1 for random-effects model.
 f_uncond_1t_h1 <- function(p, mu, sigma) {
-  z <- stats::qnorm(p)
+  z <- stats::qnorm(log(p), log.p = TRUE)
   s2 <- sigma^2
-  pref <- 1 / sqrt(1 + s2)
-  base <- (s2 * z^2 - mu^2) / (2 * (1 + s2))
-  t    <- (mu * z) / (1 + s2)
-  m <- pmax(t, -t)  # log-sum-exp stabilization
-  pref * exp(base + m) * exp(-t - m)
+  d <- 1 + s2
+  log_pdfs <- -0.5 * log1p(s2) + (s2 * z^2 - mu^2 - 2 * mu * z) / (2 * d)
+  exp(log_pdfs)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # z <- stats::qnorm(p)
+  # s2 <- sigma^2
+  # pref <- 1 / sqrt(1 + s2)
+  # base <- (s2 * z^2 - mu^2) / (2 * (1 + s2))
+  # t    <- (mu * z) / (1 + s2)
+  # m <- pmax(t, -t)  # log-sum-exp stabilization
+  # pref * exp(base + m) * exp(-t - m)
 }
 
 f_uncond_1t_mix <- function(p, mu, sigma, pi) (1 - pi) + pi * f_uncond_1t_h1(p, mu, sigma)

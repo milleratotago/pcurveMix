@@ -160,7 +160,7 @@ ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
 #' @returns A data frame
 #' @importFrom rlang .data
 #' @export
-fit_to_estimates_tbl <- function(fit, round_to = pcm_env$round_to) {
+fit_to_estimates_tbl <- function(fit, round_to = get_ao("round_to") ) {
   mle_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
     estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power),

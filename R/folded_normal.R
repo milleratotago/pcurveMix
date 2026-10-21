@@ -57,6 +57,7 @@ f_ratio <- function(c, target_ratio) {
   return((mean_scaled / sd_scaled) - target_ratio)
 }
 
+# NEWJEFF: Fails with (3.79,3.266)
 # Compute unfolded mu & sigma from folded mu & sigma.
 unfolded_moments <- function(folded_mu, folded_sigma, tol = 1e-10) {  # NEWJEFF: Magic constant.
   target_ratio <- folded_mu / folded_sigma

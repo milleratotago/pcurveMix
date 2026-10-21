@@ -8,7 +8,8 @@ auto_shiny_files(
   params,
   output_dir = ".",
   file_name_prefix = "",
-  use_time_stamp = TRUE
+  time_stamp = "",
+  generate_time_stamp = TRUE
 )
 }
 \arguments{
@@ -19,7 +20,12 @@ auto_shiny_files(
 
 \item{file_name_prefix}{String prepended to output file names (default = "").}
 
-\item{use_time_stamp}{Boolean; TRUE says add a date_time_stamp string to
+\item{time_stamp}{String time_stamp appended to output file names
+(default = "", in which case the time_stamp is automatically generated
+if generate_time_stamp is TRUE).}
+
+\item{generate_time_stamp}{Boolean. If no time_stamp is given and this
+Boolean is TRUE, generate a time_stamp and append it to
 output file names (default = TRUE).}
 }
 \value{

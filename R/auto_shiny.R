@@ -1,7 +1,7 @@
 # auto_shiny.R
 
 # NEWJEFF: Defaults of parameters taken from pcm_env. These can be modified
-# using  man-roxygen templates (do this later: gemini will explain)
+# using man-roxygen templates (do this later: gemini will explain)
 # User calls this function and then renders shiny with returned params
 #' Function to perform shiny-like analyses on a vector of p's.
 #' @param ps Vector of ps to be fit
@@ -186,21 +186,14 @@ auto_shiny_compute <- function(ps, tails, alpha,
 }
 
 #' Function to produce a report like shiny
-#' @param params Output list produced by auto_shiny function
+#' @param params Output list produced by auto_shiny function.
 #' @param output_file_name Name (with path) for the report file.
-#' @param output_format String either "html", "pdf", or "docx"
+#' @param output_format String either "html", "pdf", or "docx" (default "html").
 #' @param output_dir Directory where the final output file should go
-#'  (default = current working directory)
+#'  (default = current working directory).
 #' @export
-auto_shiny_report <- function(params, output_file_name, output_format, output_dir = ".") {
-  output_format <- switch(output_format,
-                          html = "html_document",
-                          htm = "html_document",
-                          pdf = "pdf_document",
-                          docx = "word_document") # NEWJEFF: Need otherwise
-  # rmd_outfile_name <- paste0(output_dir, "/",
-  #                            "pcurveMix_report_", time_stamp, ext)
-  # NEWJEFF: Check output_file_name extention
+auto_shiny_report <- function(params, output_file_name, output_format = "html", output_dir = ".") {
+  output_format <- get_render_output_format(output_format)
   package_path <- system.file(package = "pcurveMix")
   rmd_infile_name = paste0(package_path,"/shiny/pcurveMix_shiny_report.Rmd")
   rmarkdown::render(rmd_infile_name,
@@ -216,24 +209,21 @@ auto_shiny_report <- function(params, output_file_name, output_format, output_di
 #' @param output_dir Directory where the output files should go
 #'  (default = current working directory).
 #' @param file_name_prefix String prepended to output file names (default = "").
-#' @param use_time_stamp Boolean; TRUE says add a date_time_stamp string to
+#' @param time_stamp String time_stamp appended to output file names
+#'  (default = "", in which case the time_stamp is automatically generated
+#'  if generate_time_stamp is TRUE).
+#' @param generate_time_stamp Boolean. If no time_stamp is given and this
+#'  Boolean is TRUE, generate a time_stamp and append it to
 #'  output file names (default = TRUE).
 #' @returns A string vector with the names of the output files.
 #' @export
-auto_shiny_files <- function(params, output_dir = ".", file_name_prefix = "", use_time_stamp = TRUE) {
+auto_shiny_files <- function(params, output_dir = ".", file_name_prefix = "", time_stamp = "",
+                             generate_time_stamp = TRUE) {
   if (!dir.exists(output_dir)) dir.create(output_dir)
-  # Dirty trick (sorry Patricia): if use_time_stamp is a string, use that for the time_stamp.
-  if (is.character(use_time_stamp)) {
-    time_stamp <- use_time_stamp
-  } else {
-    # Assume it is a Boolean
-    if (use_time_stamp) {
+  if (nchar(time_stamp) == 0 && generate_time_stamp) {
       # Create time stamp to mark output file names
       time_stamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
-    } else {
-      time_stamp <- ""
-    }
-  } # else
+  }
   if (nchar(file_name_prefix) > 0) file_name_prefix <- paste0(file_name_prefix,"_")
 
   # Helper function to generate file names
@@ -256,14 +246,12 @@ auto_shiny_files <- function(params, output_dir = ".", file_name_prefix = "", us
   csv_file_list <- c(csv_descriptor_outfile_name, csv_estimates_outfile_name,
                      csv_pdf_outfile_name, csv_cdf_outfile_name)
 
-  print("try jack")
   # Write CSV files of tables that may be present
   if (!is.null(params$jack_tbl) && !identical(params$jack_tbl,NA)) {
     csv_jack_outfile_name <- csv_name("jack_tbl")
     utils::write.csv(params$jack_tbl, csv_jack_outfile_name, row.names = FALSE)
     csv_file_list <- c(csv_file_list, csv_jack_outfile_name)
   }
-  print("try boot_tbl")
   if (!is.null(params$boot_tbl) && !identical(params$boot_tbl,NA)) {
     csv_boot_outfile_name <- csv_name("boot_tbl")
     utils::write.csv(params$boot_tbl, csv_boot_outfile_name, row.names = FALSE)

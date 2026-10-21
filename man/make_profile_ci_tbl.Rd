@@ -9,7 +9,7 @@ make_profile_ci_tbl(
   profileCI_power,
   profileCI_folded_normal_mu = NA,
   profileCI_folded_normal_sigma = NA,
-  round_to = pcm_env$round_to
+  round_to = get_ao("round_to")
 )
 }
 \arguments{

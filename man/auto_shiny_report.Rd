@@ -4,17 +4,22 @@
 \alias{auto_shiny_report}
 \title{Function to produce a report like shiny}
 \usage{
-auto_shiny_report(params, output_file_name, output_format, output_dir = ".")
+auto_shiny_report(
+  params,
+  output_file_name,
+  output_format = "html",
+  output_dir = "."
+)
 }
 \arguments{
-\item{params}{Output list produced by auto_shiny function}
+\item{params}{Output list produced by auto_shiny function.}
 
 \item{output_file_name}{Name (with path) for the report file.}
 
-\item{output_format}{String either "html", "pdf", or "docx"}
+\item{output_format}{String either "html", "pdf", or "docx" (default "html").}
 
 \item{output_dir}{Directory where the final output file should go
-(default = current working directory)}
+(default = current working directory).}
 }
 \description{
 Function to produce a report like shiny

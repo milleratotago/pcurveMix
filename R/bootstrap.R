@@ -61,10 +61,10 @@ get_ci_bounds <- function(means, sds, confidence_level = get_ao("confidence_leve
 #' @returns A data frame with the means and sds of bootstrap sample
 #'  parameter estimates, plus confidence interval boundss.
 #' @export
-make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_tbl is named differently elsewhere
+make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl,
                                   confidence_level = get_ao("confidence_level"),
                                   bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
-                                  round_to = pcm_env$round_to) {
+                                  round_to = get_ao("round_to") ) {
   mn_sd_df <- get_parm_summaries(ests_tbl, summary_fns = list(mean = mean, sd = sd))
 
   # Parametric bootstrapping:
@@ -98,70 +98,3 @@ make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl, # NEWJEFF: ests_t
   return(df)
 }
 
-# # NEWJEFF: OBSOLETE? BETTER TO USE SHINY VERSION
-# # Function to summarize the data frame produced by parametric or nonparametric bootstrapping.
-# # @param boot_df Output data frame produced by bootstrap() function
-# # @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
-# #  original MLE estimates used as parameter values for parametric bootstrapping
-# # @param boot_ci_limits A vector with the two limiting proportions
-# #  (lower, upper) for bootstrap confidence intervals (default = c(0.025, 0.975))
-# # @returns A list with the percent of samples in which the estimation process
-# #  converged OK and a data frame with the bootstrap
-# #  means, SEs, CIs, & bootstrap-corrected estimates of the model parameters
-# # @export
-# make_boot_summary_list <- function(boot_df, mle_estimates_tbl, boot_ci_limits = c(0.025, 0.975)) {
-#   n_attempts <- nrow(boot_df)
-#   boot_df <- boot_df[stats::complete.cases(boot_df), , drop = FALSE]
-#   boot_ok <- !is.na(boot_df$mu) &
-#     boot_df$pi >= 0     &  boot_df$pi <= 1     &
-#     boot_df$mu >= 0     &  boot_df$sigma >= 0  &
-#     boot_df$power >= 0  &  boot_df$power <= 1
-#   boot_df <- boot_df[boot_ok,]
-#   n_ok <- nrow(boot_df)
-#   if (n_ok == 0) {
-#     problem_string <- "No successful bootstrap refits; try adjusting fit_p_curve() starting parameter values."
-#     if (pcm_env$shiny_running) {
-#       shiny::showNotification(problem_string, type = "warning", duration = 45)
-#       return( list(pct_converged = NULL, boot_tbl = NULL) )
-#     } else {
-#       stop(problem_string)
-#     }
-#   }
-#   pct_converged <- 100 * n_ok / n_attempts
-#
-#   boot_mn <- sapply(boot_df, mean)
-#   boot_se <- sapply(boot_df, stats::sd)
-#   boot_ci <- t(sapply(boot_df, stats::quantile, probs = boot_ci_limits))
-#   colnames(boot_ci) <- c(CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
-#
-#   use_fn <- "folded_normal_mu" %in% names(boot_df)
-#   parameters <- c("pi","mu","sigma","power")
-#   if (use_fn) {
-#     parameters <- c(parameters,"folded_normal_mu","folded_normal_sigma")
-#   }
-#   boot_tbl <- data.frame(
-#     parameter = parameters,
-#     Boot_Mean = round(boot_mn[parameters], pcm_env$round_to),
-#     Boot_SE   = round(boot_se[parameters], pcm_env$round_to),
-#     Boot_lwr  = round(boot_ci[parameters, CI_LOWER_BOUND_LABEL], pcm_env$round_to),
-#     Boot_upr  = round(boot_ci[parameters, CI_UPPER_BOUND_LABEL], pcm_env$round_to),
-#     row.names = NULL
-#   )
-#
-#   boot_tbl <- boot_tbl |> dplyr::arrange(factor(.data$parameter, levels = c("mu", "sigma", "pi")))
-#
-#   # augment original estimates with folded normal parameters derived from those
-#   if (use_fn) {
-#     original_mu <- mle_estimates_tbl$estimate[mle_estimates_tbl$parameter == "mu"]
-#     original_sigma <- mle_estimates_tbl$estimate[mle_estimates_tbl$parameter == "sigma"]
-#     folded_normal_mu_original <- mean_folded_normal(original_mu, original_sigma)
-#     folded_normal_sigma_original <- sd_folded_normal(original_mu, original_sigma)
-#     original_estimates <- c(mle_estimates_tbl$estimate) # NEWJEFF TESTING, folded_normal_mu_original, folded_normal_sigma_original)
-#   } else {
-#     original_estimates <- mle_estimates_tbl$estimate
-#   }
-#   # Compute simple bias-corrected estimate:
-#   boot_tbl$BC_est <- 2*original_estimates - boot_tbl$Boot_Mean
-#
-#   return( list(pct_converged = pct_converged, boot_tbl = boot_tbl) )
-# } # make_boot_summary_list

@@ -36,9 +36,14 @@ F_uncond_2t_h1 <- function(p, mu, sigma) {
 F_uncond_2t_mix  <- function(p, mu, sigma, pi) (1 - pi) * p + pi * F_uncond_2t_h1(p, mu, sigma)
 
 F_uncond_1t_h1 <- function(p, mu, sigma) {
-  z <- stats::qnorm(1 - p)
+  z <- stats::qnorm(p, lower.tail = FALSE)
   s <- sqrt(1 + sigma^2)
-  stats::pnorm((mu - z) / s)
+  log_cdf_vals <- stats::pnorm((mu - z) / s, lower.tail = TRUE, log.p = TRUE)
+  cdf_vals <- exp(log_cdf_vals)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # z <- stats::qnorm(1 - p)
+  # s <- sqrt(1 + sigma^2)
+  # stats::pnorm((mu - z) / s)
 }
 
 F_uncond_1t_mix  <- function(p, mu, sigma, pi) (1 - pi) * p + pi * F_uncond_1t_h1(p, mu, sigma)

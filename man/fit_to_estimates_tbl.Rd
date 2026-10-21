@@ -4,7 +4,7 @@
 \alias{fit_to_estimates_tbl}
 \title{Convert the fit_p_curve parameter estimates into a nice data frame.}
 \usage{
-fit_to_estimates_tbl(fit, round_to = pcm_env$round_to)
+fit_to_estimates_tbl(fit, round_to = get_ao("round_to"))
 }
 \arguments{
 \item{fit}{Output list from fit_p_curve}

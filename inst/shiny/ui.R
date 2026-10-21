@@ -197,22 +197,23 @@ ui <- tagList(
           checkboxInput("fast_boot_jack", label = strong("Always start parameter search at ML estimates when jackknifing & bootstrapping (faster)"), TRUE)
         ),
 
-        ## Adjust starting values ====  NWJEFF: Move to advanced options or let user provide file
-        h4(),
-        checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),
-        conditionalPanel(
-          condition = "input.specify_starting_values == true",
-          div(
-            style = "display: flex; align-items: center; flex-wrap: wrap; gap: 10px;",
-            inlineNumericInput("start_mu", "mu =", value = pcurveMix:::START_MU_DEFAULT,
-                               min = 0, max = 20, step = 0.1, label_width = "40px"),
-            inlineNumericInput("start_sigma", "sigma =", value = pcurveMix:::START_SIGMA_DEFAULT,
-                               min = 1e-6, max = 20, step = 0.1, label_width = "60px"),
-            inlineNumericInput("start_pi", "pi =", value = pcurveMix:::START_PI_DEFAULT,
-                               min = 0, max = 1, step = 0.1, label_width = "40px")
-          ) # div
-        ), # conditionalPanel
-        # end Adjust starting values ====
+        # # NEWJEFF: I do not yet have a way to retrieve these values in the server if they have been set.
+        # ## Adjust starting values ====  NWJEFF: Move to advanced options or let user provide file
+        # h4(),
+        # checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),
+        # conditionalPanel(
+        #   condition = "input.specify_starting_values == true",
+        #   div(
+        #     style = "display: flex; align-items: center; flex-wrap: wrap; gap: 10px;",
+        #     inlineNumericInput("start_mu", "mu =", value = pcurveMix:::START_MU_DEFAULT,
+        #                        min = 0, max = 20, step = 0.1, label_width = "40px"),
+        #     inlineNumericInput("start_sigma", "sigma =", value = pcurveMix:::START_SIGMA_DEFAULT,
+        #                        min = 1e-6, max = 20, step = 0.1, label_width = "60px"),
+        #     inlineNumericInput("start_pi", "pi =", value = pcurveMix:::START_PI_DEFAULT,
+        #                        min = 0, max = 1, step = 0.1, label_width = "40px")
+        #   ) # div
+        # ), # conditionalPanel
+        # # end Adjust starting values ====
 
         textAreaInput("text_optim_control","Optim function control settings", value = "", width = '100%'),
 

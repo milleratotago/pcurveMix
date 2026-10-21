@@ -227,3 +227,13 @@ get_ao <- function(name) {
   # Default fallback use package environment value
   return(pcm_env[[name]])
 }
+
+get_render_output_format <- function(output_format) {
+  output_format <- switch(output_format,
+                          html = "html_document",
+                          htm = "html_document",
+                          pdf = "pdf_document",
+                          docx = "word_document",
+                          "html_document")  # Default output otherwise
+}
+

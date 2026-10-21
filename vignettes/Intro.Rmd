@@ -36,9 +36,9 @@ library(progressr)
 # Handlers now defined later in with_progress
 # progressr::handlers(handler_txtprogressbar(file = stderr()))
 
-# Set this switch to TRUE for testing to make sure the demo code works.
+
 # 2026-10-15 version 1.0.19: Checked demo code and all looks good
-eval_demo_code <- !TRUE
+eval_demo_code <- !TRUE  # Set to TRUE for testing to make sure the demo code works.
 ```
 
 # Introduction to `pcurveMix`

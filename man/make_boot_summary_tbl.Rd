@@ -9,7 +9,7 @@ make_boot_summary_tbl(
   ests_tbl,
   confidence_level = get_ao("confidence_level"),
   bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
-  round_to = pcm_env$round_to
+  round_to = get_ao("round_to")
 )
 }
 \arguments{

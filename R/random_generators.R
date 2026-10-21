@@ -22,7 +22,7 @@ random <- function(n, mu, sigma, pi = 1, alpha = 1, tails = 2, cond_method = c("
     "uncond_2t_mix" = r_uncond_2t_mix (n, mu, sigma, pi),
     "uncond_1t_h1"  = r_uncond_1t_h1  (n, mu, sigma),
     "uncond_1t_mix" = r_uncond_1t_mix (n, mu, sigma, pi)
-  )  # returns NULL if no match
+  )  # returns NULL if no match (i.e., if alpha < 1 so we need cond method)
   if (!is.null(rands)) {
     return(rands)
   }
@@ -47,7 +47,10 @@ random <- function(n, mu, sigma, pi = 1, alpha = 1, tails = 2, cond_method = c("
 r_uncond_2t_h1 <- function(n, mu, sigma) {
   s1 <- sqrt(1 + sigma^2)
   z  <- stats::rnorm(n, mean = mu, sd = s1)
-  rands <- 2 * (1 - stats::pnorm(abs(z)))
+  log_p_vals <- log(2) + stats::pnorm(abs(z), lower.tail = FALSE, log.p = TRUE)
+  rands <- exp(log_p_vals)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # rands <- 2 * (1 - stats::pnorm(abs(z)))
   return(rands)
 }
 
@@ -57,14 +60,20 @@ r_uncond_2t_mix <- function(n, mu, sigma, pi) {
   z  <- stats::rnorm(n,
               mean = ifelse(h1 == 1, mu, 0),
               sd   = ifelse(h1 == 1, s1, 1))
-  rands <- 2 * (1 - stats::pnorm(abs(z)))
+  log_p_vals <- log(2) + stats::pnorm(abs(z), lower.tail = FALSE, log.p = TRUE)
+  rands <- exp(log_p_vals)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # rands <- 2 * (1 - stats::pnorm(abs(z)))
   return(rands)
 }
 
 r_uncond_1t_h1 <- function(n, mu, sigma) {
   s1 <- sqrt(1 + sigma^2)
   z  <- stats::rnorm(n, mean = mu, sd = s1)
-  rands <- 1 - stats::pnorm(z)  # one-sided upper-tail p-value
+  log_p_vals <- stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
+  rands <- exp(log_p_vals)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # rands <- 1 - stats::pnorm(z)  # one-sided upper-tail p-value
   return(rands)
 }
 
@@ -77,7 +86,10 @@ r_uncond_1t_mix <- function(n, mu, sigma, pi) {
     mean = ifelse(h1 == 1, mu, 0),
     sd   = ifelse(h1 == 1, s1, 1)
   )
-  rands <- 1 - stats::pnorm(z)  # one-sided upper-tail p-value
+  log_p_vals <- stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
+  rands <- exp(log_p_vals)
+  # The following original version may have lower precision:  PRECISION ISSUES
+  # rands <- 1 - stats::pnorm(z)  # one-sided upper-tail p-value  ORIGINAL VERSION
   return(rands)
 }
 

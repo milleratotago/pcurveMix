@@ -172,7 +172,7 @@ server <- function(input, output, session) {
     mat_of_ps <- generate_parametric_subsamples(v$n_boot_samples, n_ps, mu, sigma, pi, alpha, tails)
     ests_tbl <- get_ests(mat_of_ps, "Parametric bootstrapping")
     v$boot_pct_converged <- 100 * mean(ests_tbl$converged)
-    v$boot_confidence_level <- get_globals("confidence_level")  # NEWJEFF: was inconsistent to use 0-1 here
+    v$boot_confidence_level <- get_globals("confidence_level")
     mle_estimates_tbl <- fit_to_estimates_tbl(v$fit_list)
     v$boot_tbl <- make_boot_summary_tbl(mle_estimates_tbl, ests_tbl,
                                         confidence_level = input$confidence_level,
@@ -376,12 +376,12 @@ server <- function(input, output, session) {
       tails <- get_tails()
       alpha_cutoff <- get_alpha_cutoff()
       alpha_sig <- input$alpha_sig
-      if (input$specify_starting_values) {
-        start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
-      } else {
-        start_list <- pcm_env$optim_starting_parms
-      }
-      # start_list <- pcm_env$optim_starting_parms
+      # if (input$specify_starting_values) {
+      #   start_list <- list(mu = input$start_mu, sigma = input$start_sigma, pi = input$start_pi)
+      # } else {
+      #   start_list <- pcm_env$optim_starting_parms
+      # }
+      start_list <- pcm_env$optim_starting_parms
 
       v$fit_list <- pcurveMix::fit_p_curve(p_vec_to_fit, alpha = alpha_cutoff, tails = tails, alpha_sig = alpha_sig, start_parms = start_list)
       ps_in_bounds <- v$fit_list$check_ps_list$ps_in_bounds
@@ -451,7 +451,7 @@ server <- function(input, output, session) {
         # print(v_as_list)
         # # Create time stamp to mark output file names
         time_stamp <- format(Sys.time(), "%Y_%m_%d_%H_%M_%S")
-        all_file_paths <- auto_shiny_files(v_as_list, output_directory_name, use_time_stamp = time_stamp)
+        all_file_paths <- auto_shiny_files(v_as_list, output_directory_name, time_stamp = time_stamp)
         tails <- get_tails()
 
         # ### Replaced by auto_shiny_files: START
@@ -551,35 +551,24 @@ server <- function(input, output, session) {
                       profile_folded_normal_mu_plot = v$profile_folded_normal_mu_plot,
                       profile_folded_normal_sigma_plot = v$profile_folded_normal_sigma_plot)
         }
-        # Dynamically set the file extension based on user choice
+        # Set the file extension based on user choice.
+        # This is not needed for render, but it is needed to identify the
+        # Rmd output file to zipr
         ext <- switch(input$rmd_format,
                       html = ".html",
+                      htm = ".htm",
                       pdf = ".pdf",
-                      docx = ".docx")
-        output_format <- switch(input$rmd_format,
-                                html = "html_document",
-                                pdf = "pdf_document",
-                                docx = "word_document")
+                      docx = ".docx",
+                      ".html")
+        output_format <- get_render_output_format(input$rmd_format)
         rmd_outfile_name <- paste0(output_directory_name, "/",
-                                   "pcurveMix_report_", time_stamp, ext)
+                                   "pcurveMix_report_", time_stamp,ext)
         rmarkdown::render(rmd,
                           output_file = paste0(rmd_outfile_name),
                           output_format = output_format,
                           params = params,
                           envir = new.env(parent = globalenv()))
 
-        # all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
-        # if (input$profile_ci) {
-        #   all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name,
-        #                       csv_profile_mu_outfile_name, csv_profile_sigma_outfile_name,
-        #                       csv_profile_pi_outfile_name, csv_profile_power_outfile_name,
-        #                       rmd_outfile_name)
-        #   if (tails == 2) {  # folded normal only for 2-tailed
-        #     all_file_paths <- c(all_file_paths, csv_profile_folded_normal_mu_outfile_name, csv_profile_folded_normal_sigma_outfile_name)
-        #   }
-        # } else {
-        #   all_file_paths <- c(csv_pdf_outfile_name, csv_cdf_outfile_name, rmd_outfile_name)
-        # }
         all_file_paths <- c(all_file_paths, rmd_outfile_name)
 
         removeNotification(id)

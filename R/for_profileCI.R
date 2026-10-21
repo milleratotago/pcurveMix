@@ -377,7 +377,7 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
   }
 
   # Use 3 x 3 x 3 = 27 starting values for the unrestricted MLE.
-  starts <- expand.grid(
+  starts <- expand.grid( # NEWJEFF: Should use starts defined elsewhere
     mu = c(1, 2, 3),
     sigma = c(0.5, 1, 2),
     pi = c(0.2, 0.5, 0.8)
@@ -612,7 +612,7 @@ make_profile_ci_tbl <- function(profileCI_std,
                                 profileCI_power,
                                 profileCI_folded_normal_mu = NA,
                                 profileCI_folded_normal_sigma = NA,
-                                round_to = pcm_env$round_to) {
+                                round_to = get_ao("round_to") ) {
   ci_tbl <- data.frame(parameter = c("mu", "sigma", "pi"), row.names = NULL)
   ci_tbl <- cbind(ci_tbl,profileCI_std$bounds_matrix)
   names(ci_tbl) <- c("parameter", CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL)
