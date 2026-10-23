@@ -37,7 +37,6 @@ vcov.profCI_model <- function(object, ...) {
     return(object$vcov)
   } else {
     # Provide a placeholder variance-covariance matrix matching parameter names
-    # print("vcov.profCI_model was called and returned mat:")  # NEWJEFF
     nparms <- length(object$coefficients)
     mat <- diag(rep(1,nparms))
     dimnames(mat) <- list(names(object$coefficients), names(object$coefficients))
@@ -343,74 +342,284 @@ parameters_from_power <- function(power, log_ratio, alpha_sig, tails) {
   c(mu = unname(ratio * sigma), sigma = unname(sigma))
 }
 
-profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
-                             tails = 2, level = get_ao("confidence_level") / 100) {
-  p_values <- p_values[
-    is.finite(p_values) & p_values >= 0 & p_values <= alpha
-  ]
-  p_values[p_values == 0] <- 1e-15
+# # OBSOLETE: this profile_ci_power was replaced because it starts from
+# # p_values, alpha, alpha_sig, tails & refits model; it should start
+# # from fitted fit_result_list
+# profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
+#                              tails = 2, level = get_ao("confidence_level") / 100) {
+#   p_values <- p_values[
+#     is.finite(p_values) & p_values >= 0 & p_values <= alpha
+#   ]
+#   p_values[p_values == 0] <- 1e-15 # NWJEFF: Magic constant
+#
+#   if (length(p_values) == 0L) {
+#     stop("No valid p-values remain after filtering.")
+#   }
+#
+#   # Original parameterization for the unrestricted MLE:
+#   # eta[1] = log(mu), eta[2] = log(sigma), eta[3] = logit(pi).
+#   original_loglik <- function(eta) {
+#     if (length(eta) != 3L || any(!is.finite(eta))) return(-Inf)
+#
+#     mu <- exp(eta[1])
+#     sigma <- exp(eta[2])
+#     pi_value <- stats::plogis(eta[3])
+#
+#     density <- pcurveMix::pdf(
+#       p = p_values,
+#       pi = pi_value,
+#       mu = mu,
+#       sigma = sigma,
+#       alpha = alpha,
+#       tails = tails
+#     )
+#
+#     if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
+#     sum(log(density))
+#   }
+#
+#   # Use 3 x 3 x 3 = 27 starting values for the unrestricted MLE.
+#   starts <- expand.grid( #  Should use starts defined elsewhere
+#     mu = c(1, 2, 3),
+#     sigma = c(0.5, 1, 2),
+#     pi = c(0.2, 0.5, 0.8)
+#   )
+#
+#   fits <- lapply(seq_len(nrow(starts)), function(i) {
+#     start <- c(
+#       log(starts$mu[i]),
+#       log(starts$sigma[i]),
+#       stats::qlogis(starts$pi[i])
+#     )
+#
+#     tryCatch(
+#       stats::optim(
+#         par = start,
+#         fn = function(eta) -original_loglik(eta),
+#         method = "BFGS",
+#         control = list(maxit = 2000, reltol = 1e-10)
+#       ),
+#       error = function(e) list(value = Inf, par = start, convergence = 1)
+#     )
+#   })
+#
+#   objective_values <- vapply(fits, function(x) x$value, numeric(1))
+#   if (all(!is.finite(objective_values))) {
+#     stop("The unrestricted maximum-likelihood fit failed.")
+#   }
+#
+#   best <- fits[[which.min(objective_values)]]
+#   original_hat <- unname(best$par)
+#   mu_hat <- exp(original_hat[1])
+#   sigma_hat <- exp(original_hat[2])
+#   pi_hat <- stats::plogis(original_hat[3])
+#   ratio_hat <- mu_hat / sigma_hat
+#   power_hat <- unname(average_power(
+#     mu_hat, sigma_hat, alpha_sig, tails
+#   ))
+#
+#   # Power is constrained to [alpha_sig, 1]. The relative position in this
+#   # interval is mapped to the real line using a logit transformation.
+#   relative_power_hat <- (power_hat - alpha_sig) / (1 - alpha_sig)
+#   relative_power_hat <- min(max(relative_power_hat, 1e-10), 1 - 1e-10) #  Magic constant
+#
+#   coefficients <- c(
+#     logit_relative_power = stats::qlogis(relative_power_hat),
+#     logit_pi = stats::qlogis(pi_hat),
+#     log_ratio = log(ratio_hat)
+#   )
+#
+#   profile_loglik_power <- function(z) {
+#     pars <- decode_for_power(z, alpha_sig, tails)
+#     if (any(!is.finite(pars)) || pars["pi"] <= 0 || pars["pi"] >= 1 ||
+#         pars["mu"] <= 0 || pars["sigma"] <= 0 ||
+#         pars["mu"] > 1e6 || pars["sigma"] > 1e6) return(-Inf)
+#
+#     density <- pcurveMix::pdf(
+#       p = p_values,
+#       pi = pars["pi"],
+#       mu = pars["mu"],
+#       sigma = pars["sigma"],
+#       alpha = alpha,
+#       tails = tails
+#     )
+#     if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
+#     sum(log(density))
+#   }
+#
+#   hessian <- stats::optimHess(coefficients, function(z) -profile_loglik_power(z))
+#   vcov_hat <- tryCatch(solve(hessian), error = function(e) NULL)
+#
+#   if (is.null(vcov_hat) || any(!is.finite(vcov_hat)) ||
+#       any(diag(vcov_hat) <= 0)) {
+#     hessian_symmetric <- (hessian + t(hessian)) / 2
+#     eig <- eigen(hessian_symmetric, symmetric = TRUE)
+#     tolerance <- max(max(abs(eig$values)), 1) * 1e-8
+#     safe_values <- pmax(eig$values, tolerance)
+#     vcov_hat <- eig$vectors %*% diag(1 / safe_values) %*% t(eig$vectors)
+#   }
+#   dimnames(vcov_hat) <- list(names(coefficients), names(coefficients))
+#
+#   profile_object <- structure(
+#     list(coefficients = coefficients, vcov = vcov_hat),
+#     class = "profCI_model"
+#   )
+#
+#   lower_search <- stats::qlogis(1e-6)  # Magic constants
+#   upper_search <- stats::qlogis(1 - 1e-6)
+#
+#   profile_result <- profileCI::profileCI(
+#     object = profile_object,
+#     loglik = profile_loglik_power,
+#     parm = "logit_relative_power",
+#     level = level,
+#     faster = FALSE,
+#     mult = 16,
+#     epsilon = 1e-4,
+#     lb = lower_search,
+#     ub = upper_search,
+#     optim_args = list(
+#       method = "BFGS",
+#       control = list(maxit = 3000)
+#     )
+#   )
+#
+#   ci_transformed <- as.numeric(
+#     profile_result["logit_relative_power", 1:2]
+#   )
+#
+#   # Verify whether a missing limit means that the confidence set reaches the
+#   # natural power boundary. Nuisance parameters are optimized from several
+#   # starting values for this explicit boundary check.
+#   profile_at_boundary <- function(fixed_power_parameter) {
+#     nuisance_starts <- rbind(
+#       unname(coefficients[c("logit_pi", "log_ratio")]),
+#       as.matrix(expand.grid(
+#         logit_pi = stats::qlogis(c(0.2, 0.5, 0.8)),
+#         log_ratio = log(c(0.1, 0.25, 0.5, 1, 2, 4))
+#       ))
+#     )
+#
+#     boundary_fits <- lapply(seq_len(nrow(nuisance_starts)), function(i) {
+#       tryCatch(
+#         stats::optim(
+#           par = unname(nuisance_starts[i, ]),
+#           fn = function(nuisance) {
+#             -profile_loglik_power(c(fixed_power_parameter, nuisance))
+#           },
+#           method = "BFGS",
+#           control = list(maxit = 3000)
+#         ),
+#         error = function(e) list(value = Inf)
+#       )
+#     })
+#
+#     values <- vapply(boundary_fits, function(x) x$value, numeric(1))
+#     if (all(!is.finite(values))) return(NA_real_)
+#     -min(values, na.rm = TRUE)
+#   }
+#
+#   boundary_included <- c(lower = FALSE, upper = FALSE)
+#   likelihood_cutoff <- attr(profile_result, "crit")
+#
+#   if (is.na(ci_transformed[1])) {
+#     boundary_loglik <- profile_at_boundary(lower_search)
+#     if (is.finite(boundary_loglik) &&
+#         boundary_loglik >= likelihood_cutoff - 1e-6) {
+#       ci_transformed[1] <- -Inf
+#       boundary_included["lower"] <- TRUE
+#     }
+#   }
+#
+#   if (is.na(ci_transformed[2])) {
+#     boundary_loglik <- profile_at_boundary(upper_search)
+#     if (is.finite(boundary_loglik) &&
+#         boundary_loglik >= likelihood_cutoff - 1e-6) {
+#       ci_transformed[2] <- Inf
+#       boundary_included["upper"] <- TRUE
+#     }
+#   }
+#
+#   back_transform <- function(z) {
+#     alpha_sig + (1 - alpha_sig) * stats::plogis(z)
+#   }
+#   ci_power <- back_transform(ci_transformed)
+#
+#   status <- if (all(is.finite(ci_power))) {
+#     if (all(boundary_included)) {
+#       "Both power boundaries included"
+#     } else if (boundary_included["lower"]) {
+#       paste0("Lower power boundary set to ", alpha_sig)
+#     } else if (boundary_included["upper"]) {
+#       "Upper power boundary set to 1"
+#     } else {
+#       "OK"
+#     }
+#   } else {
+#     "Limit not found within the numerical search range"
+#   }
+#
+#   result_table <- data.frame(
+#     n = length(p_values),
+#     Estimate = power_hat,
+#     lower = ci_power[1],
+#     upper = ci_power[2],
+#     Status = status,
+#     check.names = FALSE
+#   )
+#   names(result_table)[names(result_table) == "lower"] <- CI_LOWER_BOUND_LABEL
+#   names(result_table)[names(result_table) == "upper"] <- CI_UPPER_BOUND_LABEL
+#
+#   list(
+#     table = result_table,
+#     profile = profile_result,
+#     estimate = power_hat,
+#     ci = ci_power,
+#     alpha_sig = alpha_sig
+#   )
+# }
 
-  if (length(p_values) == 0L) {
-    stop("No valid p-values remain after filtering.")
-  }
+# # OBSOLETE: This routine just calls profile_ci_power, which re-fits the model
+# # Computations for profile-based confidence intervals of the derived
+# #  model parameter power.
+# # @inheritParams compute_profileCI
+# # @returns A list with the following elements:
+# #  bounds_matrix = matrix of CI bounds;
+# #  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+# #  profile_fn_output = the output of the profileCI function from the profileCI package.
+# # @export
+# compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level") / 100) {
+#   alpha <- fit_list$alpha
+#   tails <- fit_list$tails
+#   p_values <- fit_list$check_ps_list$ps_in_bounds
+#   mu_hat <- fit_list$mu
+#   sigma_hat <- fit_list$sigma
+#   pi_hat <- fit_list$pi
+#   alpha_sig <- fit_list$alpha_sig
+#   result <- profile_ci_power(p_values, alpha, alpha_sig = alpha_sig,
+#                              tails = tails, level = level)
+#   return(result)
+# }
 
-  # Original parameterization for the unrestricted MLE:
-  # eta[1] = log(mu), eta[2] = log(sigma), eta[3] = logit(pi).
-  original_loglik <- function(eta) {
-    if (length(eta) != 3L || any(!is.finite(eta))) return(-Inf)
+#' Computations for profile-based confidence intervals of the derived
+#'  model parameter power.
+#' @inheritParams compute_profileCI
+#' @returns A list with the following elements:
+#'  bounds_matrix = matrix of CI bounds;
+#'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
+#'  profile_fn_output = the output of the profileCI function from the profileCI package.
+#' @export
+compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level") / 100) {
+  # was profile_ci_power2 <- function(fit_list, level = get_ao("confidence_level") / 100) {
+  p_values <- fit_list$check_ps_list$ps_in_bounds
 
-    mu <- exp(eta[1])
-    sigma <- exp(eta[2])
-    pi_value <- stats::plogis(eta[3])
+  alpha <- fit_list$alpha
+  tails <- fit_list$tails
+  alpha_sig <- fit_list$alpha_sig
 
-    density <- pcurveMix::pdf(
-      p = p_values,
-      pi = pi_value,
-      mu = mu,
-      sigma = sigma,
-      alpha = alpha,
-      tails = tails
-    )
-
-    if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
-    sum(log(density))
-  }
-
-  # Use 3 x 3 x 3 = 27 starting values for the unrestricted MLE.
-  starts <- expand.grid( # NEWJEFF: Should use starts defined elsewhere
-    mu = c(1, 2, 3),
-    sigma = c(0.5, 1, 2),
-    pi = c(0.2, 0.5, 0.8)
-  )
-
-  fits <- lapply(seq_len(nrow(starts)), function(i) {
-    start <- c(
-      log(starts$mu[i]),
-      log(starts$sigma[i]),
-      stats::qlogis(starts$pi[i])
-    )
-
-    tryCatch(
-      stats::optim(
-        par = start,
-        fn = function(eta) -original_loglik(eta),
-        method = "BFGS",
-        control = list(maxit = 2000, reltol = 1e-10)
-      ),
-      error = function(e) list(value = Inf, par = start, convergence = 1)
-    )
-  })
-
-  objective_values <- vapply(fits, function(x) x$value, numeric(1))
-  if (all(!is.finite(objective_values))) {
-    stop("The unrestricted maximum-likelihood fit failed.")
-  }
-
-  best <- fits[[which.min(objective_values)]]
-  original_hat <- unname(best$par)
-  mu_hat <- exp(original_hat[1])
-  sigma_hat <- exp(original_hat[2])
-  pi_hat <- stats::plogis(original_hat[3])
+  mu_hat <- fit_list$mu
+  sigma_hat <- fit_list$sigma
+  pi_hat <- fit_list$pi
   ratio_hat <- mu_hat / sigma_hat
   power_hat <- unname(average_power(
     mu_hat, sigma_hat, alpha_sig, tails
@@ -419,7 +628,7 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
   # Power is constrained to [alpha_sig, 1]. The relative position in this
   # interval is mapped to the real line using a logit transformation.
   relative_power_hat <- (power_hat - alpha_sig) / (1 - alpha_sig)
-  relative_power_hat <- min(max(relative_power_hat, 1e-10), 1 - 1e-10)
+  relative_power_hat <- min(max(relative_power_hat, 1e-10), 1 - 1e-10) # NEWJEFF: Magic constant
 
   coefficients <- c(
     logit_relative_power = stats::qlogis(relative_power_hat),
@@ -463,7 +672,7 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
     class = "profCI_model"
   )
 
-  lower_search <- stats::qlogis(1e-6)
+  lower_search <- stats::qlogis(1e-6)  # NEWJEFF: Magic constants
   upper_search <- stats::qlogis(1 - 1e-6)
 
   profile_result <- profileCI::profileCI(
@@ -577,27 +786,6 @@ profile_ci_power <- function(p_values, alpha, alpha_sig = 0.05,
   )
 }
 
-# NEWJEFF: This routine just calls profile_ci_power, which re-fits the model
-#' Computations for profile-based confidence intervals of the derived
-#'  model parameter power.
-#' @inheritParams compute_profileCI
-#' @returns A list with the following elements:
-#'  bounds_matrix = matrix of CI bounds;
-#'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
-#'  profile_fn_output = the output of the profileCI function from the profileCI package.
-#' @export
-compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level") / 100) {
-  alpha <- fit_list$alpha
-  tails <- fit_list$tails
-  p_values <- fit_list$check_ps_list$ps_in_bounds
-  mu_hat <- fit_list$mu
-  sigma_hat <- fit_list$sigma
-  pi_hat <- fit_list$pi
-  alpha_sig <- fit_list$alpha_sig
-  result <- profile_ci_power(p_values, alpha, alpha_sig = alpha_sig,
-                             tails = tails, level = level)
-  return(result)
-}
 
 #### END of Special routines for computing profileCIs of power
 

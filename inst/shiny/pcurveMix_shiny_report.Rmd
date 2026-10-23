@@ -1,5 +1,5 @@
 ---
-title: "pcurveMix Fit Report"
+title: "pcurveMix maximum-likelihood fitting summary"
 date: "`r format(Sys.time(), '%Y_%m_%d_%H_%M_%S')`"
 output:
   word_document:
@@ -36,9 +36,10 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.width = 6, fig.height = 4)
 # Fitting observed $p$ values with the mixture model of Ulrich & Miller (2026, submitted).
+# doc_header <- if (exists("doc_header")) doc_header else ""
 ```
 
-# Maximum-likelihood fitting summary
+# `r doc_header`
 
 ## Fitting parameters and summary results
 

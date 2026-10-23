@@ -1,7 +1,7 @@
 # auto_shiny.R
 
-# NEWJEFF: Defaults of parameters taken from pcm_env. These can be modified
-# using man-roxygen templates (do this later: gemini will explain)
+# NEWJEFF: Defaults of parameter definitions are taken from pcm_env. These can
+# be modified using man-roxygen templates (do this later: gemini will explain)
 # User calls this function and then renders shiny with returned params
 #' Function to perform shiny-like analyses on a vector of p's.
 #' @param ps Vector of ps to be fit
