@@ -6,6 +6,7 @@
 \usage{
 boot_table_notes(
   n_samples,
+  sample_size,
   pct_converged,
   confidence_level = get_ao("confidence_level"),
   bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds")
@@ -13,6 +14,8 @@ boot_table_notes(
 }
 \arguments{
 \item{n_samples}{Number of bootstrap samples}
+
+\item{sample_size}{Number of p's in each bootstrap sample}
 
 \item{pct_converged}{Percentage of bootstrap samples for which estimation converged}
 

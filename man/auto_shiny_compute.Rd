@@ -13,18 +13,7 @@ auto_shiny_compute(
   want_jackknifing = TRUE,
   n_bootstrap_parametric = 100,
   n_bootstrap_nonparametric = 100,
-  want_profile_cis = TRUE,
-  bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
-  confidence_level = pcm_env$confidence_level,
-  edge_p = pcm_env$edge_p,
-  fast_boot_jack = pcm_env$fast_boot_jack,
-  optim_control = pcm_env$optim_control,
-  optim_starting_parms = pcm_env$optim_starting_parms,
-  p_seq_cdf = pcm_env$p_seq_cdf,
-  p_seq_pdf = pcm_env$p_seq_pdf,
-  profileCI_args = pcm_env$profileCI_args,
-  round_to = pcm_env$round_to,
-  small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+  want_profile_cis = TRUE
 )
 }
 \arguments{
@@ -51,39 +40,6 @@ Use 0 to skip this bootstrapping (default = 100)}
 
 \item{want_profile_cis}{Boolean to indicate that profile confidence intervals
 should be computed (default = TRUE)}
-
-\item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
-interval bounds to correct for estimated bias.}
-
-\item{confidence_level}{Used in computing confidence intervals (default = 95)}
-
-\item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
-change p==1 to 1-edge_p (default = 1e-20)}
-
-\item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
-and jackknifing should always run optim() starting from the maximum likelihood
-parameter values, which is faster than running it from the starting value
-grid given by optim_starting_parms,}
-
-\item{optim_control}{A control list passed to R's optim() function
-(default = NULL, in which case the optim defaults are used)}
-
-\item{optim_starting_parms}{A list or data frame of parameter combinations
-at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
-
-\item{p_seq_cdf}{Sequence of p values at which to compute predicted cdf
-values for plots (default same as pdf with added 10^(4:10))}
-
-\item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
-values for plots (default = seq(0.001, 0.999, 0.002))}
-
-\item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
-
-\item{round_to}{Number of decimal places to display (default = 3)}
-
-\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
-censoring (default = NA, in which case likelihoods are computed without
-censoring)}
 }
 \value{
 List with params for pcurveMix_shiny_report.Rmd

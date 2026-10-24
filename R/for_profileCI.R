@@ -654,7 +654,9 @@ compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level")
     sum(log(density))
   }
 
+  # NEWJEFF: Error here when censoring at small_p_bin_cutoff == .001, .0001, .00001
   hessian <- stats::optimHess(coefficients, function(z) -profile_loglik_power(z))
+  # hessian <- numDeriv::hessian(function(z) -profile_loglik_power(z), x = coefficients) # Does not work either
   vcov_hat <- tryCatch(solve(hessian), error = function(e) NULL)
 
   if (is.null(vcov_hat) || any(!is.finite(vcov_hat)) ||

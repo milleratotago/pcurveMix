@@ -230,7 +230,7 @@ jack_tbl <- make_jackknife_tbl(fit_results_list, summaries, full_sample_n)
 ```{r print_jackknife_estimates, echo = FALSE}
 # jack_tbl[,-1] <- round(jack_tbl[,-1],pcurveMix:::pcm_env$round_to)
 knitr::kable(jack_tbl)
-table_notes <- pcurveMix:::jackknife_table_notes(full_sample_n, jack_pct_converged)
+table_notes <- pcurveMix:::jackknife_table_notes(full_sample_n, full_sample_n-1, jack_pct_converged)
 pointed_list <- paste("-", table_notes, collapse = "\n")
 knitr::asis_output(pointed_list)
 ```
@@ -261,7 +261,7 @@ boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 ```{r print_boot_estimates, echo = FALSE}
 # boot_tbl[,-1] <- round(boot_tbl[,-1],pcurveMix:::pcm_env$round_to)
 knitr::kable(boot_tbl)
-table_notes <- pcurveMix:::boot_table_notes(full_sample_n, boot_pct_converged)
+table_notes <- pcurveMix:::boot_table_notes(n_boot_samples, full_sample_n, boot_pct_converged)
 pointed_list <- paste("-", table_notes, collapse = "\n")
 knitr::asis_output(pointed_list)
 ```
@@ -314,7 +314,7 @@ np_boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 ```{r print_np_boot_estimates, echo = FALSE}
 np_boot_tbl[,-1] <- round(np_boot_tbl[,-1],pcurveMix:::pcm_env$round_to)
 knitr::kable(np_boot_tbl)
-table_notes <- pcurveMix:::boot_table_notes(full_sample_n, np_boot_pct_converged)
+table_notes <- pcurveMix:::boot_table_notes(n_boot_samples, full_sample_n, np_boot_pct_converged)
 pointed_list <- paste("-", table_notes, collapse = "\n")
 knitr::asis_output(pointed_list)
 ```
@@ -480,7 +480,9 @@ jack_pct_converged <- 100 * mean(ests_tbl$converged)
 summaries <- get_parm_summaries(ests_tbl)
 jack_tbl <- make_jackknife_tbl(fit_results_list, summaries, full_sample_n)
 print(jack_tbl)
-table_notes <- jackknife_table_notes(n_samples = length(real_ps), pct_converged = jack_pct_converged)
+full_sample_n <- length(real_ps)
+table_notes <- jackknife_table_notes(n_samples = full_sample_n, sample_size = full_sample_n-1,
+                                     pct_converged = jack_pct_converged)
 print(table_notes)
 ```
 
@@ -497,7 +499,8 @@ ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)
 boot_pct_converged <- 100 * mean(ests_tbl$converged)
 boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 print(boot_tbl)
-table_notes <- boot_table_notes(n_samples = n_boot_samples, pct_converged = boot_pct_converged)
+table_notes <- boot_table_notes(n_samples = n_boot_samples, sample_size = full_sample_n,
+                                pct_converged = boot_pct_converged)
 print(table_notes)
 ```
 
@@ -510,7 +513,8 @@ ests_tbl <- fits_for_matrix(mat_of_ps, start_parms = start_list)
 boot_pct_converged <- 100 * mean(ests_tbl$converged)
 boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
 print(boot_tbl)
-table_notes <- boot_table_notes(n_samples = n_boot_samples, pct_converged = boot_pct_converged)
+table_notes <- boot_table_notes(n_samples = n_boot_samples, sample_size = full_sample_n,
+                                pct_converged = boot_pct_converged)
 print(table_notes)
 ```
 

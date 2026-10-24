@@ -1,2 +1,12 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+\\.bat$
+^Development$
+^slow_tests$
+^\.positai$
+^\.claude$
+^adjusted_ps_fit\.xlsx$
+^pkg_rebuild\.R$
+^pull_from_git\.bat$
+^push_to_git\.bat$
+^cran_check\.R$

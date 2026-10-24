@@ -25,22 +25,25 @@ auto_shiny_compute <- function(ps, tails, alpha,
                                want_jackknifing = TRUE,
                                n_bootstrap_parametric = 100,
                                n_bootstrap_nonparametric = 100,
-                               want_profile_cis = TRUE,
-                               bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
-                               confidence_level = pcm_env$confidence_level,
-                               edge_p = pcm_env$edge_p,
-                               fast_boot_jack = pcm_env$fast_boot_jack,
-                               optim_control = pcm_env$optim_control,
-                               optim_starting_parms = pcm_env$optim_starting_parms,
-                               p_seq_cdf = pcm_env$p_seq_cdf,
-                               p_seq_pdf = pcm_env$p_seq_pdf,
-                               profileCI_args = pcm_env$profileCI_args,
-                               round_to = pcm_env$round_to,
-                               small_p_bin_cutoff = pcm_env$small_p_bin_cutoff) {
+                               want_profile_cis = TRUE
+                               # pcm_env parameters must be set with set_globals prior
+                               #  to calling this function.
+                               # bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+                               # confidence_level = pcm_env$confidence_level,
+                               # edge_p = pcm_env$edge_p,
+                               # fast_boot_jack = pcm_env$fast_boot_jack,
+                               # optim_control = pcm_env$optim_control,
+                               # optim_starting_parms = pcm_env$optim_starting_parms,
+                               # p_seq_cdf = pcm_env$p_seq_cdf,
+                               # p_seq_pdf = pcm_env$p_seq_pdf,
+                               # profileCI_args = pcm_env$profileCI_args,
+                               # round_to = pcm_env$round_to,
+                               # small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+                               ) {
   fit_results_list <- fit_p_curve(ps, alpha = alpha, tails = tails)
   real_ps <- fit_results_list$check_ps_list$ps_in_bounds
   full_sample_n <- length(real_ps)
-  if (fast_boot_jack) {
+  if (pcm_env$fast_boot_jack) {
     start_list <- list(mu = fit_results_list$mu, sigma = fit_results_list$sigma,
                        pi = fit_results_list$pi)
   } else {
@@ -89,7 +92,7 @@ auto_shiny_compute <- function(ps, tails, alpha,
     )
     boot_pct_converged <- 100 * mean(ests_tbl$converged)
     boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
-    boot_notes <- boot_table_notes(full_sample_n, boot_pct_converged)
+    boot_notes <- boot_table_notes(n_bootstrap_parametric, full_sample_n, boot_pct_converged)
   } else {
     boot_pct_converged <- NA
     boot_tbl <- NA
@@ -105,7 +108,7 @@ auto_shiny_compute <- function(ps, tails, alpha,
     )
     np_boot_pct_converged <- 100 * mean(ests_tbl$converged)
     np_boot_tbl <- make_boot_summary_tbl(estimates_tbl, ests_tbl)
-    np_boot_notes <- boot_table_notes(full_sample_n, np_boot_pct_converged)
+    np_boot_notes <- boot_table_notes(n_bootstrap_nonparametric, full_sample_n, np_boot_pct_converged)
   } else {
     np_boot_pct_converged <- NA
     np_boot_tbl <- NA
@@ -180,7 +183,7 @@ auto_shiny_compute <- function(ps, tails, alpha,
                  profile_sigma_plot = profile_plots$sigma,
                  profile_tbl = profile_ci_tbl,
                  profile_notes = profile_tbl_notes,
-                 round_to = round_to,
+                 round_to = pcm_env$round_to,
                  tails = tails)
   return(params)
 }

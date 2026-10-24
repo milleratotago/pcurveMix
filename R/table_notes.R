@@ -17,7 +17,7 @@ estimates_table_notes <- function(converged, confidence_level = get_ao("confiden
 }
 
 # Utility function called to make jackknife and bootstrap table notes
-utility_table_notes <- function(n_samples, pct_converged,
+utility_table_notes <- function(n_samples, sample_size, pct_converged,
                                 confidence_level, t_or_z,
                                 sample_string,
                                 bias_correct_ci_bounds) {
@@ -30,7 +30,7 @@ utility_table_notes <- function(n_samples, pct_converged,
     ci_bounds_line <- sprintf("%s/%s  %3.1f%% %s confidence interval bounds.",
                               CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL, confidence_level, t_or_z)
   }
-  notes <- c(sprintf("results based on estimates from %d %s; %3.1f%% converged.",n_samples, sample_string, pct_converged),
+  notes <- c(sprintf("results based on estimates from %d %s with %d p's per sample; %3.1f%% converged.",n_samples, sample_string, sample_size, pct_converged),
              sprintf("mean and se of estimates across %s.",sample_string),
              est_line,
              ci_bounds_line)
@@ -48,20 +48,7 @@ jackknife_table_notes <- function(n_samples, pct_converged,
                                   # t_or_z = "t",
                                   # sample_string = "jackknife subsamples",
                                   bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds") ) {
-  # if (bias_correct_ci_bounds) {
-  #   est_line <- "estimated bias and bias-corrected estimate (bc_estimate)."
-  #   ci_bounds_line <- sprintf("%s/%s  bias-corrected (bc_) %3.1f%% %s confidence interval bounds.",
-  #                             CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL, confidence_level, t_or_z)
-  # } else {
-  #   est_line <- "estimated bias."
-  #   ci_bounds_line <- sprintf("%s/%s  %3.1f%% %s confidence interval bounds.",
-  #                             CI_LOWER_BOUND_LABEL, CI_UPPER_BOUND_LABEL, confidence_level, t_or_z)
-  # }
-  # notes <- c(sprintf("results based on estimates from %d %s; %3.1f%% converged.",n_samples, sample_string, pct_converged),
-  #            sprintf("mean and se of estimates across %s.",sample_string),
-  #            est_line,
-  #            ci_bounds_line)
-  notes <- utility_table_notes(n_samples, pct_converged,
+  notes <- utility_table_notes(n_samples, n_samples-1, pct_converged,
                                confidence_level, t_or_z = "t",
                                sample_string = "jackknife subsamples",
                                bias_correct_ci_bounds)
@@ -70,20 +57,15 @@ jackknife_table_notes <- function(n_samples, pct_converged,
 
 #' Generate notes for table of bootstrap estimates
 #' @param n_samples Number of bootstrap samples
+#' @param sample_size Number of p's in each bootstrap sample
 #' @param pct_converged Percentage of bootstrap samples for which estimation converged
 #' @inheritParams set_globals confidence_level bias_correct_ci_bounds
 #' @returns A vector of strings
 #' @export
-boot_table_notes <- function(n_samples, pct_converged,
+boot_table_notes <- function(n_samples, sample_size, pct_converged,
                              confidence_level = get_ao("confidence_level"),
                              bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds") ) {
-  # notes <- jackknife_table_notes(n_samples, pct_converged,
-  #                                confidence_level = confidence_level,
-  #                                bias_correct_ci_bounds = bias_correct_ci_bounds,
-  #                                t_or_z = "z",
-  #                                sample_string = "bootstrap samples")
-
-  notes <- utility_table_notes(n_samples, pct_converged,
+  notes <- utility_table_notes(n_samples, sample_size, pct_converged,
                                confidence_level, t_or_z = "z",
                                sample_string = "bootstrap subsamples",
                                bias_correct_ci_bounds)
