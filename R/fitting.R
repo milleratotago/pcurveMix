@@ -3,7 +3,7 @@
 #' Compute negative log-likelihood of a p value or vector of p values
 #'  under the model with the indicated parameters. Use the direct
 #'  method with pdf() or use a censoring method that bins all p's
-#'  less than small_p_bin_cutoff
+#'  less than censor_at
 #' @param p Real 0-1 p value or vector for which nll is to be computed. p values
 #'  should be checked to make sure they are in range (0--1] before calling
 #'  this function.
@@ -12,7 +12,7 @@
 #' @returns Real negative log-likelihood of the p values
 #' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
-                small_p_bin_cutoff = get_ao("small_p_bin_cutoff") ) {
+                censor_at = get_ao("censor_at") ) {
   # print( paste("nll thinks: mu =",mu, "sigma =",sigma, "pi =",pi) )
   # JEFF: profileCI gets confused if the flat region extends
   # to the lower bound, and the profile plots have a terrible y-axis
@@ -23,19 +23,19 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   # used uniformly (eg make sure profiling uses this).
   if (pi < 0 || pi > 1 || sigma < 0) return(1e12)
   # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
-  if (is.na(small_p_bin_cutoff)) {
+  if (is.na(censor_at)) {
     # Direct method without censoring
     pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
-    above_cutoff <- p > small_p_bin_cutoff
+    above_cutoff <- p > censor_at
     pdfs <- pcurveMix::pdf(p[above_cutoff], mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails)
-    n_in_small_bin <- sum(p <= small_p_bin_cutoff)
-    cdf_at_cutoff <- pcurveMix::cdf(small_p_bin_cutoff, mu, sigma, pi, alpha, tails)
+    n_in_small_bin <- sum(p <= censor_at)
+    cdf_at_cutoff <- pcurveMix::cdf(censor_at, mu, sigma, pi, alpha, tails)
     # this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
     #   n_in_small_bin * log(cdf_at_cutoff)
-    # print( paste("Cens:", small_p_bin_cutoff, mu, sigma, pi, n_in_small_bin, log(cdf_at_cutoff), sum(log(pdfs))))
+    # print( paste("Cens:", censor_at, mu, sigma, pi, n_in_small_bin, log(cdf_at_cutoff), sum(log(pdfs))))
     this_nll <- -n_in_small_bin * log(cdf_at_cutoff) - sum(log(pmax(pdfs, .Machine$double.xmin)))
   }
   return(this_nll)
@@ -226,11 +226,11 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
 #' Convert the fit_p_curve fit descriptors into a nice data frame.
 #' @param fit Output list from fit_p_curve
 #' @param file_name Optional string used to include p file name in table
-#' @param small_p_bin_cutoff Top of bin for small p's
+#' @inheritParams set_globals censor_at
 #' @returns A data frame
 #' @export
 fit_to_descriptor_tbl <- function(fit, file_name = NULL,
-                                  small_p_bin_cutoff = get_ao("small_p_bin_cutoff")) {
+                                  censor_at = get_ao("censor_at")) {
   round_to <- get_ao("round_to")
   descriptor_tbl <- data.frame()
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("** pcurveMix version:",
@@ -249,11 +249,11 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL,
   desc2 <- paste0("p's in [1 - (",s_edge_p,"), 1] replaced with:")
   descriptor_tbl <- rbind(descriptor_tbl, descriptor(desc2,paste("1 -",s_edge_p)))
   # descriptor_tbl <- rbind(descriptor_tbl, descriptor("p's = 1 replaced with 1 minus",as.character(edge_p)))
-  if (is.na(small_p_bin_cutoff)) {
+  if (is.na(censor_at)) {
     descriptor_tbl <- rbind(descriptor_tbl, descriptor("Low p censoring", "Unused"))
   } else {
-    descriptor_tbl <- rbind(descriptor_tbl, descriptor( "Low p's censored at small_p_bin_cutoff =",
-                                                        small_p_bin_cutoff) )
+    descriptor_tbl <- rbind(descriptor_tbl, descriptor( "Low p's censored at censor_at =",
+                                                        censor_at) )
   }
   # bias_correct_ci_bounds & confidence_level are not shown because they appear elsewhere in output.
   # NEWJEFF: fast_boot_jack & optim_control not shown in descriptor table

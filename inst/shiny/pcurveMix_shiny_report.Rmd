@@ -9,6 +9,7 @@ params:
   boot_tbl: NA
   cdf_plot: NA
   descriptor_tbl: NA
+  doc_header: NA
   estimates_notes: NA
   estimates_tbl: NA
   jack_notes: NA
@@ -35,11 +36,10 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, fig.width = 6, fig.height = 4)
-# Fitting observed $p$ values with the mixture model of Ulrich & Miller (2026, submitted).
-# doc_header <- if (exists("doc_header")) doc_header else ""
+if (is.na(params$doc_header)) params$doc_header <- ""
 ```
 
-# `r doc_header`
+# `r params$doc_header`
 
 ## Fitting parameters and summary results
 

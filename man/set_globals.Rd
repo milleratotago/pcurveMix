@@ -15,7 +15,7 @@ set_globals(
   p_seq_pdf = NA,
   profileCI_args = NA,
   round_to = NA,
-  small_p_bin_cutoff = NA,
+  censor_at = NA,
   reset_to_defaults = FALSE
 )
 }
@@ -49,7 +49,7 @@ values for plots (default = seq(0.001, 0.999, 0.002))}
 
 \item{round_to}{Number of decimal places to display (default = 3)}
 
-\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
+\item{censor_at}{The cutoff point for computing likelihoods with
 censoring (default = NA, in which case likelihoods are computed without
 censoring)}
 

@@ -151,24 +151,8 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
   if (any(!is.finite(pars)) || pars["pi"] <= 0 || pars["pi"] >= 1 ||
       pars["mu"] <= 0 || pars["sigma"] <= 0 ||
       pars["mu"] > 1e4 || pars["sigma"] > 1e4) return(-Inf)
-
-  # pars2 <- c(pars["mu"], pars["sigma"], pars["pi"])
-  # print(pars)  # NEWJEFF
-  # print(pars2)
-  # res2 <- pll_profileCI(pars2, p_values, alpha = alpha, tails = tails)
   res2 <- -nll(p_values, mu = pars["mu"], sigma = pars["sigma"], pi = pars["pi"],
               alpha = alpha, tails = tails)
-  # density <- pcurveMix::pdf(
-  #   p = p_values,  # Already checked in compute_profileCI_folded()
-  #   pi = pars["pi"],
-  #   mu = pars["mu"],
-  #   sigma = pars["sigma"],
-  #   alpha = alpha,
-  #   tails = tails
-  # )
-  # if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
-  # res1 <- sum(log(density))
-  # print( paste("NEWJEFF old =",res1,"new =",res2))
   return(res2)
 }
 
@@ -650,24 +634,11 @@ compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level")
     if (any(!is.finite(pars)) || pars["pi"] <= 0 || pars["pi"] >= 1 ||
         pars["mu"] <= 0 || pars["sigma"] <= 0 ||
         pars["mu"] > 1e6 || pars["sigma"] > 1e6) return(-Inf)
-
-    # density <- pcurveMix::pdf(
-    #   p = p_values,
-    #   pi = pars["pi"],
-    #   mu = pars["mu"],
-    #   sigma = pars["sigma"],
-    #   alpha = alpha,
-    #   tails = tails
-    # )
-    # if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
-    # sum(log(density))
     res2 <- -nll(p_values, mu = pars["mu"], sigma = pars["sigma"], pi = pars["pi"],
                  alpha = alpha, tails = tails)
   }
 
-  # NEWJEFF: Error here when censoring at small_p_bin_cutoff == .001, .0001, .00001
   hessian <- stats::optimHess(coefficients, function(z) -profile_loglik_power(z))
-  # hessian <- numDeriv::hessian(function(z) -profile_loglik_power(z), x = coefficients) # Does not work either
   vcov_hat <- tryCatch(solve(hessian), error = function(e) NULL)
 
   if (is.null(vcov_hat) || any(!is.finite(vcov_hat)) ||

@@ -50,7 +50,7 @@ server <- function(input, output, session) {
 
     updateCheckboxInput(session = session, inputId = "fast_boot_jack", value = package_settings$fast_boot_jack)
     updateNumericInput(session = session,  inputId = "round_to", value = package_settings$round_to)
-    updateNumericInput(session = session,  inputId = "small_p_bin_cutoff", value = package_settings$small_p_bin_cutoff)
+    updateNumericInput(session = session,  inputId = "censor_at", value = package_settings$censor_at)
   }
 
   # Special functions needed to return values computed from UI settings
@@ -300,7 +300,7 @@ server <- function(input, output, session) {
   # })
 
   observeEvent(input$btnUploadDemo, {
-    demo_file_name <- "demo_data.csv"  # NEWJEFF: HARD-CODED FILE NAME IN UI & Intro.Rmd
+    demo_file_name <- pcurveMix:::DEMO_DATA_FILE_NAME
     full_file_path <- system.file("extdata", demo_file_name, package = "pcurveMix")
     v$p_filename <- demo_file_name
     v$df <- read.csv(full_file_path)
@@ -454,70 +454,6 @@ server <- function(input, output, session) {
         all_file_paths <- auto_shiny_files(v_as_list, output_directory_name, time_stamp = time_stamp)
         tails <- get_tails()
 
-        # ### Replaced by auto_shiny_files: START
-        #
-        # if (!dir.exists(output_directory_name)) dir.create(output_directory_name)
-        #
-        #
-        # # Write CSV files of predicted pdf and cdf values
-        # csv_pdf_outfile_name <- paste0(output_directory_name, "/",
-        #                                "pred_pdf_", time_stamp, ".csv")
-        # pred_pdf <- data.frame(p = v$p_seq_pdf, pdf = v$pred_pdfs)
-        # write.csv(pred_pdf, csv_pdf_outfile_name, row.names = FALSE)
-        # csv_cdf_outfile_name <- paste0(output_directory_name, "/",
-        #                                "pred_cdf_", time_stamp, ".csv")
-        # pred_cdf <- data.frame(p = v$p_seq_cdf, cdf = v$pred_cdfs)
-        # write.csv(pred_cdf, csv_cdf_outfile_name, row.names = FALSE)
-        #
-        # # Write CSV files of profile curves if these were requested:
-        # if (input$profile_ci) {
-        #
-        #   csv_profile_mu_outfile_name <- paste0(output_directory_name, "/",
-        #                                         "profile_mu_", time_stamp, ".csv")
-        #   profile_mu <- data.frame(mu = v$profileCI_std$profile_curves$mu[,1],
-        #                            likelihood = v$profileCI_std$profile_curves$mu[,2])
-        #   write.csv(profile_mu, csv_profile_mu_outfile_name, row.names = FALSE)
-        #
-        #   csv_profile_sigma_outfile_name <- paste0(output_directory_name, "/",
-        #                                            "profile_sigma_", time_stamp, ".csv")
-        #   profile_sigma <- data.frame(sigma = v$profileCI_std$profile_curves$sigma[,1],
-        #                               likelihood = v$profileCI_std$profile_curves$sigma[,2])
-        #   write.csv(profile_sigma, csv_profile_sigma_outfile_name, row.names = FALSE)
-        #
-        #   csv_profile_pi_outfile_name <- paste0(output_directory_name, "/",
-        #                                         "profile_pi_", time_stamp, ".csv")
-        #   profile_pi <- data.frame(pi = v$profileCI_std$profile_curves$pi[,1],
-        #                            likelihood = v$profileCI_std$profile_curves$pi[,2])
-        #   write.csv(profile_pi, csv_profile_pi_outfile_name, row.names = FALSE)
-        #
-        #   csv_profile_power_outfile_name <- paste0(output_directory_name, "/",
-        #                                            "profile_power_", time_stamp, ".csv")
-        #   temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_power,1) # 1st profiled parm
-        #   temp_mat[,1] <- pcurveMix:::reals_to_powers(temp_mat[,1])
-        #   profile_power <- data.frame(power = temp_mat[,1],
-        #                               likelihood = temp_mat[,2])
-        #   write.csv(profile_power, csv_profile_power_outfile_name, row.names = FALSE)
-        #
-        #   if (tails == 2) {
-        #     csv_profile_folded_normal_mu_outfile_name <- paste0(output_directory_name, "/",
-        #                                                         "profile_folded_normal_mu_", time_stamp, ".csv")
-        #     temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_mu,1) # 1st profiled parm
-        #     temp_mat[,1] <- pcurveMix:::reals_to_mus(temp_mat[,1])
-        #     profile_folded_normal_mu <- data.frame(folded_normal_mu = temp_mat[,1],
-        #                                            likelihood = temp_mat[,2])
-        #     write.csv(profile_folded_normal_mu, csv_profile_folded_normal_mu_outfile_name, row.names = FALSE)
-        #
-        #     csv_profile_folded_normal_sigma_outfile_name <- paste0(output_directory_name, "/",
-        #                                                            "profile_folded_normal_sigma_", time_stamp, ".csv")
-        #     temp_mat <- pcurveMix:::extract_profile_plot_columns(v$profileCI_folded_normal_sigma,1) # 1st profiled parm
-        #     temp_mat[,1] <- pcurveMix:::reals_to_sigmas(temp_mat[,1])
-        #     profile_folded_normal_sigma <- data.frame(folded_normal_sigma = temp_mat[,1],
-        #                                               likelihood = temp_mat[,2])
-        #     write.csv(profile_folded_normal_sigma, csv_profile_folded_normal_sigma_outfile_name, row.names = FALSE)
-        #   } # if tails == 2
-        # } # if (input$profile_ci)
-        # ### Replaced by auto_shiny_files: END
-
         # Render the rmd into the directory as well
         rmd = "pcurveMix_shiny_report.Rmd"
         params = list(
@@ -525,6 +461,7 @@ server <- function(input, output, session) {
           boot_tbl = v$boot_tbl,
           cdf_plot = v$cdf_plot,
           descriptor_tbl = v$descriptor_tbl,
+          doc_header = "Fit Ulrich & Miller (2026) p-Curve Mixture Model",
           estimates_notes = v$estimates_notes,
           estimates_tbl = v$estimates_tbl,
           jack_notes = v$jack_notes,

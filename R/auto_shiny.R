@@ -38,7 +38,7 @@ auto_shiny_compute <- function(ps, tails, alpha,
                                # p_seq_pdf = pcm_env$p_seq_pdf,
                                # profileCI_args = pcm_env$profileCI_args,
                                # round_to = pcm_env$round_to,
-                               # small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+                               # censor_at = pcm_env$censor_at
                                ) {
   fit_results_list <- fit_p_curve(ps, alpha = alpha, tails = tails)
   real_ps <- fit_results_list$check_ps_list$ps_in_bounds

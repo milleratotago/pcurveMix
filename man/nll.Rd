@@ -5,7 +5,7 @@
 \title{Compute negative log-likelihood of a p value or vector of p values
 under the model with the indicated parameters. Use the direct
 method with pdf() or use a censoring method that bins all p's
-less than small_p_bin_cutoff}
+less than censor_at}
 \usage{
 nll(
   p,
@@ -14,7 +14,7 @@ nll(
   pi = 1,
   alpha = 1,
   tails = 2,
-  small_p_bin_cutoff = get_ao("small_p_bin_cutoff")
+  censor_at = get_ao("censor_at")
 )
 }
 \arguments{
@@ -32,7 +32,7 @@ this function.}
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
 
-\item{small_p_bin_cutoff}{The cutoff point for computing likelihoods with
+\item{censor_at}{The cutoff point for computing likelihoods with
 censoring (default = NA, in which case likelihoods are computed without
 censoring)}
 }
@@ -43,5 +43,5 @@ Real negative log-likelihood of the p values
 Compute negative log-likelihood of a p value or vector of p values
 under the model with the indicated parameters. Use the direct
 method with pdf() or use a censoring method that bins all p's
-less than small_p_bin_cutoff
+less than censor_at
 }

@@ -20,6 +20,7 @@ R_FP <- "Rate_FPs"
 R_FN <- "Rate_FNs"
 N_BASE_PARMS <- 4 # mu, sigma, pi, power
 N_DERIVED_PARMS <- 6 # PR_TP ... R_FN
+DEMO_DATA_FILE_NAME <- "demo_data.csv"
 
 START_MU_DEFAULT <- 2
 START_SIGMA_DEFAULT <- 1
@@ -62,7 +63,7 @@ initialize_globals <- function() {
   pcm_env$p_seq_pdf <- seq(0.001, 0.999, 0.002)  # p values for plotting predicted PDFs
   pcm_env$profileCI_args <- list(parm = "all", profile = TRUE, mult = 2, faster = FALSE, flat = 1e-08, lb = rep(-200,3), ub = rep(200,3) )
   pcm_env$round_to <- 3
-  pcm_env$small_p_bin_cutoff <- NA
+  pcm_env$censor_at <- NA
   # pcm_env$small_rcond <- 1e-15
   # @param small_rcond The cutoff reciprocal condition number for deciding that
   #  a Fisher information matrix is ill-conditioned (default = 1e-15)
@@ -84,7 +85,7 @@ initialize_globals <- function() {
 #'  values for plots (default same as pdf with added 10^(4:10))
 #' @param optim_control A control list passed to R's optim() function
 #'  (default = NULL, in which case the optim defaults are used)
-#' @param small_p_bin_cutoff The cutoff point for computing likelihoods with
+#' @param censor_at The cutoff point for computing likelihoods with
 #'  censoring (default = NA, in which case likelihoods are computed without
 #'  censoring)
 #' @param optim_starting_parms A list or data frame of parameter combinations
@@ -116,7 +117,7 @@ set_globals <- function(
                         p_seq_pdf = NA,
                         profileCI_args = NA,  # NEWJEFF: Obsolete?
                         round_to = NA,
-                        small_p_bin_cutoff = NA,
+                        censor_at = NA,
                         # small_rcond = NA,
 
                         reset_to_defaults = FALSE
@@ -129,7 +130,7 @@ set_globals <- function(
   if (is.numeric(p_seq_pdf)) pcm_env$p_seq_pdf <- p_seq_pdf
   if (is.numeric(p_seq_cdf)) pcm_env$p_seq_cdf <- p_seq_cdf
   if (!identical(optim_control,NA)) pcm_env$optim_control <- optim_control
-  if (!is.na(small_p_bin_cutoff)) pcm_env$small_p_bin_cutoff <- small_p_bin_cutoff
+  if (!is.na(censor_at)) pcm_env$censor_at <- censor_at
   # if (!is.na(MLSEh)) pcm_env$MLSEh <- MLSEh
   # if (!is.na(small_rcond)) pcm_env$small_rcond <- small_rcond
   if (any(!is.na(optim_starting_parms))) pcm_env$optim_starting_parms <- optim_starting_parms
@@ -147,7 +148,7 @@ set_globals <- function(
             p_seq_pdf = pcm_env$p_seq_pdf,
             profileCI_args = pcm_env$profileCI_args,
             round_to = pcm_env$round_to,
-            small_p_bin_cutoff = pcm_env$small_p_bin_cutoff
+            censor_at = pcm_env$censor_at
             # small_rcond = pcm_env$small_rcond
             )
   invisible(l)

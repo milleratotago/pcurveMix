@@ -70,7 +70,7 @@ run_shiny_app()
 
 Normally you would choose your own CSV file with the $p$ values that are to be analyzed. This file must contain a column named "p" with the $p$ values from the different studies, one study per row. Other columns, if any, are ignored.
 
-For a demo run, just read in the default `demo_data.csv` file supplied with the package. This file has some random $p$ values that were generated previously (in accordance with the assumptions of the model.
+For a demo run, just read in the default demo file supplied with the package. This file has some random $p$ values that were generated previously (in accordance with the assumptions of the model.
 
 Next indicate whether the $p$ values in the file came from 1- or 2-tailed testing (because the computations are slightly different for these two cases). The demo file has 2-tailed $p$'s (the default).
 
@@ -103,7 +103,7 @@ library(pcurveMix)
 
 ```{r eval = FALSE}
 library(pcurveMix)
-set_globals(edge_p = 1e-13, small_p_bin_cutoff = 1e-9) # Changing 2 example variables
+set_globals(edge_p = 1e-13, censor_at = 1e-9) # Changing 2 example variables
 run_shiny_app()
 ```
 
@@ -113,7 +113,7 @@ After you have set the above arguments, click the `Fit model...` button and the 
 ## Maximum-likelihood fitting results
 
 ```{r, eval = TRUE, echo = FALSE}
-p_file_name <- "demo_data.csv"
+p_file_name <- pcurveMix:::DEMO_DATA_FILE_NAME
 package_path <- system.file(package = "pcurveMix")
 file_name <- paste0(package_path,"/extdata/",p_file_name)
 ```

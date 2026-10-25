@@ -120,7 +120,7 @@ ui <- tagList(
       # checkboxInput("use_demo", label = strong("Use demo file of p values"), FALSE),
       fileInput(inputId = "p_file",
                 label = "Browse to load your CSV file with a 'p' column or click 'Read demo file' to use demo data",
-                placeholder = "demo_data.csv", # Custom placeholder text
+                placeholder = pcurveMix:::DEMO_DATA_FILE_NAME, # Custom placeholder text
                 accept = ".csv"),
       actionButton("btnUploadDemo","Read demo file"),
       h2(),
@@ -230,8 +230,8 @@ ui <- tagList(
                              label_width = "400px")
         ),
 
-        inlineNumericInput("small_p_bin_cutoff",
-                           HTML("OPTIONAL: Top of small p's bin if binning is needed to counter numerical<br> errors (e.g., 1e-10 to 1e-15; smaller is better if there are no errors):"),
+        inlineNumericInput("censor_at",
+                           HTML("OPTIONAL: Top of small p bin if censoring is used to handle p's = 0 or<br> to counter numerical errors (e.g., 1e-10 or less):"),
                            value = "0", min = 0, max = 1e-7, step = 1e-10,
                            label_width = "500px"),
         # h6("(binning is not recommended unless there are numerical errors, in that case try 1e-10."),

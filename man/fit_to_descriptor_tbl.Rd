@@ -4,18 +4,16 @@
 \alias{fit_to_descriptor_tbl}
 \title{Convert the fit_p_curve fit descriptors into a nice data frame.}
 \usage{
-fit_to_descriptor_tbl(
-  fit,
-  file_name = NULL,
-  small_p_bin_cutoff = get_ao("small_p_bin_cutoff")
-)
+fit_to_descriptor_tbl(fit, file_name = NULL, censor_at = get_ao("censor_at"))
 }
 \arguments{
 \item{fit}{Output list from fit_p_curve}
 
 \item{file_name}{Optional string used to include p file name in table}
 
-\item{small_p_bin_cutoff}{Top of bin for small p's}
+\item{censor_at}{The cutoff point for computing likelihoods with
+censoring (default = NA, in which case likelihoods are computed without
+censoring)}
 }
 \value{
 A data frame
