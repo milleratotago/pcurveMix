@@ -182,7 +182,7 @@ server <- function(input, output, session) {
                          "% confidence)")
     output$boot_title <- renderText(boot_title)
     output$boot_tbl <- renderTable(v$boot_tbl, rownames = FALSE, digits = input$round_to)
-    v$boot_notes <- pcurveMix:::boot_table_notes(v$n_boot_samples,v$boot_pct_converged)
+    v$boot_notes <- pcurveMix:::boot_table_notes(v$n_boot_samples,n_ps,v$boot_pct_converged)
     output$boot_notes <- render_strings_as_bullets(v$boot_notes)
   } # do_bootstrapping
 
@@ -207,7 +207,7 @@ server <- function(input, output, session) {
                            "% confidence)")
     output$np_boot_title <- renderText(npboot_title)
     output$np_boot_tbl <- renderTable(v$np_boot_tbl, rownames = FALSE, digits = input$round_to)
-    v$np_boot_notes <- pcurveMix:::boot_table_notes(v$np_n_boot_samples,v$boot_pct_converged)
+    v$np_boot_notes <- pcurveMix:::boot_table_notes(v$np_n_boot_samples,full_sample_n,v$boot_pct_converged)
     output$np_boot_notes <- render_strings_as_bullets(v$np_boot_notes)
   } # do_npbootstrapping
 

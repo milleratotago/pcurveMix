@@ -99,6 +99,7 @@ compute_profileCI <- function(fit_list, level = get_ao("confidence_level") / 100
 # Positive log-likelihood function that is called by profileCI
 pll_profileCI <- function(par, ps, alpha = 1, tails = 2) {
   # Make sure parameters are in the order expected by nll_optim
+  # (i.e., pi = par[1], mu = par[2], sigma = par[3])
   # and then negate its result to get positive log-likelihood
   par2 <- c(par[3], par[1], par[2])
   nll <- nll_optim(par2, ps, alpha, tails)
@@ -151,16 +152,24 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
       pars["mu"] <= 0 || pars["sigma"] <= 0 ||
       pars["mu"] > 1e4 || pars["sigma"] > 1e4) return(-Inf)
 
-  density <- pcurveMix::pdf(
-    p = p_values,  # Already censored in compute_profileCI_folded()
-    pi = pars["pi"],
-    mu = pars["mu"],
-    sigma = pars["sigma"],
-    alpha = alpha,
-    tails = tails
-  )
-  if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
-  sum(log(density))
+  # pars2 <- c(pars["mu"], pars["sigma"], pars["pi"])
+  # print(pars)  # NEWJEFF
+  # print(pars2)
+  # res2 <- pll_profileCI(pars2, p_values, alpha = alpha, tails = tails)
+  res2 <- -nll(p_values, mu = pars["mu"], sigma = pars["sigma"], pi = pars["pi"],
+              alpha = alpha, tails = tails)
+  # density <- pcurveMix::pdf(
+  #   p = p_values,  # Already checked in compute_profileCI_folded()
+  #   pi = pars["pi"],
+  #   mu = pars["mu"],
+  #   sigma = pars["sigma"],
+  #   alpha = alpha,
+  #   tails = tails
+  # )
+  # if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
+  # res1 <- sum(log(density))
+  # print( paste("NEWJEFF old =",res1,"new =",res2))
+  return(res2)
 }
 
 #' Computations for profile-based confidence intervals of the derived
@@ -642,16 +651,18 @@ compute_profileCI_power <- function(fit_list, level = get_ao("confidence_level")
         pars["mu"] <= 0 || pars["sigma"] <= 0 ||
         pars["mu"] > 1e6 || pars["sigma"] > 1e6) return(-Inf)
 
-    density <- pcurveMix::pdf(
-      p = p_values,
-      pi = pars["pi"],
-      mu = pars["mu"],
-      sigma = pars["sigma"],
-      alpha = alpha,
-      tails = tails
-    )
-    if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
-    sum(log(density))
+    # density <- pcurveMix::pdf(
+    #   p = p_values,
+    #   pi = pars["pi"],
+    #   mu = pars["mu"],
+    #   sigma = pars["sigma"],
+    #   alpha = alpha,
+    #   tails = tails
+    # )
+    # if (any(!is.finite(density)) || any(density <= 0)) return(-Inf)
+    # sum(log(density))
+    res2 <- -nll(p_values, mu = pars["mu"], sigma = pars["sigma"], pi = pars["pi"],
+                 alpha = alpha, tails = tails)
   }
 
   # NEWJEFF: Error here when censoring at small_p_bin_cutoff == .001, .0001, .00001
