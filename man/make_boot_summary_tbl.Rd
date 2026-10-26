@@ -20,7 +20,7 @@ original MLE estimates used as parameter values for parametric bootstrapping}
 (e.g., bootstrap samples), with one row per dataset and columns for parameters.}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95).}
+intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
 
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}

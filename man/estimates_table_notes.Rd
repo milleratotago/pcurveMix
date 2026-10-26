@@ -10,7 +10,7 @@ estimates_table_notes(converged, confidence_level = get_ao("confidence_level"))
 \item{converged}{Boolean indicating whether the optim estimation process converged}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95).}
+intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
 }
 \value{
 A vector of strings

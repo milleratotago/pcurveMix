@@ -75,24 +75,24 @@ initialize_globals <- function() {
 #' @examples
 #' set_globals(confidence_level = 99, fast_boot_jack = FALSE)
 set_globals <- function(
-                        bias_correct_ci_bounds = NA,
-                        confidence_level = NA,
-                        edge_p = NA,
-                        fast_boot_jack = NA,
-                        # MLSEh = NA,
-                        # @param MLSEh Small +/- increment to parameter values used in computing
-                        #  the Fisher information matrix (default = 1e-7)
-                        optim_control = NA,
-                        optim_starting_parms = NA,
-                        p_seq_cdf = NA,
-                        p_seq_pdf = NA,
-                        profileCI_args = NA,
-                        round_to = NA,
-                        censor_at = NA,
-                        # small_rcond = NA,
+    bias_correct_ci_bounds = NA,
+    confidence_level = NA,
+    edge_p = NA,
+    fast_boot_jack = NA,
+    # MLSEh = NA,
+    # @param MLSEh Small +/- increment to parameter values used in computing
+    #  the Fisher information matrix (default = 1e-7)
+    optim_control = NA,
+    optim_starting_parms = NA,
+    p_seq_cdf = NA,
+    p_seq_pdf = NA,
+    profileCI_args = NA,
+    round_to = NA,
+    censor_at = NA,
+    # small_rcond = NA,
 
-                        reset_to_defaults = FALSE
-                        ) {
+    reset_to_defaults = FALSE
+) {
   if (reset_to_defaults) initialize_globals()
   if (!is.na(confidence_level)) pcm_env$confidence_level <- confidence_level
   if (!is.na(round_to)) pcm_env$round_to <- round_to
@@ -108,20 +108,20 @@ set_globals <- function(
   if (any(!is.na(profileCI_args))) pcm_env$profileCI_args <- profileCI_args
   if (!is.na(fast_boot_jack)) pcm_env$fast_boot_jack <- fast_boot_jack
   l <- list(
-            bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
-            confidence_level = pcm_env$confidence_level,
-            edge_p = pcm_env$edge_p,
-            fast_boot_jack = pcm_env$fast_boot_jack,
-            # MLSEh = pcm_env$MLSEh,
-            optim_control = pcm_env$optim_control,
-            optim_starting_parms = pcm_env$optim_starting_parms,
-            p_seq_cdf = pcm_env$p_seq_cdf,
-            p_seq_pdf = pcm_env$p_seq_pdf,
-            profileCI_args = pcm_env$profileCI_args,
-            round_to = pcm_env$round_to,
-            censor_at = pcm_env$censor_at
-            # small_rcond = pcm_env$small_rcond
-            )
+    bias_correct_ci_bounds = pcm_env$bias_correct_ci_bounds,
+    confidence_level = pcm_env$confidence_level,
+    edge_p = pcm_env$edge_p,
+    fast_boot_jack = pcm_env$fast_boot_jack,
+    # MLSEh = pcm_env$MLSEh,
+    optim_control = pcm_env$optim_control,
+    optim_starting_parms = pcm_env$optim_starting_parms,
+    p_seq_cdf = pcm_env$p_seq_cdf,
+    p_seq_pdf = pcm_env$p_seq_pdf,
+    profileCI_args = pcm_env$profileCI_args,
+    round_to = pcm_env$round_to,
+    censor_at = pcm_env$censor_at
+    # small_rcond = pcm_env$small_rcond
+  )
   invisible(l)
 }
 
@@ -138,8 +138,8 @@ set_globals <- function(
 #'  results in the vector of p's that is to be fit.
 #' @export
 make_optim_starting_parms_df <- function(mu = c(0.25, 1.0, 2.0),
-                                        sigma = c(1, 2, 4),
-                                        pi = c(0.2, 0.5, 0.8) ) {
+                                         sigma = c(1, 2, 4),
+                                         pi = c(0.2, 0.5, 0.8) ) {
   start_df <- expand.grid(mu = mu, sigma = sigma, pi = pi)
   return(start_df)
 }

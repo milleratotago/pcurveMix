@@ -43,7 +43,6 @@ get_parm_summaries <- function(estimates, parms_to_summarize = "All",
   return(as.data.frame(summaries))
 }
 
-# NEWJEFF: inheritParams get_parm_summaries parms_to_summarize wide_table_output
 #' Compute a long-format data frame with quantile values for each parameter
 #' @inheritParams pcurveMix-package
 #' @inheritParams get_parm_summaries
@@ -106,15 +105,13 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_se, full_sample_n, t_crit
 #'  jackknife stats associated with each parameter & t confidence intervals.
 #' @inheritParams pcurveMix-package
 #' @param ests_orig A list with numerical values of the full-sample estimates
-#'  for each parameter
+#'  for each parameter.
 #' @param jackknife_summaries Data frame produced by get_parm_summaries() from
-#'  the jackknife subsample parameter estimates
+#'  the jackknife subsample parameter estimates.
 #' @param full_sample_n Number of observations in the original dataset from
-#'  which est_orig values were computed
-#' @inheritParams pcurveMix-package
-#' @inheritParams fit_to_estimates_tbl
+#'  which est_orig values were computed.
 #' @returns data frame with rows for parms and cols for bias_corrected_estimate,
-#'  bias, jack_se, lower_bound, and upper_bound
+#'  bias, jack_se, lower_bound, and upper_bound.
 #' @export
 make_jackknife_tbl <- function(ests_orig, jackknife_summaries, full_sample_n,
                                confidence_level = get_ao("confidence_level"),

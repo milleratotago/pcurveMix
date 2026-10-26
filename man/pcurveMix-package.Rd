@@ -18,7 +18,7 @@ censoring (default = NA, in which case likelihoods are computed without
 censoring).}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95).}
+intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
 
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-20)}
@@ -33,6 +33,8 @@ starting values given by pcm_env$optim_starting_parms.}
 
 \item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
+\item{mu}{Mean of noncentrality parameters when H1 is true}
+
 \item{optim_control}{A control list passed to R's optim() function
 (default = NULL, in which case the optim defaults are used).}
 
@@ -45,10 +47,16 @@ values for plots (default same as pdf with added 10^(4:10)).}
 \item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
 values for plots (default = seq(0.001, 0.999, 0.002)).}
 
+\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)}
+
 \item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
 
 \item{round_to}{Integer number of decimal places to display (default = 3, use
 NULL for no rounding).}
+
+\item{sigma}{Standard deviation of noncentrality parameters when H1 is true}
+
+\item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
 }
 \description{
 Package for computations and fitting with the p-curve mixture model of Ulrich & Miller (2026). According to the model, p values from statistical tests come from a mixture distribution with some proportion 'pi' of studies having a true effect (H1 is true), whereas the remaining studies have no true effect (H0 is true). Among studies with H1 true, the noncentrality parameter is normally distributed with mean 'mu' and standard deviation 'sigma'. Package functions can fit the model to a set of observed p values by estimating the underlying 'pi', 'mu', and 'sigma' values, and they can also provide the model's true PDF and CDF values of specific p's given particular values of the model's parameters 'pi', 'mu', and 'sigma'. Confidence intervals for the parameter values can be obtained by parametric or nonparametric bootstrapping, jackknifing, or likelihood profiling.

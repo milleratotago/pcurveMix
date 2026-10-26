@@ -20,7 +20,7 @@ boot_table_notes(
 \item{pct_converged}{Percentage of bootstrap samples for which estimation converged}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95).}
+intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
 
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}

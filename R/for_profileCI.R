@@ -515,11 +515,11 @@ compute_profileCI_power <- function(fit_results_list, confidence_level = get_ao(
 #### END of Special routines for computing profileCIs of power
 
 #' Function to produce summary table of profile confidence interval values
+#' @inheritParams pcurveMix-package
 #' @param profileCI_std Profile result list for mu, sigma, and pi
 #' @param profileCI_power Profile result list for power
 #' @param profileCI_folded_normal_mu Profile result list for mu
 #' @param profileCI_folded_normal_sigma Profile result list for sigma
-#' @inheritParams fit_to_estimates_tbl round_to
 #' @export
 make_profile_ci_tbl <- function(profileCI_std,
                                 profileCI_power,

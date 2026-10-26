@@ -3,10 +3,6 @@
 #' Generate random p values from the mixture model.
 #' @inheritParams pcurveMix-package
 #' @param n Number of random p values to be generated
-#' @param mu Mean of noncentrality parameters when H1 is true
-#' @param sigma Standard deviation of noncentrality parameters when H1 is true
-#' @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)
-#' @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
 #' @param cond_method Set to string "rejection" (default) or "inversion" to generate random
 #'  p's from conditional distribution via rejection or quantile method. Rejection generates
 #'  values 0-1 but only keeps those less than alpha. Inversion uses numerical search of the p

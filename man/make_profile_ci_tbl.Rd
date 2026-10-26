@@ -21,7 +21,8 @@ make_profile_ci_tbl(
 
 \item{profileCI_folded_normal_sigma}{Profile result list for sigma}
 
-\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
+\item{round_to}{Integer number of decimal places to display (default = 3, use
+NULL for no rounding).}
 }
 \description{
 Function to produce summary table of profile confidence interval values

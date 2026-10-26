@@ -3,10 +3,6 @@
 #' Compute PDF(s) of p values for random-effects model.
 #' @inheritParams pcurveMix-package
 #' @param p Real 0-1 single p value or vector of p's for which function values are to be computed
-#' @param mu Mean of noncentrality parameters when H1 is true
-#' @param sigma Standard deviation of noncentrality parameters when H1 is true
-#' @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)
-#' @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
 #' @returns Real PDF value or vector of PDF values
 #' @export
 pdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {

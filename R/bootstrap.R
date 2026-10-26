@@ -53,7 +53,6 @@ get_ci_bounds <- function(means, sds, confidence_level = get_ao("confidence_leve
 
 #' Function to summarize the data frame produced by parametric or nonparametric bootstrapping.
 #' @inheritParams pcurveMix-package
-#' @inheritParams fit_to_estimates_tbl
 #' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
 #'  original MLE estimates used as parameter values for parametric bootstrapping
 #' @returns A data frame with the means and sds of bootstrap sample

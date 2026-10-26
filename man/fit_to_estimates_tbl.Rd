@@ -9,7 +9,8 @@ fit_to_estimates_tbl(fit_results_list, round_to = get_ao("round_to"))
 \arguments{
 \item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
-\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
+\item{round_to}{Integer number of decimal places to display (default = 3, use
+NULL for no rounding).}
 }
 \value{
 A data frame

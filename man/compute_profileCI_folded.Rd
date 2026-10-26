@@ -20,7 +20,7 @@ compute_profileCI_folded(
 and FALSE requests CI for folded normal sigma.}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95).}
+intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
 }
 \value{
 A list with the following elements:

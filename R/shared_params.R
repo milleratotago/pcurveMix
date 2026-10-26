@@ -2,6 +2,9 @@
 # This file defines parameter specifications for parameters used across multiple functions.
 # Functions that use these parameters should include inheritParams pcurveMix-package
 # THOSE FUNCTIONS MUST NOT INCLUDE ANY OTHER inheritParams specs selecting specific parameters
+#
+# Note that recursive inheritance is OK, so an R package function using roxygen2 can inherit
+# parameters from another function, which in turn inherited them from a third function.
 
 #' pcurveMix: Shared Parameter Documentation
 #'
@@ -14,7 +17,7 @@
 #'  censoring (default = NA, in which case likelihoods are computed without
 #'  censoring).
 #' @param confidence_level A numeric value 0-100 used in computing confidence
-#'  intervals (default = 95).
+#'  intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-20)
 #' @param estimates Data frame of parameter estimates for many datasets
@@ -24,6 +27,7 @@
 #'  parameter values, which is faster than running it from the default grid of
 #'  starting values given by pcm_env$optim_starting_parms.
 #' @param fit_results_list List returned by fit_p_curve() with results of model fitting.
+#' @param mu Mean of noncentrality parameters when H1 is true
 #' @param optim_control A control list passed to R's optim() function
 #'  (default = NULL, in which case the optim defaults are used).
 #' @param optim_starting_parms A list or data frame of parameter combinations
@@ -32,30 +36,28 @@
 #'  values for plots (default same as pdf with added 10^(4:10)).
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
 #'  values for plots (default = seq(0.001, 0.999, 0.002)).
+#' @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)
 #' @param profileCI_args A list of optional arguments to be passed to profileCI.
 #' @param round_to Integer number of decimal places to display (default = 3, use
 #'  NULL for no rounding).
+#' @param sigma Standard deviation of noncentrality parameters when H1 is true
+#' @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
 #'
 #' @docType _PACKAGE
 #' @keywords internal
 "_PACKAGE"
 
 # start_parms
-# @param cond_method SINGULAR Set to string "rejection" (default) or "inversion" to generate random
-# @param converged SINGULAR Boolean indicating whether the optim estimation process converged
-# @param ests_orig SINGULAR A list with numerical values of the full-sample estimates
-# @param file_name SINGULAR Optional string used to include p file name in table
-# @param file_name_prefix SINGULAR String prepended to output file names (default = "").
-# @param fit List output of fit_p_curve function
-# @param fit Output list from fit_p_curve
-# @param fit Output list from fit_p_curve
-# @param full_sample_n Number of observations in the original dataset from
-# @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny
-# @param lhs A value or the magrittr placeholder.
-# @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
-# @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
-# @param mu Mean of noncentrality parameters when H1 is true
-# @param mu Mean of noncentrality parameters when H1 is true
+# SINGULAR @param cond_method Set to string "rejection" (default) or "inversion" to generate random
+# SINGULAR @param converged Boolean indicating whether the optim estimation process converged
+# SINGULAR @param ests_orig A list with numerical values of the full-sample estimates
+# SINGULAR @param file_name Optional string used to include p file name in table
+# SINGULAR @param file_name_prefix String prepended to output file names (default = "").
+# SINGULAR @param full_sample_n Number of observations in the original dataset from
+# SINGULAR @param generate_time_stamp
+# SINGULAR @param lhs A value or the magrittr placeholder.
+# SINGULAR @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
+# SINGULAR @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
 # @param mu Vector of different starting values of the mu parameter
 # @param n Number of random p values to be generated
 # @param n_boot_samples Number of bootstrap samples to take
@@ -78,9 +80,6 @@
 # @param parms_to_summarize String vector with names of parameters to estimate
 # @param pct_converged Percentage of bootstrap samples for which estimation converged
 # @param pct_converged Percentage of jackknife subsamples for which estimation converged
-# @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)
-# @param pi Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)
-# @param pi Vector of different starting values of the pi parameter.
 # @param profileCI_folded_normal_mu Profile result list for mu
 # @param profileCI_folded_normal_sigma Profile result list for sigma
 # @param profileCI_power Profile result list for power
@@ -95,11 +94,7 @@
 # @param sample_size Number of p's in each bootstrap sample
 # @param show_error Show error message if any p value is out of
 # @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
-# @param sigma Standard deviation of noncentrality parameters when H1 is true
-# @param sigma Standard deviation of noncentrality parameters when H1 is true
 # @param sigma Vector of different starting values of the sigma parameter
-# @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
-# @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
 # @param target_cdfs The CDFs of the p-curve distribution at which to determine the quantile p value
 # @param SINGULAR target_folded_normal_mu Boolean where TRUE requests CI for folded normal mu
 # @param tol Real tolerance when generating p's via quantiles (default = 1e-8)

@@ -155,7 +155,6 @@ ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
 
 #' Convert the fit_p_curve parameter estimates into a nice data frame.
 #' @inheritParams pcurveMix-package
-#' @param round_to Integer number of decimal places for rounding; use NULL for no rounding.
 #' @returns A data frame
 #' @importFrom rlang .data
 #' @export

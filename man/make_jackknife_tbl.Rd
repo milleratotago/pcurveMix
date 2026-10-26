@@ -16,16 +16,16 @@ make_jackknife_tbl(
 }
 \arguments{
 \item{ests_orig}{A list with numerical values of the full-sample estimates
-for each parameter}
+for each parameter.}
 
 \item{jackknife_summaries}{Data frame produced by get_parm_summaries() from
-the jackknife subsample parameter estimates}
+the jackknife subsample parameter estimates.}
 
 \item{full_sample_n}{Number of observations in the original dataset from
-which est_orig values were computed}
+which est_orig values were computed.}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95).}
+intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
 
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}
@@ -35,7 +35,7 @@ NULL for no rounding).}
 }
 \value{
 data frame with rows for parms and cols for bias_corrected_estimate,
-bias, jack_se, lower_bound, and upper_bound
+bias, jack_se, lower_bound, and upper_bound.
 }
 \description{
 Function to make a data frame with rows for parms and cols for
