@@ -14,7 +14,7 @@
 #'  censoring (default = NA, in which case likelihoods are computed without
 #'  censoring).
 #' @param confidence_level A numeric value 0-100 used in computing confidence
-#'  intervals (default = 95).
+#'  intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-20)
 #' @param estimates Data frame of parameter estimates for many datasets
@@ -40,7 +40,7 @@
 #' @keywords internal
 "_PACKAGE"
 
-
+# start_parms
 # @param cond_method SINGULAR Set to string "rejection" (default) or "inversion" to generate random
 # @param converged SINGULAR Boolean indicating whether the optim estimation process converged
 # @param ests_orig SINGULAR A list with numerical values of the full-sample estimates
@@ -50,7 +50,6 @@
 # @param fit Output list from fit_p_curve
 # @param fit Output list from fit_p_curve
 # @param full_sample_n Number of observations in the original dataset from
-# @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny
 # @param lhs A value or the magrittr placeholder.
 # @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
 # @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
@@ -73,7 +72,6 @@
 # @param p Real 0-1 p value or vector for which nll is to be computed. p values
 # @param p Real 0-1 single p value or vector of p's for which function values are to be computed
 # @param p Vector of to-be-fitted p values in 0--1
-# @param p_seq Sequence of p values at which to compute predictions
 # @param params Output list produced by auto_shiny function.
 # @param params Output list produced by auto_shiny function.
 # @param parms_to_summarize String vector with names of parameters to estimate

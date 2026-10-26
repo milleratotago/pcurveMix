@@ -5,13 +5,13 @@
 \title{Make a simple plot of observed p histogram and
 predicted pdf density}
 \usage{
-make_pdf_plot(fit, p_seq = NULL)
+make_pdf_plot(fit_results_list, p_seq_pdf = NULL)
 }
 \arguments{
-\item{fit}{List output of fit_p_curve function}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
-\item{p_seq}{Sequence of p values at which to compute predictions
-(default NULL)}
+\item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
+values for plots (default = seq(0.001, 0.999, 0.002)).}
 }
 \value{
 Figure object made by ggplot

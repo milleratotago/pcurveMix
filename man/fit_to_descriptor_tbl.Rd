@@ -2,12 +2,16 @@
 % Please edit documentation in R/fitting.R
 \name{fit_to_descriptor_tbl}
 \alias{fit_to_descriptor_tbl}
-\title{Convert the fit_p_curve fit descriptors into a nice data frame.}
+\title{Convert the fit_p_curve fit_results_list descriptors into a nice data frame.}
 \usage{
-fit_to_descriptor_tbl(fit, file_name = NULL, censor_at = get_ao("censor_at"))
+fit_to_descriptor_tbl(
+  fit_results_list,
+  file_name = NULL,
+  censor_at = get_ao("censor_at")
+)
 }
 \arguments{
-\item{fit}{Output list from fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
 \item{file_name}{Optional string used to include p file name in table.}
 
@@ -19,5 +23,5 @@ censoring).}
 A data frame with rows describing fitting conditions.
 }
 \description{
-Convert the fit_p_curve fit descriptors into a nice data frame.
+Convert the fit_p_curve fit_results_list descriptors into a nice data frame.
 }

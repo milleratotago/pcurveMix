@@ -4,10 +4,10 @@
 \alias{fit_to_estimates_tbl}
 \title{Convert the fit_p_curve parameter estimates into a nice data frame.}
 \usage{
-fit_to_estimates_tbl(fit, round_to = get_ao("round_to"))
+fit_to_estimates_tbl(fit_results_list, round_to = get_ao("round_to"))
 }
 \arguments{
-\item{fit}{Output list from fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
 \item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
 }

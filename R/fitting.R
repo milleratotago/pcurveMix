@@ -154,25 +154,25 @@ ks_with_cdf <- function(p, cdf_fun, jitter_scale = 1e-9) {
 }
 
 #' Convert the fit_p_curve parameter estimates into a nice data frame.
-#' @param fit Output list from fit_p_curve
+#' @inheritParams pcurveMix-package
 #' @param round_to Integer number of decimal places for rounding; use NULL for no rounding.
 #' @returns A data frame
 #' @importFrom rlang .data
 #' @export
-fit_to_estimates_tbl <- function(fit, round_to = get_ao("round_to") ) {
+fit_to_estimates_tbl <- function(fit_results_list, round_to = get_ao("round_to") ) {
   mle_tbl <- data.frame(
     parameter = c("pi","mu","sigma","power"),
-    estimate  = c(fit$pi, fit$mu, fit$sigma, fit$power),
+    estimate  = c(fit_results_list$pi, fit_results_list$mu, fit_results_list$sigma, fit_results_list$power),
     # NWJEFF PROGRAM NOTE: Wald_se etc removed because Hessian on nonlinear scale, but remember
     #  that profileCI uses Hessian results
-    # Wald_se   = c(if (!is.null(fit$se)) fit$se else c(NA,NA,NA), NA),
-    # Wald_lwr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_LOWER_BOUND_LABEL] else c(NA,NA,NA), NA),
-    # Wald_upr  = c(if (!is.null(fit$conf_int)) fit$conf_int[, CI_UPPER_BOUND_LABEL] else c(NA,NA,NA), NA),
+    # Wald_se   = c(if (!is.null(fit_results_list$se)) fit_results_list$se else c(NA,NA,NA), NA),
+    # Wald_lwr  = c(if (!is.null(fit_results_list$conf_int)) fit_results_list$conf_int[, CI_LOWER_BOUND_LABEL] else c(NA,NA,NA), NA),
+    # Wald_upr  = c(if (!is.null(fit_results_list$conf_int)) fit_results_list$conf_int[, CI_UPPER_BOUND_LABEL] else c(NA,NA,NA), NA),
     row.names = NULL
   )
-  if (fit$tails == 2) {
-    folded_normal_mu <- mean_folded_normal(fit$mu, fit$sigma)
-    folded_normal_sigma <- sd_folded_normal(fit$mu, fit$sigma)
+  if (fit_results_list$tails == 2) {
+    folded_normal_mu <- mean_folded_normal(fit_results_list$mu, fit_results_list$sigma)
+    folded_normal_sigma <- sd_folded_normal(fit_results_list$mu, fit_results_list$sigma)
     folded_normal_cols <- data.frame(
       parameter = c(FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL),
       estimate  = c(folded_normal_mu, folded_normal_sigma),
@@ -185,7 +185,8 @@ fit_to_estimates_tbl <- function(fit, round_to = get_ao("round_to") ) {
   }
   derived_tbl <- data.frame(
     parameter = c(PR_TP, PR_FN, PR_FP, PR_TN, R_FP, R_FN),
-    estimate  = c(fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]], fit[[R_FP]], fit[[R_FN]]),
+    estimate  = c(fit_results_list[[PR_TP]], fit_results_list[[PR_FN]], fit_results_list[[PR_FP]],
+                  fit_results_list[[PR_TN]], fit_results_list[[R_FP]], fit_results_list[[R_FN]]),
     # Wald_se   = c(NA, NA, NA, NA, NA, NA),
     # Wald_lwr  = c(NA, NA, NA, NA, NA, NA),
     # Wald_upr  = c(NA, NA, NA, NA, NA, NA),
@@ -222,24 +223,23 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
   return(descriptors)
 }
 
-#' Convert the fit_p_curve fit descriptors into a nice data frame.
+#' Convert the fit_p_curve fit_results_list descriptors into a nice data frame.
 #' @inheritParams pcurveMix-package
-#' @param fit Output list from fit_p_curve
 #' @param file_name Optional string used to include p file name in table.
 #' @returns A data frame with rows describing fitting conditions.
 #' @export
-fit_to_descriptor_tbl <- function(fit, file_name = NULL,
+fit_to_descriptor_tbl <- function(fit_results_list, file_name = NULL,
                                   censor_at = get_ao("censor_at")) {
   round_to <- get_ao("round_to")
   descriptor_tbl <- data.frame()
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("** pcurveMix version:",
                                                      as.character(utils::packageVersion("pcurveMix"))))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING OPTIONS---", "-------------"))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit$alpha,round_to))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit$tails,0))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit$alpha_sig,round_to))))
-  if (any(!is.na(fit$start_parm_set))) {
-    descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit$start_parm_set) )
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha",as.character(round(fit_results_list$alpha,round_to))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("tails",as.character(round(fit_results_list$tails,0))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("alpha_sig",as.character(round(fit_results_list$alpha_sig,round_to))))
+  if (any(!is.na(fit_results_list$start_parm_set))) {
+    descriptor_tbl <- rbind(descriptor_tbl, starting_parms_to_descriptors(fit_results_list$start_parm_set) )
   }
   edge_p <- get_ao("edge_p")
   s_edge_p <- paste(edge_p)
@@ -258,27 +258,27 @@ fit_to_descriptor_tbl <- function(fit, file_name = NULL,
   # NEWJEFF: fast_boot_jack & optim_control not shown in descriptor table
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---DATASET OF p's---", "-------------"))
   if (!is.null(file_name)) descriptor_tbl <- rbind(descriptor_tbl, descriptor("file name", file_name))
-  if (fit$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_small,"p's < 0")))
-  if (fit$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit$check_ps_list$n_too_large,"p's > ",fit$alpha)))
-  if (fit$check_ps_list$n_nearly_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit$check_ps_list$n_nearly_zero,"p's near 0 set to",pcm_env$edge_p)))
-  if (fit$check_ps_list$n_nearly_one > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit$check_ps_list$n_nearly_one,"p's near 1 set to 1 -",pcm_env$edge_p)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit$n,0))))
-  smin <- formatC(fit$min_p, format = "e", digits = 6)
-  if (fit$max_p < 0.001) {
-    smax <- formatC(fit$max_p, format = "e", digits = 6)
+  if (fit_results_list$check_ps_list$n_too_small > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit_results_list$check_ps_list$n_too_small,"p's < 0")))
+  if (fit_results_list$check_ps_list$n_too_large > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("****** WARNING: ******", paste("excluded",fit_results_list$check_ps_list$n_too_large,"p's > ",fit_results_list$alpha)))
+  if (fit_results_list$check_ps_list$n_nearly_zero > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit_results_list$check_ps_list$n_nearly_zero,"p's near 0 set to",pcm_env$edge_p)))
+  if (fit_results_list$check_ps_list$n_nearly_one > 0) descriptor_tbl <- rbind(descriptor_tbl, descriptor("INFORMATION:", paste(fit_results_list$check_ps_list$n_nearly_one,"p's near 1 set to 1 -",pcm_env$edge_p)))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("n_fitted_p's", as.character(round(fit_results_list$n,0))))
+  smin <- formatC(fit_results_list$min_p, format = "e", digits = 6)
+  if (fit_results_list$max_p < 0.001) {
+    smax <- formatC(fit_results_list$max_p, format = "e", digits = 6)
   } else {
-    smax <- as.character(round(fit$max_p,6))
+    smax <- as.character(round(fit_results_list$max_p,6))
   }
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("min(p)", smin))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("max(p)", smax))
   descriptor_tbl <- rbind(descriptor_tbl, descriptor("---FITTING RESULTS---", "-------------"))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("fit converged",as.character(fit$converged)))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("log likelihood",as.character(round(fit$logLik,3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s statistic",as.character(round(fit$ks$statistic,3))))
-  descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s p value",as.character(round(fit$ks$p.value,5))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("fit converged",as.character(fit_results_list$converged)))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("log likelihood",as.character(round(fit_results_list$logLik,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s statistic",as.character(round(fit_results_list$ks$statistic,3))))
+  descriptor_tbl <- rbind(descriptor_tbl, descriptor("k-s p value",as.character(round(fit_results_list$ks$p.value,5))))
   # The next two are now considered parameter estimates.
-  # descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_MU_LABEL,as.character(round(fit[[FOLDED_NORMAL_MU_LABEL]],3))))
-  # descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_SIGMA_LABEL,as.character(round(fit[[FOLDED_NORMAL_SIGMA_LABEL]],3))))
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_MU_LABEL,as.character(round(fit_results_list[[FOLDED_NORMAL_MU_LABEL]],3))))
+  # descriptor_tbl <- rbind(descriptor_tbl, descriptor(FOLDED_NORMAL_SIGMA_LABEL,as.character(round(fit_results_list[[FOLDED_NORMAL_SIGMA_LABEL]],3))))
   rownames(descriptor_tbl) <- NULL
   return(descriptor_tbl)
 }
@@ -288,7 +288,6 @@ descriptor <- function(slabel, svalue) {
   return(tbl)
 }
 
-#
 estimate_names <- function(tails, want_converged = TRUE) {
   if (tails == 2) {
     parm_names <- c("mu", "sigma", "pi", "power", FOLDED_NORMAL_MU_LABEL, FOLDED_NORMAL_SIGMA_LABEL)
@@ -301,21 +300,21 @@ estimate_names <- function(tails, want_converged = TRUE) {
 }
 
 #' Function to extract estimated parameter values to a vector.
-#' @inheritParams fit_to_estimates_tbl fit
+#' @inheritParams pcurveMix-package
 #' @param want_names Boolean indicating whether vector elements should be named,
 #'  which is slightly slower (default = TRUE)
 #' @param want_converged Boolean with default TRUE indicating that the boolean
 #'  value of converged should be included in the output vector
 #' @returns Vector of mu, sigma, pi, power, and folded_normal mu/sigma if 2-tails
 #' @export
-fit_to_parms_vec <- function(fit, want_names = TRUE, want_converged = TRUE) {
+fit_to_parms_vec <- function(fit_results_list, want_names = TRUE, want_converged = TRUE) {
   # ORDER OF PARMS MUST MATCH IN fit_to_parms_vec() AND estimate_names()
-  parms <- c(fit$mu, fit$sigma, fit$pi, fit$power)
-  if (fit$tails == 2) parms <- c(parms, mean_folded_normal(fit$mu, fit$sigma), sd_folded_normal(fit$mu, fit$sigma))
-  parms <- c(parms, fit[[PR_TP]], fit[[PR_FN]], fit[[PR_FP]], fit[[PR_TN]],
-             fit[[R_FP]], fit[[R_FN]])
-  if (want_converged)  parms <- c(parms, fit$converged)
-  if (want_names) names(parms) <- estimate_names(fit$tails, want_converged = want_converged)
+  parms <- c(fit_results_list$mu, fit_results_list$sigma, fit_results_list$pi, fit_results_list$power)
+  if (fit_results_list$tails == 2) parms <- c(parms, mean_folded_normal(fit_results_list$mu, fit_results_list$sigma), sd_folded_normal(fit_results_list$mu, fit_results_list$sigma))
+  parms <- c(parms, fit_results_list[[PR_TP]], fit_results_list[[PR_FN]], fit_results_list[[PR_FP]], fit_results_list[[PR_TN]],
+             fit_results_list[[R_FP]], fit_results_list[[R_FN]])
+  if (want_converged)  parms <- c(parms, fit_results_list$converged)
+  if (want_names) names(parms) <- estimate_names(fit_results_list$tails, want_converged = want_converged)
   return(parms)
 }
 

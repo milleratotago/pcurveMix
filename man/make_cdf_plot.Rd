@@ -5,13 +5,13 @@
 \title{Make a simple plot of observed p cumulative histogram and
 predicted cdf}
 \usage{
-make_cdf_plot(fit, p_seq = NULL)
+make_cdf_plot(fit_results_list, p_seq_cdf = NULL)
 }
 \arguments{
-\item{fit}{List output of fit_p_curve function}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
-\item{p_seq}{Sequence of p values at which to compute predictions
-(default NULL)}
+\item{p_seq_cdf}{Sequence of p values at which to compute predicted cdf
+values for plots (default same as pdf with added 10^(4:10)).}
 }
 \value{
 Figure object made by ggplot

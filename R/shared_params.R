@@ -40,7 +40,7 @@
 #' @keywords internal
 "_PACKAGE"
 
-
+# start_parms
 # @param cond_method SINGULAR Set to string "rejection" (default) or "inversion" to generate random
 # @param converged SINGULAR Boolean indicating whether the optim estimation process converged
 # @param ests_orig SINGULAR A list with numerical values of the full-sample estimates
@@ -49,8 +49,6 @@
 # @param fit List output of fit_p_curve function
 # @param fit Output list from fit_p_curve
 # @param fit Output list from fit_p_curve
-# @param fit_list A list that was the output of fit_p_curve
-# @param fit_list 
 # @param full_sample_n Number of observations in the original dataset from
 # @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny
 # @param lhs A value or the magrittr placeholder.
@@ -75,7 +73,6 @@
 # @param p Real 0-1 p value or vector for which nll is to be computed. p values
 # @param p Real 0-1 single p value or vector of p's for which function values are to be computed
 # @param p Vector of to-be-fitted p values in 0--1
-# @param p_seq Sequence of p values at which to compute predictions
 # @param params Output list produced by auto_shiny function.
 # @param params Output list produced by auto_shiny function.
 # @param parms_to_summarize String vector with names of parameters to estimate

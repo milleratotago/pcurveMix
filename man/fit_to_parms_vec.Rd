@@ -4,10 +4,10 @@
 \alias{fit_to_parms_vec}
 \title{Function to extract estimated parameter values to a vector.}
 \usage{
-fit_to_parms_vec(fit, want_names = TRUE, want_converged = TRUE)
+fit_to_parms_vec(fit_results_list, want_names = TRUE, want_converged = TRUE)
 }
 \arguments{
-\item{fit}{Output list from fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
 \item{want_names}{Boolean indicating whether vector elements should be named,
 which is slightly slower (default = TRUE)}
