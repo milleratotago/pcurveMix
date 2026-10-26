@@ -15,7 +15,7 @@
 #'  Use 0 to skip this bootstrapping (default = 100)
 #' @param ps_label A string label to identify this set of p's in the
 #'  analysis descriptor table
-#' @inheritParams set_globals
+#' @inheritParams pcurveMix-package
 #' @inheritParams fit_p_curve
 #' @returns List with params for pcurveMix_shiny_report.Rmd
 #' @export

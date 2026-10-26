@@ -48,7 +48,8 @@ values for plots (default = seq(0.001, 0.999, 0.002))}
 
 \item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
 
-\item{round_to}{Number of decimal places to display (default = 3)}
+\item{round_to}{Integer number of decimal places to display (default = 3, use
+NULL for no rounding).}
 
 \item{censor_at}{The cutoff point for computing likelihoods with
 censoring (default = NA, in which case likelihoods are computed without

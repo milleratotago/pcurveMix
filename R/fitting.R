@@ -4,11 +4,11 @@
 #'  under the model with the indicated parameters. Use the direct
 #'  method with pdf() or use a censoring method that bins all p's
 #'  less than censor_at
+#' @inheritParams pcurveMix-package
 #' @param p Real 0-1 p value or vector for which nll is to be computed. p values
 #'  should be checked to make sure they are in range (0--1] before calling
 #'  this function.
 #' @inheritParams pdf
-#' @inheritParams set_globals
 #' @returns Real negative log-likelihood of the p values
 #' @export
 nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
@@ -60,13 +60,13 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' Fit estimates of the model parameters pi, mu, sigma to a vector of p values.
 #' Repeatedly fit model with multiple starting points,
 #'  saving at the end the best fit.
-#' @param p Vector of to-be-fitted p values in 0--1
 #' @inheritParams pcurveMix-package
+#' @param p Vector of to-be-fitted p values in 0--1
 #' @inheritParams pdf
 #' @param want_optim_hessian Boolean indicating whether optim() should compute
 #'  the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 #'  hessian is not used)
-#' @param start_parms Either a list of starting parameter values for the optim search,
+#' @param start_parms Either a single list of starting parameter values for the optim search,
 #'  or else a data frame where each row is a combination of starting parameter values
 #'  and the function tries all combinations (defaults to optim_starting_parms).
 #' @returns List including estimated parameter values, their standard errors
@@ -85,7 +85,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
 #                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
 #                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
   p <- as.numeric(p)
-  check_ps_list <- check_ps(p, alpha_cutoff = alpha)
+  check_ps_list <- check_ps(p, alpha = alpha)
   p <- check_ps_list$ps_in_bounds
   if (!length(p)) stop("No valid p-values in (0,1).")
   single_start <- !is.data.frame(start_parms)
@@ -124,7 +124,7 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
 #' Fit estimates of model pi, mu, sigma to a vector of p values starting from
 #'  a single combination of parameter values.
 #' @inheritParams fit_p_curve
-#' @param start A list of starting parameter values for mu, sigma, and pi.
+#' @param start A single list of starting parameter values for mu, sigma, and pi.
 #' @export
 fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
                          want_optim_hessian = TRUE,

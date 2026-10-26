@@ -1,9 +1,9 @@
 # bootstrap.R
 
 #' Function for parametric bootstrapping of fitted model.
+#' @inheritParams pcurveMix-package
 #' @inheritParams random
 #' @inheritParams fit_p_curve
-#' @inheritParams set_globals
 #' @param fit_list Fitted model list returned by fit_p_curve
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
@@ -53,19 +53,18 @@ get_ci_bounds <- function(means, sds, confidence_level = get_ao("confidence_leve
 }
 
 #' Function to summarize the data frame produced by parametric or nonparametric bootstrapping.
+#' @inheritParams pcurveMix-package
+#' @inheritParams fit_to_estimates_tbl
 #' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
 #'  original MLE estimates used as parameter values for parametric bootstrapping
-#' @param ests_tbl Data frame of parameter estimates, one row per bootstrap sample
-#' @inheritParams set_globals
-#' @inheritParams fit_to_estimates_tbl
 #' @returns A data frame with the means and sds of bootstrap sample
 #'  parameter estimates, plus confidence interval boundss.
 #' @export
-make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl,
+make_boot_summary_tbl <- function(mle_estimates_tbl, estimates,
                                   confidence_level = get_ao("confidence_level"),
                                   bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
                                   round_to = get_ao("round_to") ) {
-  mn_sd_df <- get_parm_summaries(ests_tbl, summary_fns = list(mean = mean, sd = sd))
+  mn_sd_df <- get_parm_summaries(estimates, summary_fns = list(mean = mean, sd = sd))
 
   # Parametric bootstrapping:
   # In this case the "true" values are those in the mle_estimates_tbl, and the
@@ -80,7 +79,7 @@ make_boot_summary_tbl <- function(mle_estimates_tbl, ests_tbl,
 
   ci_df <- get_ci_bounds(mle_estimates_tbl$estimate, mn_sd_df$sd, confidence_level)
   target_quantiles <- symmetric_tail_quantiles_from_confidence(confidence_level)
-  q_df <- get_parm_quantiles(ests_tbl, quantiles = target_quantiles)
+  q_df <- get_parm_quantiles(estimates, quantiles = target_quantiles)
   if (bias_correct_ci_bounds) {
     bias_df$bc_estimate <- mle_estimates_tbl$estimate - bias_df$bias
     ci_df[[CI_LOWER_BOUND_LABEL]] <- ci_df[[CI_LOWER_BOUND_LABEL]] - bias_df$bias

@@ -2,8 +2,8 @@
 # Unexported functions can be called via pcurveMix:::
 
 #' Generate notes for table of ML estimates
+#' @inheritParams pcurveMix-package
 #' @param converged Boolean indicating whether the optim estimation process converged
-#' @inheritParams set_globals confidence_level
 #' @returns A vector of strings
 #' @export
 estimates_table_notes <- function(converged, confidence_level = get_ao("confidence_level") ) {
@@ -38,9 +38,9 @@ utility_table_notes <- function(n_samples, sample_size, pct_converged,
 }
 
 #' Generate notes for table of jackknife estimates
+#' @inheritParams pcurveMix-package
 #' @param n_samples Number of jackknife subsamples
 #' @param pct_converged Percentage of jackknife subsamples for which estimation converged
-#' @inheritParams set_globals confidence_level bias_correct_ci_bounds
 #' @returns A vector of strings
 #' @export
 jackknife_table_notes <- function(n_samples, pct_converged,
@@ -56,10 +56,10 @@ jackknife_table_notes <- function(n_samples, pct_converged,
 }
 
 #' Generate notes for table of bootstrap estimates
+#' @inheritParams pcurveMix-package
 #' @param n_samples Number of bootstrap samples
 #' @param sample_size Number of p's in each bootstrap sample
 #' @param pct_converged Percentage of bootstrap samples for which estimation converged
-#' @inheritParams set_globals confidence_level bias_correct_ci_bounds
 #' @returns A vector of strings
 #' @export
 boot_table_notes <- function(n_samples, sample_size, pct_converged,
@@ -80,7 +80,7 @@ boot_table_notes <- function(n_samples, sample_size, pct_converged,
 }
 
 #' Generate notes for table of profile confidence intervals
-#' @inheritParams set_globals confidence_level
+#' @inheritParams pcurveMix-package
 #' @returns A vector of strings
 #' @export
 profile_table_notes <- function(confidence_level = get_ao("confidence_level") ) {

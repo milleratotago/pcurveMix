@@ -105,17 +105,17 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 }
 
 #' Check a vector of p values to see whether they are
-#'   all >0 and <=alpha_cutoff as expected.
+#'   all >0 and <=alpha as expected.
+#' @inheritParams pcurveMix-package
 #' @param ps Vector of p values
-#' @param alpha_cutoff Maximum p value allowed in file
 #' @param show_error Show error message if any p value is out of
 #'  bounds (default TRUE)
 #' @returns A list all_in_bounds, n_too_small, etc
 #' @export
-check_ps <- function(ps, alpha_cutoff, show_error = TRUE) {
+check_ps <- function(ps, alpha, show_error = TRUE) {
   # These p's are simply out of bounds and must be excluded:
   too_small <- ps < 0
-  too_large <- (ps > alpha_cutoff) # | (ps == 1)
+  too_large <- (ps > alpha) # | (ps == 1)
   n_too_small <- sum(too_small)
   n_too_large <- sum(too_large)
   # These p's are at the extreme 0/1 edges and must be replaced:
@@ -128,7 +128,7 @@ check_ps <- function(ps, alpha_cutoff, show_error = TRUE) {
   if (n_nearly_one > 0) ps[nearly_one] <- 1 - edge_p
   all_in_bounds <- (n_too_small + n_too_large == 0)
   l <- list(all_in_bounds = all_in_bounds,
-            alpha_cutoff = alpha_cutoff,
+            alpha_cutoff = alpha,
             n_too_small = n_too_small,
             n_too_large = n_too_large,
             n_nearly_zero = n_nearly_zero,

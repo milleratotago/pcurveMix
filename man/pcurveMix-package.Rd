@@ -5,6 +5,8 @@
 \alias{pcurveMix-package}
 \title{pcurveMix: Computations and Fitting with the P-Curve Mixture Model}
 \arguments{
+\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
+
 \item{alpha_sig}{Significance level p cutoff used in computing the estimated
 average power when H0 is false (default = 0.05).}
 
@@ -18,10 +20,33 @@ censoring).}
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
 intervals (default = 95).}
 
+\item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
+change p==1 to 1-edge_p (default = 1e-20)}
+
+\item{estimates}{Data frame of parameter estimates for many datasets
+(e.g., bootstrap samples), with one row per dataset and columns for parameters.}
+
 \item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
 and jackknifing should always run optim() starting from the maximum likelihood
 parameter values, which is faster than running it from the default grid of
 starting values given by pcm_env$optim_starting_parms.}
+
+\item{optim_control}{A control list passed to R's optim() function
+(default = NULL, in which case the optim defaults are used)}
+
+\item{optim_starting_parms}{A list or data frame of parameter combinations
+at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
+
+\item{p_seq_cdf}{Sequence of p values at which to compute predicted cdf
+values for plots (default same as pdf with added 10^(4:10))}
+
+\item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
+values for plots (default = seq(0.001, 0.999, 0.002))}
+
+\item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
+
+\item{round_to}{Integer number of decimal places to display (default = 3, use
+NULL for no rounding).}
 }
 \description{
 Package for computations and fitting with the p-curve mixture model of Ulrich & Miller (2026). According to the model, p values from statistical tests come from a mixture distribution with some proportion 'pi' of studies having a true effect (H1 is true), whereas the remaining studies have no true effect (H0 is true). Among studies with H1 true, the noncentrality parameter is normally distributed with mean 'mu' and standard deviation 'sigma'. Package functions can fit the model to a set of observed p values by estimating the underlying 'pi', 'mu', and 'sigma' values, and they can also provide the model's true PDF and CDF values of specific p's given particular values of the model's parameters 'pi', 'mu', and 'sigma'. Confidence intervals for the parameter values can be obtained by parametric or nonparametric bootstrapping, jackknifing, or likelihood profiling.

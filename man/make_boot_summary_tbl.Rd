@@ -6,7 +6,7 @@
 \usage{
 make_boot_summary_tbl(
   mle_estimates_tbl,
-  ests_tbl,
+  estimates,
   confidence_level = get_ao("confidence_level"),
   bias_correct_ci_bounds = get_ao("bias_correct_ci_bounds"),
   round_to = get_ao("round_to")
@@ -16,7 +16,8 @@ make_boot_summary_tbl(
 \item{mle_estimates_tbl}{Data frame produced by fit_to_estimates_tbl() with
 original MLE estimates used as parameter values for parametric bootstrapping}
 
-\item{ests_tbl}{Data frame of parameter estimates, one row per bootstrap sample}
+\item{estimates}{Data frame of parameter estimates for many datasets
+(e.g., bootstrap samples), with one row per dataset and columns for parameters.}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
 intervals (default = 95).}
@@ -24,7 +25,8 @@ intervals (default = 95).}
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}
 
-\item{round_to}{Number of decimal places to display (default = 3)}
+\item{round_to}{Integer number of decimal places to display (default = 3, use
+NULL for no rounding).}
 }
 \value{
 A data frame with the means and sds of bootstrap sample

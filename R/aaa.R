@@ -67,20 +67,8 @@ initialize_globals <- function() {
 
 #' Function to override defaults of some global variables.
 #' @inheritParams pcurveMix-package
-#' @param edge_p To avoid numerical errors, change p==0 to edge_p and
-#'  change p==1 to 1-edge_p (default = 1e-20)
-#' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
-#'  values for plots (default = seq(0.001, 0.999, 0.002))
-#' @param p_seq_cdf Sequence of p values at which to compute predicted cdf
-#'  values for plots (default same as pdf with added 10^(4:10))
-#' @param optim_control A control list passed to R's optim() function
-#'  (default = NULL, in which case the optim defaults are used)
-#' @param optim_starting_parms A list or data frame of parameter combinations
-#'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
-#' @param profileCI_args A list of optional arguments to be passed to profileCI.
 #' @param reset_to_defaults Boolean; if true, reset all values to their
 #'  defaults before applying the other arguments
-#' @param round_to Number of decimal places to display (default = 3)
 #' @returns A list of the values of the global variables, after changing any
 #'  of the values as indicated.
 #' @export

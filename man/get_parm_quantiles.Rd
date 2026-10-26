@@ -14,7 +14,7 @@ get_parm_quantiles(
 }
 \arguments{
 \item{estimates}{Data frame of parameter estimates for many datasets
-with rows for datasets and cols for parameters}
+(e.g., bootstrap samples), with one row per dataset and columns for parameters.}
 
 \item{parms_to_summarize}{String vector with names of parameters to estimate
 (default = "All")}

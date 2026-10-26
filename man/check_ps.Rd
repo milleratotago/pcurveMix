@@ -3,14 +3,14 @@
 \name{check_ps}
 \alias{check_ps}
 \title{Check a vector of p values to see whether they are
-all >0 and <=alpha_cutoff as expected.}
+all >0 and <=alpha as expected.}
 \usage{
-check_ps(ps, alpha_cutoff, show_error = TRUE)
+check_ps(ps, alpha, show_error = TRUE)
 }
 \arguments{
 \item{ps}{Vector of p values}
 
-\item{alpha_cutoff}{Maximum p value allowed in file}
+\item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
 \item{show_error}{Show error message if any p value is out of
 bounds (default TRUE)}
@@ -20,5 +20,5 @@ A list all_in_bounds, n_too_small, etc
 }
 \description{
 Check a vector of p values to see whether they are
-all >0 and <=alpha_cutoff as expected.
+all >0 and <=alpha as expected.
 }

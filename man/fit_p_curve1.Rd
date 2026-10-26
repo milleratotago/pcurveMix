@@ -28,7 +28,7 @@ average power when H0 is false (default = 0.05).}
 the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 hessian is not used)}
 
-\item{start}{A list of starting parameter values for mu, sigma, and pi.}
+\item{start}{A single list of starting parameter values for mu, sigma, and pi.}
 }
 \description{
 Fit estimates of model pi, mu, sigma to a vector of p values starting from

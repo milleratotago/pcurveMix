@@ -30,7 +30,8 @@ intervals (default = 95).}
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}
 
-\item{round_to}{Number of decimal places to display (default = 3)}
+\item{round_to}{Integer number of decimal places to display (default = 3, use
+NULL for no rounding).}
 }
 \value{
 data frame with rows for parms and cols for bias_corrected_estimate,

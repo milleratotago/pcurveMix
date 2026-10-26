@@ -4,8 +4,7 @@
 
 #' Compute a long-format data frame with summaries of each combination of
 #' summary function & estimated value.
-#' @param estimates Data frame of parameter estimates for many datasets
-#'  with rows for datasets and cols for parameters
+#' @inheritParams pcurveMix-package
 #' @param parms_to_summarize String vector with names of parameters to estimate
 #'  (default = "All")
 #' @param summary_fns List of the functions to be computed across the different
@@ -33,15 +32,7 @@ get_parm_summaries <- function(estimates, parms_to_summarize = "All",
   summaries <- data.frame()
   for (parm in parms_to_summarize) {
     for (i_summary_fn in 1:length(summary_fns)) {
-      # summary_fn_name <- summary_fn_names[i_summary_fn]
-      # one_fn_cols_df <- data.frame(matrix(ncol = length(parms_to_summarize), nrow = 1))
-      # colnames(one_fn_cols_df) <- paste0(parms_to_summarize,"_",summary_fn_name)
-      # parm_est <- paste0(parm,"_",summary_fn_name)
-      # if (some_converged) {
       value <- summary_fns[[i_summary_fn]](estimates[[parm]], na.rm = TRUE)
-      # } else {
-      #   one_fn_cols_df[[parm_est]] <- NA
-      # }
       one_summary <- data.frame(parameter = parm, summary = summary_fn_names[i_summary_fn], value = value)
       summaries <- rbind(summaries, one_summary)
     }
@@ -52,10 +43,10 @@ get_parm_summaries <- function(estimates, parms_to_summarize = "All",
   return(as.data.frame(summaries))
 }
 
+# NEWJEFF: inheritParams get_parm_summaries parms_to_summarize wide_table_output
 #' Compute a long-format data frame with quantile values for each parameter
-#' @param estimates Data frame of parameter estimates for many datasets
-#'  with rows for datasets and cols for parameters
-#' @inheritParams get_parm_summaries parms_to_summarize wide_table_output
+#' @inheritParams pcurveMix-package
+#' @inheritParams get_parm_summaries
 #' @param quantiles Vector of 0-1 quantile values to be returned
 #'  (default = c(0.025, 0.975))
 #' @param type Integer 1-7 indicating the quantile type
@@ -120,7 +111,7 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_se, full_sample_n, t_crit
 #'  the jackknife subsample parameter estimates
 #' @param full_sample_n Number of observations in the original dataset from
 #'  which est_orig values were computed
-#' @inheritParams set_globals
+#' @inheritParams pcurveMix-package
 #' @inheritParams fit_to_estimates_tbl
 #' @returns data frame with rows for parms and cols for bias_corrected_estimate,
 #'  bias, jack_se, lower_bound, and upper_bound

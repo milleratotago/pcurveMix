@@ -29,7 +29,7 @@ average power when H0 is false (default = 0.05).}
 the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 hessian is not used)}
 
-\item{start_parms}{Either a list of starting parameter values for the optim search,
+\item{start_parms}{Either a single list of starting parameter values for the optim search,
 or else a data frame where each row is a combination of starting parameter values
 and the function tries all combinations (defaults to optim_starting_parms).}
 
