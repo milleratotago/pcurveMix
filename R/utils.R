@@ -169,31 +169,31 @@ bad_ps_report_string <- function(l) {
   return(s)
 }
 
-#' Convert a fit_list (output of fit_p_curve) to a data frame with a single row
+#' Convert a fit_results_list (output of fit_p_curve) to a data frame with a single row
 #'  for convenient accumulation of multiple fit results via rbind
-#' @param fit_list A list that was the output of fit_p_curve
+#' @inheritParams pcurveMix-package
 #' @returns A data frame with a single row
 #' @export
-fit_list_to_df <- function(fit_list) {
-  fit_list$start <- NULL
-  fit_list$start_parm_set <- NULL
-  fit_list$check_ps_list <- NULL
-  fit_list$pi_se <- fit_list$se["pi"]
-  fit_list$mu_se <- fit_list$se["mu"]
-  fit_list$sigma_se <- fit_list$se["sigma"]
-  fit_list$se <- NULL
-  fit_list$pi_lower <- fit_list$conf_int["pi",CI_LOWER_BOUND_LABEL]
-  fit_list$pi_upper <- fit_list$conf_int["pi",CI_UPPER_BOUND_LABEL]
-  fit_list$mu_lower <- fit_list$conf_int["mu",CI_LOWER_BOUND_LABEL]
-  fit_list$mu_upper <- fit_list$conf_int["mu",CI_UPPER_BOUND_LABEL]
-  fit_list$sigma_lower <- fit_list$conf_int["sigma",CI_LOWER_BOUND_LABEL]
-  fit_list$sigma_upper <- fit_list$conf_int["sigma",CI_UPPER_BOUND_LABEL]
-  fit_list$conf_int <- NULL
-  fit_list$ks_Dmax <- fit_list$ks$statistic
-  fit_list$ks_p_value <- fit_list$ks$p.value
-  fit_list$ks_exact <- fit_list$ks$exact
-  fit_list$ks <- NULL
-  df <- as.data.frame(fit_list)
+fit_list_to_df <- function(fit_results_list) {
+  fit_results_list$start <- NULL
+  fit_results_list$start_parm_set <- NULL
+  fit_results_list$check_ps_list <- NULL
+  fit_results_list$pi_se <- fit_results_list$se["pi"]
+  fit_results_list$mu_se <- fit_results_list$se["mu"]
+  fit_results_list$sigma_se <- fit_results_list$se["sigma"]
+  fit_results_list$se <- NULL
+  fit_results_list$pi_lower <- fit_results_list$conf_int["pi",CI_LOWER_BOUND_LABEL]
+  fit_results_list$pi_upper <- fit_results_list$conf_int["pi",CI_UPPER_BOUND_LABEL]
+  fit_results_list$mu_lower <- fit_results_list$conf_int["mu",CI_LOWER_BOUND_LABEL]
+  fit_results_list$mu_upper <- fit_results_list$conf_int["mu",CI_UPPER_BOUND_LABEL]
+  fit_results_list$sigma_lower <- fit_results_list$conf_int["sigma",CI_LOWER_BOUND_LABEL]
+  fit_results_list$sigma_upper <- fit_results_list$conf_int["sigma",CI_UPPER_BOUND_LABEL]
+  fit_results_list$conf_int <- NULL
+  fit_results_list$ks_Dmax <- fit_results_list$ks$statistic
+  fit_results_list$ks_p_value <- fit_results_list$ks$p.value
+  fit_results_list$ks_exact <- fit_results_list$ks$exact
+  fit_results_list$ks <- NULL
+  df <- as.data.frame(fit_results_list)
   return(df)
 }
 

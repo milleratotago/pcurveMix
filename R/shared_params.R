@@ -23,14 +23,15 @@
 #'  and jackknifing should always run optim() starting from the maximum likelihood
 #'  parameter values, which is faster than running it from the default grid of
 #'  starting values given by pcm_env$optim_starting_parms.
+#' @param fit_results_list List returned by fit_p_curve() with results of model fitting.
 #' @param optim_control A control list passed to R's optim() function
-#'  (default = NULL, in which case the optim defaults are used)
+#'  (default = NULL, in which case the optim defaults are used).
 #' @param optim_starting_parms A list or data frame of parameter combinations
-#'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
+#'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5)).
 #' @param p_seq_cdf Sequence of p values at which to compute predicted cdf
-#'  values for plots (default same as pdf with added 10^(4:10))
+#'  values for plots (default same as pdf with added 10^(4:10)).
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
-#'  values for plots (default = seq(0.001, 0.999, 0.002))
+#'  values for plots (default = seq(0.001, 0.999, 0.002)).
 #' @param profileCI_args A list of optional arguments to be passed to profileCI.
 #' @param round_to Integer number of decimal places to display (default = 3, use
 #'  NULL for no rounding).
@@ -43,14 +44,13 @@
 # @param cond_method SINGULAR Set to string "rejection" (default) or "inversion" to generate random
 # @param converged SINGULAR Boolean indicating whether the optim estimation process converged
 # @param ests_orig SINGULAR A list with numerical values of the full-sample estimates
-# @param ests_tbl Data frame of parameter estimates, one row per bootstrap sample
-# @param file_name Optional string used to include p file name in table
-# @param file_name_prefix String prepended to output file names (default = "").
+# @param file_name SINGULAR Optional string used to include p file name in table
+# @param file_name_prefix SINGULAR String prepended to output file names (default = "").
 # @param fit List output of fit_p_curve function
 # @param fit Output list from fit_p_curve
 # @param fit Output list from fit_p_curve
 # @param fit_list A list that was the output of fit_p_curve
-# @param fit_list Fitted model list returned by fit_p_curve
+# @param fit_list 
 # @param full_sample_n Number of observations in the original dataset from
 # @param level Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny
 # @param lhs A value or the magrittr placeholder.
@@ -104,7 +104,7 @@
 # @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
 # @param tails 1 or 2 to indicate 1- or 2-tailed p values (default = 2)
 # @param target_cdfs The CDFs of the p-curve distribution at which to determine the quantile p value
-# @param target_folded_normal_mu Boolean where TRUE requests CI for folded normal mu
+# @param SINGULAR target_folded_normal_mu Boolean where TRUE requests CI for folded normal mu
 # @param tol Real tolerance when generating p's via quantiles (default = 1e-8)
 # @param tol Tolerance value for uniroot search function (default = 1e-8)
 # @param type Integer 1-7 indicating the quantile type

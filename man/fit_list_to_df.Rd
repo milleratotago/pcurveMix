@@ -2,18 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{fit_list_to_df}
 \alias{fit_list_to_df}
-\title{Convert a fit_list (output of fit_p_curve) to a data frame with a single row
+\title{Convert a fit_results_list (output of fit_p_curve) to a data frame with a single row
 for convenient accumulation of multiple fit results via rbind}
 \usage{
-fit_list_to_df(fit_list)
+fit_list_to_df(fit_results_list)
 }
 \arguments{
-\item{fit_list}{A list that was the output of fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 }
 \value{
 A data frame with a single row
 }
 \description{
-Convert a fit_list (output of fit_p_curve) to a data frame with a single row
+Convert a fit_results_list (output of fit_p_curve) to a data frame with a single row
 for convenient accumulation of multiple fit results via rbind
 }

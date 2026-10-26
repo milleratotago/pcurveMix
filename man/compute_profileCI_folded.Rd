@@ -8,13 +8,13 @@ This function computes the CI for \emph{either} mu or sigma but not both,
 so you must call it twice to get the CIs for both.}
 \usage{
 compute_profileCI_folded(
-  fit_list,
+  fit_results_list,
   target_folded_normal_mu,
   confidence_level = get_ao("confidence_level")/100
 )
 }
 \arguments{
-\item{fit_list}{A list that was the output of fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
 \item{target_folded_normal_mu}{Boolean where TRUE requests CI for folded normal mu
 and FALSE requests CI for folded normal sigma.}

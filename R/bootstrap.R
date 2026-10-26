@@ -4,19 +4,18 @@
 #' @inheritParams pcurveMix-package
 #' @inheritParams random
 #' @inheritParams fit_p_curve
-#' @param fit_list Fitted model list returned by fit_p_curve
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
 #' @returns Data frame with 1 row per bootstrap sample & cols for estimated pi, mu, sigma, etc.
 #' @export
-bootstrap <- function(n, fit_list, n_boot_samples,
-                      # alpha = 1, tails = 2, alpha_sig = 0.05, -- these are taken from "fit_list"
+bootstrap <- function(n, fit_results_list, n_boot_samples,
+                      # alpha = 1, tails = 2, alpha_sig = 0.05, -- these are taken from "fit_results_list"
                       show_progress_bar = TRUE,
                       fast_boot_jack = get_ao("fast_boot_jack"),
                       cond_method = "rejection", tol = 1e-8) {
-  alpha <- fit_list$alpha
-  tails <- fit_list$tails
-  alpha_sig <- fit_list$alpha_sig
+  alpha <- fit_results_list$alpha
+  tails <- fit_results_list$tails
+  alpha_sig <- fit_results_list$alpha_sig
   use_fn <- tails == 2  # fn is an abbreviation for folded normal
   cols_to_boot <- c("pi", "mu", "sigma", "power")
   if (use_fn) {
@@ -24,11 +23,11 @@ bootstrap <- function(n, fit_list, n_boot_samples,
   }
   boot <- matrix(NA_real_, nrow = n_boot_samples, ncol = length(cols_to_boot))
   colnames(boot) <- cols_to_boot
-  ps_mat <- generate_parametric_subsamples(n_boot_samples, n, fit_list$mu, fit_list$sigma,
-                                           pi = fit_list$pi, alpha = alpha, tails = tails,
+  ps_mat <- generate_parametric_subsamples(n_boot_samples, n, fit_results_list$mu, fit_results_list$sigma,
+                                           pi = fit_results_list$pi, alpha = alpha, tails = tails,
                                            cond_method = cond_method, tol = tol)
   if (fast_boot_jack) {
-    start_list <- list(mu = fit_list$mu, sigma = fit_list$sigma, pi = fit_list$pi)
+    start_list <- list(mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi)
   } else {
     start_list <- pcm_env$optim_starting_parms
   }

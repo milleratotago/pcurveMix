@@ -50,31 +50,28 @@ extract_profile_plot_columns <- function(profileCI_output, param_number) {
   profile_curves2 <- attr(profileCI_output$profile,"for_plot")[[param_number]]
 }
 
-# NEWJEFF param confidence_level Used in computing confidence intervals (default = 95)
-
 #' Computations for profile-based confidence intervals of the basic model
 #'  parameters mu, sigma, and pi (NOT the folded normal parameters).
 #' @inheritParams pcurveMix-package
-#' @inheritParams fit_list_to_df
 #' @returns A list with:
 #'   bounds_matrix = matrix of CI bounds;
 #'   profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'   profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI <- function(fit_list, confidence_level = get_ao("confidence_level") / 100) {
+compute_profileCI <- function(fit_results_list, confidence_level = get_ao("confidence_level") / 100) {
   coefficients <- c(mu = 0, sigma = 0, pi = 0)
   profCI_model <- list(coefficients = coefficients)
   class(profCI_model) <- "profCI_model"
 
-  ps <- fit_list$check_ps_list$ps_in_bounds
-  parms_list <- list(mu = fit_list$mu, sigma = fit_list$sigma, pi = fit_list$pi)
+  ps <- fit_results_list$check_ps_list$ps_in_bounds
+  parms_list <- list(mu = fit_results_list$mu, sigma = fit_results_list$sigma, pi = fit_results_list$pi)
   reals_list <- parms_to_reals(parms_list)
   profCI_model$coefficients["mu"] <- reals_list$mu
   profCI_model$coefficients["sigma"] <- reals_list$sigma
   profCI_model$coefficients["pi"] <- reals_list$pi
   # Build the list of arguments that will be passed to profileCI
   args1 <- list(object = profCI_model, loglik = pll_profileCI,
-                ps = ps, alpha = fit_list$alpha, tails = fit_list$tails) # profileCI passes these to pll_profileCI()
+                ps = ps, alpha = fit_results_list$alpha, tails = fit_results_list$tails) # profileCI passes these to pll_profileCI()
   args1 <- c(args1, level = confidence_level)
   full_args <- c(args1, pcm_env$profileCI_args)  # append profileCI args in environment, default or set by user
 
@@ -163,7 +160,7 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
 #'  model parameters for the folded normal: mu and sigma.
 #' This function computes the CI for _either_ mu or sigma but not both,
 #'  so you must call it twice to get the CIs for both.
-#' @inheritParams compute_profileCI
+#' @inheritParams pcurveMix-package
 #' @param target_folded_normal_mu Boolean where TRUE requests CI for folded normal mu
 #'  and FALSE requests CI for folded normal sigma.
 #' @returns A list with the following elements:
@@ -171,14 +168,14 @@ profile_loglik_for_folded <- function(z, p_values, alpha, tails, target_folded_n
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_folded <- function(fit_list, target_folded_normal_mu,
+compute_profileCI_folded <- function(fit_results_list, target_folded_normal_mu,
                                      confidence_level = get_ao("confidence_level") / 100) {
-  alpha <- fit_list$alpha
-  tails <- fit_list$tails
-  p_values <- fit_list$check_ps_list$ps_in_bounds
-  mu_hat <- fit_list$mu
-  sigma_hat <- fit_list$sigma
-  pi_hat <- fit_list$pi
+  alpha <- fit_results_list$alpha
+  tails <- fit_results_list$tails
+  p_values <- fit_results_list$check_ps_list$ps_in_bounds
+  mu_hat <- fit_results_list$mu
+  sigma_hat <- fit_results_list$sigma
+  pi_hat <- fit_results_list$pi
   ratio_hat <- mu_hat / sigma_hat
   folded_hat <- folded_moments(mu_hat, sigma_hat)
   if (target_folded_normal_mu) {
@@ -340,23 +337,23 @@ parameters_from_power <- function(power, log_ratio, alpha_sig, tails) {
 
 #' Computations for profile-based confidence intervals of the derived
 #'  model parameter power.
-#' @inheritParams compute_profileCI
+#' @inheritParams pcurveMix-package
 #' @returns A list with the following elements:
 #'  bounds_matrix = matrix of CI bounds;
 #'  profile_curves = a list with x/y pairs of the profile curves for mu, sigma, and pi;
 #'  profile_fn_output = the output of the profileCI function from the profileCI package.
 #' @export
-compute_profileCI_power <- function(fit_list, confidence_level = get_ao("confidence_level") / 100) {
-  # was profile_ci_power2 <- function(fit_list, confidence_level = get_ao("confidence_level") / 100) {
-  p_values <- fit_list$check_ps_list$ps_in_bounds
+compute_profileCI_power <- function(fit_results_list, confidence_level = get_ao("confidence_level") / 100) {
+  # was profile_ci_power2 <- function(fit_results_list, confidence_level = get_ao("confidence_level") / 100) {
+  p_values <- fit_results_list$check_ps_list$ps_in_bounds
 
-  alpha <- fit_list$alpha
-  tails <- fit_list$tails
-  alpha_sig <- fit_list$alpha_sig
+  alpha <- fit_results_list$alpha
+  tails <- fit_results_list$tails
+  alpha_sig <- fit_results_list$alpha_sig
 
-  mu_hat <- fit_list$mu
-  sigma_hat <- fit_list$sigma
-  pi_hat <- fit_list$pi
+  mu_hat <- fit_results_list$mu
+  sigma_hat <- fit_results_list$sigma
+  pi_hat <- fit_results_list$pi
   ratio_hat <- mu_hat / sigma_hat
   power_hat <- unname(average_power(
     mu_hat, sigma_hat, alpha_sig, tails

@@ -6,7 +6,7 @@
 \usage{
 bootstrap(
   n,
-  fit_list,
+  fit_results_list,
   n_boot_samples,
   show_progress_bar = TRUE,
   fast_boot_jack = get_ao("fast_boot_jack"),
@@ -17,7 +17,7 @@ bootstrap(
 \arguments{
 \item{n}{Number of random p values to be generated}
 
-\item{fit_list}{Fitted model list returned by fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
 \item{n_boot_samples}{Number of bootstrap samples to take}
 

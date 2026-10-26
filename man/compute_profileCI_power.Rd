@@ -6,12 +6,12 @@
 model parameter power.}
 \usage{
 compute_profileCI_power(
-  fit_list,
+  fit_results_list,
   confidence_level = get_ao("confidence_level")/100
 )
 }
 \arguments{
-\item{fit_list}{A list that was the output of fit_p_curve}
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
 intervals (default = 95).}

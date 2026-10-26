@@ -31,17 +31,19 @@ and jackknifing should always run optim() starting from the maximum likelihood
 parameter values, which is faster than running it from the default grid of
 starting values given by pcm_env$optim_starting_parms.}
 
+\item{fit_results_list}{List returned by fit_p_curve() with results of model fitting.}
+
 \item{optim_control}{A control list passed to R's optim() function
-(default = NULL, in which case the optim defaults are used)}
+(default = NULL, in which case the optim defaults are used).}
 
 \item{optim_starting_parms}{A list or data frame of parameter combinations
-at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))}
+at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5)).}
 
 \item{p_seq_cdf}{Sequence of p values at which to compute predicted cdf
-values for plots (default same as pdf with added 10^(4:10))}
+values for plots (default same as pdf with added 10^(4:10)).}
 
 \item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
-values for plots (default = seq(0.001, 0.999, 0.002))}
+values for plots (default = seq(0.001, 0.999, 0.002)).}
 
 \item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
 
