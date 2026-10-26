@@ -57,13 +57,16 @@ f_ratio <- function(c, target_ratio) {
   return((mean_scaled / sd_scaled) - target_ratio)
 }
 
-# NEWJEFF: Fails with (3.79,3.266)
 # Compute unfolded mu & sigma from folded mu & sigma.
-unfolded_moments <- function(folded_mu, folded_sigma, tol = 1e-10) {  # NEWJEFF: Magic constant.
+# Note: The minimum ratio of a folded normal's mu to its sigma is
+# sqrt(2/(pi-2)) \approx 1.3236, which occurs with a half-normal with mu=0.
+# This function thus fails for ratios less than that, eg. (3.79,3.266)
+unfolded_moments <- function(folded_mu, folded_sigma, tol = 1e-10) {  # NWJEFF: Magic constant.
   target_ratio <- folded_mu / folded_sigma
-  # Use helper fn to solve for c_val in a reasonable interval (e.g., 0 to 20)  # NEWJEFF: Magic constants.
-  root_res <- stats::uniroot(f_ratio, lower = 0, upper = 20, tol = tol,
-                             target_ratio = target_ratio)
+  if (target_ratio < MINIMUM_FOLDED_NORMAL_RATIO)
+  # Use helper fn to solve for c_val in a reasonable interval:
+  root_res <- stats::uniroot(f_ratio, lower = MINIMUM_FOLDED_NORMAL_RATIO,
+                             upper = 20, tol = tol, target_ratio = target_ratio)  # NWJEFF: Magic constant.
   c_val <- root_res$root
 
   # Recover sigma and mu from c_val analytically

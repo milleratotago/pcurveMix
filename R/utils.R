@@ -205,11 +205,6 @@ quantile_name <- function(base_name) {
   q_name <- paste0("q_", base_name)
 }
 
-get_p_seq <- function(alpha) {
-  ps <- seq(from = 0.001, to = alpha, length.out = 100)  # NEWJEFF: HARD-CODED
-  return(ps)
-}
-
 # Function to get analysis option that is determined by shiny when shiny
 # is running, and otherwise is determined by package environment.
 get_ao <- function(name) {

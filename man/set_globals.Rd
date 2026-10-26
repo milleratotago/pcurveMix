@@ -23,15 +23,16 @@ set_globals(
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}
 
-\item{confidence_level}{Used in computing confidence intervals (default = 95)}
+\item{confidence_level}{A numeric value 0-100 used in computing confidence
+intervals (default = 95).}
 
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-20)}
 
 \item{fast_boot_jack}{Boolean with default TRUE indicating that bootstrapping
 and jackknifing should always run optim() starting from the maximum likelihood
-parameter values, which is faster than running it from the starting value
-grid given by optim_starting_parms,}
+parameter values, which is faster than running it from the default grid of
+starting values given by pcm_env$optim_starting_parms.}
 
 \item{optim_control}{A control list passed to R's optim() function
 (default = NULL, in which case the optim defaults are used)}
@@ -51,7 +52,7 @@ values for plots (default = seq(0.001, 0.999, 0.002))}
 
 \item{censor_at}{The cutoff point for computing likelihoods with
 censoring (default = NA, in which case likelihoods are computed without
-censoring)}
+censoring).}
 
 \item{reset_to_defaults}{Boolean; if true, reset all values to their
 defaults before applying the other arguments}

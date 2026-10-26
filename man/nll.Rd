@@ -34,7 +34,7 @@ this function.}
 
 \item{censor_at}{The cutoff point for computing likelihoods with
 censoring (default = NA, in which case likelihoods are computed without
-censoring)}
+censoring).}
 }
 \value{
 Real negative log-likelihood of the p values

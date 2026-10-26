@@ -1,6 +1,6 @@
 # real_to_nat_se_ci.R
 
-# NEWJEFF: OBSOLETE?
+# Used by optim_fit_unconstrained()
 # Function to compute the standard errors and confidence intervals
 #  for the model parameters on their natural scales from the
 #  estimates and Hessian returned by optim() when fitting on

@@ -23,8 +23,8 @@ auto_shiny_compute(
 
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
-\item{alpha_sig}{Significance cutoff used in computing the estimated average
-power when H0 is false (default = 0.05)}
+\item{alpha_sig}{Significance level p cutoff used in computing the estimated
+average power when H0 is false (default = 0.05).}
 
 \item{ps_label}{A string label to identify this set of p's in the
 analysis descriptor table}

@@ -24,13 +24,13 @@ the jackknife subsample parameter estimates}
 \item{full_sample_n}{Number of observations in the original dataset from
 which est_orig values were computed}
 
-\item{confidence_level}{Confidence level used to find t confidence interval
-bounds & quantile bounds.}
+\item{confidence_level}{A numeric value 0-100 used in computing confidence
+intervals (default = 95).}
 
-\item{bias_correct_ci_bounds}{Boolean indicating whether confidence interval
-bounds are corrected for the bias in the original estimate (default = TRUE)}
+\item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
+interval bounds to correct for estimated bias.}
 
-\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
+\item{round_to}{Number of decimal places to display (default = 3)}
 }
 \value{
 data frame with rows for parms and cols for bias_corrected_estimate,

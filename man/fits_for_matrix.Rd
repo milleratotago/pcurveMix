@@ -22,8 +22,8 @@ fits_for_matrix(
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
 
-\item{alpha_sig}{Significance cutoff used in computing the estimated average
-power when H0 is false (default = 0.05)}
+\item{alpha_sig}{Significance level p cutoff used in computing the estimated
+average power when H0 is false (default = 0.05).}
 
 \item{want_optim_hessian}{Boolean indicating whether optim() should compute
 the hessian (default = TRUE, but set to FALSE for faster bootstrapping where

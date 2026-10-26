@@ -90,9 +90,9 @@ optim_recovery_failed <- function(cond, start_vec, p, alpha, tails,
     sink(file = unique_file)  # Send the printing to the file
     print_optim_error_msg(cond, start_vec, p, alpha, tails, method, lower_vec, upper_vec)  # to console
     sink()  # stop sinking
+    print( paste("check file",unique_file,"for diagnostic information."))
   }
-  stop("NEWJEFF: I don't know what to return")
-  # return(NULL)
+  stop("Halting due to error in optim()")
 }
 
 print_optim_error_msg <- function(cond, start_vec, p, alpha, tails,

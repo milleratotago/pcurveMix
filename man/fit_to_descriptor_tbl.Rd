@@ -9,14 +9,14 @@ fit_to_descriptor_tbl(fit, file_name = NULL, censor_at = get_ao("censor_at"))
 \arguments{
 \item{fit}{Output list from fit_p_curve}
 
-\item{file_name}{Optional string used to include p file name in table}
+\item{file_name}{Optional string used to include p file name in table.}
 
 \item{censor_at}{The cutoff point for computing likelihoods with
 censoring (default = NA, in which case likelihoods are computed without
-censoring)}
+censoring).}
 }
 \value{
-A data frame
+A data frame with rows describing fitting conditions.
 }
 \description{
 Convert the fit_p_curve fit descriptors into a nice data frame.

@@ -22,23 +22,13 @@ N_BASE_PARMS <- 4 # mu, sigma, pi, power
 N_DERIVED_PARMS <- 6 # PR_TP ... R_FN
 DEMO_DATA_FILE_NAME <- "demo_data.csv"
 
+MINIMUM_FOLDED_NORMAL_RATIO <- sqrt( 2 / (base::pi - 2))
 START_MU_DEFAULT <- 2
 START_SIGMA_DEFAULT <- 1
 START_PI_DEFAULT <- 0.5
-# OBSOLETE PARAMETER_ESTIMATES_NOTE <- paste("Wald_lower and Wald_upper", sep = "\n")  NEWJEFF: Did I handle confidence_level?
-# Be sure to "cat" rather than "print" this to console
-BOOTSTRAP_TABLE_NOTE <- paste("TABLE NOTES:",
-                              "- mean & sd are summaries of parameter estimates across bootstrap samples.",
-                              paste("- bias &",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"are estimated bias & bias-corrected parameter value."),
-                              paste0("- hw, ", CI_LOWER_BOUND_LABEL, ", & ", CI_UPPER_BOUND_LABEL,
-                                     " are half-width and bounds of t confidence interval for ",BIAS_CORRECTED_ORIGINAL_ESTIMATE_LABEL,"."),
-                              "- bias-corrected quantiles of bootstrap parameter estimates.",
-                              sep = "\n")
+# OBSOLETE PARAMETER_ESTIMATES_NOTE <- paste("Wald_lower and Wald_upper", sep = "\n")
 
-# This is not allowed here.
-# # Set up default console handler state for interactive work
-# progressr::handlers(global = TRUE)
-# progressr::handlers("txtprogressbar") # Forces standard text console output
+# Note: setting up progressr::handlers is not allowed here.
 
 # Define an environment to hold settings that
 # are global within the package
@@ -73,10 +63,10 @@ initialize_globals <- function() {
   pcm_env$shiny_running <- FALSE
 }
 
+# Previously included confidence_level
+
 #' Function to override defaults of some global variables.
-#' @param bias_correct_ci_bounds Boolean; if true (default), adjust confidence
-#'  interval bounds to correct for estimated bias.
-#' @param confidence_level Used in computing confidence intervals (default = 95)
+#' @inheritParams pcurveMix-package
 #' @param edge_p To avoid numerical errors, change p==0 to edge_p and
 #'  change p==1 to 1-edge_p (default = 1e-20)
 #' @param p_seq_pdf Sequence of p values at which to compute predicted pdf
@@ -85,16 +75,9 @@ initialize_globals <- function() {
 #'  values for plots (default same as pdf with added 10^(4:10))
 #' @param optim_control A control list passed to R's optim() function
 #'  (default = NULL, in which case the optim defaults are used)
-#' @param censor_at The cutoff point for computing likelihoods with
-#'  censoring (default = NA, in which case likelihoods are computed without
-#'  censoring)
 #' @param optim_starting_parms A list or data frame of parameter combinations
 #'  at which to start the optim searches (default: list(mu = 2, sigma = 2, pi = 0.5))
 #' @param profileCI_args A list of optional arguments to be passed to profileCI.
-#' @param fast_boot_jack Boolean with default TRUE indicating that bootstrapping
-#'  and jackknifing should always run optim() starting from the maximum likelihood
-#'  parameter values, which is faster than running it from the starting value
-#'  grid given by optim_starting_parms,
 #' @param reset_to_defaults Boolean; if true, reset all values to their
 #'  defaults before applying the other arguments
 #' @param round_to Number of decimal places to display (default = 3)
@@ -115,7 +98,7 @@ set_globals <- function(
                         optim_starting_parms = NA,
                         p_seq_cdf = NA,
                         p_seq_pdf = NA,
-                        profileCI_args = NA,  # NEWJEFF: Obsolete?
+                        profileCI_args = NA,
                         round_to = NA,
                         censor_at = NA,
                         # small_rcond = NA,
@@ -203,7 +186,7 @@ utils::globalVariables(c("density"))
   if (!interactive()) return()
   s <- utils::packageVersion(pkgname)
   s <- paste("Package",pkgname,"version",s)
-  packageStartupMessage(s) # NEWJEFF combine strings into one call and export it in a separate function available to users with just a short note here to call that function for help
+  packageStartupMessage(s) # NWJEFF combine strings into one call and export it in a separate function available to users with just a short note here to call that function for help
   packageStartupMessage('Get help with these RStudio console commands:')
   packageStartupMessage('  ?',pkgname,'    # shows a summary of the package.')
   packageStartupMessage('  vignette("Intro", package = ',pkgname,') # basic intro to package & shiny app.')

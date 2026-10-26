@@ -234,17 +234,17 @@ server <- function(input, output, session) {
     notif_id <- "profileCI_std_notif_id" # Use the same id for all notifications to overwrite them
 
     profiling_notification(notif_id, "mu, sigma, and pi")
-    v$profileCI_std <- compute_profileCI(fit_list, level = v$profile_ci_confidence_level)
+    v$profileCI_std <- compute_profileCI(fit_list, confidence_level = v$profile_ci_confidence_level)
 
     profiling_notification(notif_id, "power")
-    v$profileCI_power <- compute_profileCI_power(fit_list, level = v$profile_ci_confidence_level)
+    v$profileCI_power <- compute_profileCI_power(fit_list, confidence_level = v$profile_ci_confidence_level)
 
     if (fit_list$tails == 2) {
       profiling_notification(notif_id, pcurveMix:::FOLDED_NORMAL_MU_LABEL)
-      v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, level = v$profile_ci_confidence_level)
+      v$profileCI_folded_normal_mu <- compute_profileCI_folded(fit_list, TRUE, confidence_level = v$profile_ci_confidence_level)
 
       profiling_notification(notif_id, pcurveMix:::FOLDED_NORMAL_SIGMA_LABEL)
-      v$profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_list, FALSE, level = v$profile_ci_confidence_level)
+      v$profileCI_folded_normal_sigma <- compute_profileCI_folded(fit_list, FALSE, confidence_level = v$profile_ci_confidence_level)
     } else {
       v$profileCI_folded_normal_mu <- NA
       v$profileCI_folded_normal_sigma <- NA

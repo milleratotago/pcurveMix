@@ -18,12 +18,13 @@ original MLE estimates used as parameter values for parametric bootstrapping}
 
 \item{ests_tbl}{Data frame of parameter estimates, one row per bootstrap sample}
 
-\item{confidence_level}{Used in computing confidence intervals (default = 95)}
+\item{confidence_level}{A numeric value 0-100 used in computing confidence
+intervals (default = 95).}
 
 \item{bias_correct_ci_bounds}{Boolean; if true (default), adjust confidence
 interval bounds to correct for estimated bias.}
 
-\item{round_to}{Integer number of decimal places for rounding; use NULL for no rounding.}
+\item{round_to}{Number of decimal places to display (default = 3)}
 }
 \value{
 A data frame with the means and sds of bootstrap sample

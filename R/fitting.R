@@ -61,9 +61,8 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' Repeatedly fit model with multiple starting points,
 #'  saving at the end the best fit.
 #' @param p Vector of to-be-fitted p values in 0--1
+#' @inheritParams pcurveMix-package
 #' @inheritParams pdf
-#' @param alpha_sig Significance cutoff used in computing the estimated average
-#'  power when H0 is false (default = 0.05)
 #' @param want_optim_hessian Boolean indicating whether optim() should compute
 #'  the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 #'  hessian is not used)
@@ -224,10 +223,10 @@ starting_parms_to_descriptors <- function(starting_parm_set) {
 }
 
 #' Convert the fit_p_curve fit descriptors into a nice data frame.
+#' @inheritParams pcurveMix-package
 #' @param fit Output list from fit_p_curve
-#' @param file_name Optional string used to include p file name in table
-#' @inheritParams set_globals censor_at
-#' @returns A data frame
+#' @param file_name Optional string used to include p file name in table.
+#' @returns A data frame with rows describing fitting conditions.
 #' @export
 fit_to_descriptor_tbl <- function(fit, file_name = NULL,
                                   censor_at = get_ao("censor_at")) {

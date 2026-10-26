@@ -1,5 +1,10 @@
 # quick_plots.R
 
+get_p_seq <- function(alpha) {
+  ps <- seq(from = 0.001, to = alpha, length.out = 100) # Magic constant
+  return(ps)
+}
+
 #' Make a simple plot of observed p histogram and
 #'   predicted pdf density
 #' @param fit List output of fit_p_curve function

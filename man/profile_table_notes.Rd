@@ -7,7 +7,8 @@
 profile_table_notes(confidence_level = get_ao("confidence_level"))
 }
 \arguments{
-\item{confidence_level}{Used in computing confidence intervals (default = 95)}
+\item{confidence_level}{A numeric value 0-100 used in computing confidence
+intervals (default = 95).}
 }
 \value{
 A vector of strings

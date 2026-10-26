@@ -113,17 +113,15 @@ jackknife_comps1 <- function(est_orig, jack_mean, jack_se, full_sample_n, t_crit
 
 #' Function to make a data frame with rows for parms and cols for
 #'  jackknife stats associated with each parameter & t confidence intervals.
+#' @inheritParams pcurveMix-package
 #' @param ests_orig A list with numerical values of the full-sample estimates
 #'  for each parameter
 #' @param jackknife_summaries Data frame produced by get_parm_summaries() from
 #'  the jackknife subsample parameter estimates
 #' @param full_sample_n Number of observations in the original dataset from
 #'  which est_orig values were computed
-#' @param confidence_level Confidence level used to find t confidence interval
-#'  bounds & quantile bounds.
-#' @param bias_correct_ci_bounds Boolean indicating whether confidence interval
-#'  bounds are corrected for the bias in the original estimate (default = TRUE)
-#' @inheritParams fit_to_estimates_tbl round_to
+#' @inheritParams set_globals
+#' @inheritParams fit_to_estimates_tbl
 #' @returns data frame with rows for parms and cols for bias_corrected_estimate,
 #'  bias, jack_se, lower_bound, and upper_bound
 #' @export
@@ -151,52 +149,6 @@ make_jackknife_tbl <- function(ests_orig, jackknife_summaries, full_sample_n,
     jack_df[,-1] <- round(jack_df[,-1], round_to)
   }
   return(jack_df)
-}
-
-# NEWJEFF: OBSOLETE???
-#' Function to summarize a set of estimated parameter values across multiple
-#'  samples of p values (e.g., for bootstrap samples).
-#' @param ests_df Data frame with rows for samples and columns for the
-#'  parameters estimated from each sample.
-#' @param confidence_level Confidence level used to find t confidence interval
-#'  bounds & quantile bounds. If <= 0, don't compute bounds
-#' @param confidence_quantiles A vector with the two limiting proportions
-#'  (lower, upper) for bootstrap confidence intervals (default = NA, in
-#'  which case these are determined symmetrically from the confidence level)
-#' @returns Data frame with row for parameters and columns for the mean,
-#'  standard error, and (if requested) lower/upper quantiles of the
-#'  parameter estimates across samples.
-#' @importFrom rlang .data
-#' @export
-get_parm_mn_sd_quan <- function(ests_df,
-                                confidence_level = 95,
-                                confidence_quantiles = NA) {
-  # Remember that get_parm_summaries() & get_parm_quantiles() return long-form data frames.
-  # Get mean & sd
-  summaries <- get_parm_summaries(ests_df, summary_fns = c(mean = mean, sd = sd))
-  # tbl <- summaries %>% tidyr::pivot_wider(names_from = .data$summary, values_from = .data$value)
-  if (confidence_level > 0) {
-    # add columns for t-confidence interval lower & upper bounds
-    noncen <- 0
-    upper_quantile <- 1 - (1 - confidence_level/100) / 2
-    df <- nrow(ests_df)
-    tcrit <- stats::qt(upper_quantile, df, noncen)
-    half_width <- tcrit * tbl$sd
-    tbl$lower_bound <- tbl$mean - half_width
-    tbl$upper_bound <- tbl$mean + half_width
-    names(tbl)[names(tbl) == "lower_bound"] <- bias_corrected_name(CI_LOWER_BOUND_LABEL)
-    names(tbl)[names(tbl) == "upper_bound"] <- bias_corrected_name(CI_UPPER_BOUND_LABEL)
-    # add columns for quantile bounds
-    if (identical(confidence_quantiles,NA)) {
-      # Determine confidence_quantiles if they were not specified:
-      confidence_quantiles <-
-        symmetric_tail_quantiles_from_confidence(confidence_level)
-    }
-    quantiles <- get_parm_quantiles(ests_df, quantiles = confidence_quantiles)
-    # quantiles <- quantiles %>% tidyr::pivot_wider(names_from = .data$quantile, values_from = .data$value)
-    tbl <- cbind(tbl, quantiles[,-1]) # Omit parameter column of quantiles
-  } # confidence_level > 0
-  return( as.data.frame(tbl) )
 }
 
 get_upper_q <- function(confidence_level = 95) {

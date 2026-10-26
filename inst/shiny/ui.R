@@ -197,7 +197,7 @@ ui <- tagList(
           checkboxInput("fast_boot_jack", label = strong("Always start parameter search at ML estimates when jackknifing & bootstrapping (faster)"), TRUE)
         ),
 
-        # # NEWJEFF: I do not yet have a way to retrieve these values in the server if they have been set.
+        # # NWJEFF: I do not yet have a way to retrieve these values in the server if they have been set.
         # ## Adjust starting values ====  NWJEFF: Move to advanced options or let user provide file
         # h4(),
         # checkboxInput("specify_starting_values", label = strong("Use a specific set of starting parameter values for optim() search:"), FALSE),

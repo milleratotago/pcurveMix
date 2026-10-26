@@ -3,7 +3,7 @@
 #' Function for parametric bootstrapping of fitted model.
 #' @inheritParams random
 #' @inheritParams fit_p_curve
-#' @inheritParams set_globals fast_boot_jack
+#' @inheritParams set_globals
 #' @param fit_list Fitted model list returned by fit_p_curve
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
@@ -56,7 +56,7 @@ get_ci_bounds <- function(means, sds, confidence_level = get_ao("confidence_leve
 #' @param mle_estimates_tbl Data frame produced by fit_to_estimates_tbl() with
 #'  original MLE estimates used as parameter values for parametric bootstrapping
 #' @param ests_tbl Data frame of parameter estimates, one row per bootstrap sample
-#' @inheritParams set_globals confidence_level bias_correct_ci_bounds
+#' @inheritParams set_globals
 #' @inheritParams fit_to_estimates_tbl
 #' @returns A data frame with the means and sds of bootstrap sample
 #'  parameter estimates, plus confidence interval boundss.

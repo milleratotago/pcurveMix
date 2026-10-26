@@ -10,7 +10,7 @@ so you must call it twice to get the CIs for both.}
 compute_profileCI_folded(
   fit_list,
   target_folded_normal_mu,
-  level = get_ao("confidence_level")/100
+  confidence_level = get_ao("confidence_level")/100
 )
 }
 \arguments{
@@ -19,7 +19,8 @@ compute_profileCI_folded(
 \item{target_folded_normal_mu}{Boolean where TRUE requests CI for folded normal mu
 and FALSE requests CI for folded normal sigma.}
 
-\item{level}{Confidence level for the CI (0-1, default = pcm_env$confidence_level/100) # NEWJEFF: Or Shiny}
+\item{confidence_level}{A numeric value 0-100 used in computing confidence
+intervals (default = 95).}
 }
 \value{
 A list with the following elements:

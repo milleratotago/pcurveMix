@@ -127,9 +127,11 @@ generate_nonparametric_subsamples <- function(n_subsamples, n_per_subsample, rea
   rand_ps <- matrix(rand_ps, nrow = n_subsamples)
 }
 
+# NEWJEFF: # @inheritParams generate_nonparametric_subsamples n_subsamples n_per_subsample
+
 #' Generate n_subsamples random samples from a set of real_ps,
 #'  with each subsample having n_per_subsample values.
-#' @inheritParams generate_nonparametric_subsamples n_subsamples n_per_subsample
+#' @inheritParams generate_nonparametric_subsamples
 #' @inheritParams random
 #' @returns Matrix of p values with n_subsamples rows and n_per_subsample columns.
 #' @export
@@ -143,7 +145,7 @@ generate_parametric_subsamples <- function(n_subsamples, n_per_subsample,
 
 #' Generate all jackknife subsamples from a set of real_ps
 #'  with each subsample omitting one of the real_ps.
-#' @inheritParams generate_nonparametric_subsamples n_subsamples n_per_subsample real_ps
+#' @inheritParams generate_nonparametric_subsamples
 #' @inheritParams random
 #' @returns Matrix of p values with n_subsamples rows and n_subsamples-1 columns.
 #' @export
