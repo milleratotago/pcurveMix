@@ -3,13 +3,11 @@
 #' Function for parametric bootstrapping of fitted model.
 #' @inheritParams pcurveMix-package
 #' @inheritParams random
-#' @inheritParams fit_p_curve
 #' @param n_boot_samples Number of bootstrap samples to take
 #' @param show_progress_bar Boolean determining whether progress bar is used (default = TRUE)
 #' @returns Data frame with 1 row per bootstrap sample & cols for estimated pi, mu, sigma, etc.
 #' @export
 bootstrap <- function(n, fit_results_list, n_boot_samples,
-                      # alpha = 1, tails = 2, alpha_sig = 0.05, -- these are taken from "fit_results_list"
                       show_progress_bar = TRUE,
                       fast_boot_jack = get_ao("fast_boot_jack"),
                       cond_method = "rejection", tol = 1e-8) {

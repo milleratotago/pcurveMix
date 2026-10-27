@@ -1,7 +1,7 @@
 # quantile.R
 
 #' Get quantile(s) of p-curves corresponding to requested target_cdfs.
-#' @inheritParams pdf
+#' @inheritParams pcurveMix-package
 #' @param target_cdfs The CDFs of the p-curve distribution at which to determine the quantile p value
 #' @param tol Tolerance value for uniroot search function (default = 1e-8)
 #' @export

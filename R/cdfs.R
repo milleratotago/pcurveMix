@@ -1,23 +1,23 @@
 # cdfs.R
 
 #' Compute CDFs of 1- or 2-sided p values under H1 for random-effects model.
-#' @inheritParams pdf
+#' @inheritParams pcurveMix-package
 #' @returns Real CDF value or vector of CDF values.
 #' @export
-cdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
+cdf <- function(ps, mu, sigma, pi = 1, alpha = 1, tails = 2) {
   cdfs <- switch(
     case_id(alpha, tails, pi),
-    "uncond_2t_h1"  = F_uncond_2t_h1  (p, mu, sigma),
-    "uncond_2t_mix" = F_uncond_2t_mix (p, mu, sigma, pi),
-    "uncond_1t_h1"  = F_uncond_1t_h1  (p, mu, sigma),
-    "uncond_1t_mix" = F_uncond_1t_mix (p, mu, sigma, pi),
-    "cond_2t_h1"    =   F_cond_2t_h1  (p, mu, sigma, alpha),
-    "cond_2t_mix"   =   F_cond_2t_mix (p, mu, sigma, pi, alpha),
-    "cond_1t_h1"    =   F_cond_1t_h1  (p, mu, sigma, alpha),
-    "cond_1t_mix"   =   F_cond_1t_mix (p, mu, sigma, pi, alpha)
+    "uncond_2t_h1"  = F_uncond_2t_h1  (ps, mu, sigma),
+    "uncond_2t_mix" = F_uncond_2t_mix (ps, mu, sigma, pi),
+    "uncond_1t_h1"  = F_uncond_1t_h1  (ps, mu, sigma),
+    "uncond_1t_mix" = F_uncond_1t_mix (ps, mu, sigma, pi),
+    "cond_2t_h1"    =   F_cond_2t_h1  (ps, mu, sigma, alpha),
+    "cond_2t_mix"   =   F_cond_2t_mix (ps, mu, sigma, pi, alpha),
+    "cond_1t_h1"    =   F_cond_1t_h1  (ps, mu, sigma, alpha),
+    "cond_1t_mix"   =   F_cond_1t_mix (ps, mu, sigma, pi, alpha)
   )
-  too_small <- p <= 0
-  too_large <- p >= alpha
+  too_small <- ps <= 0
+  too_large <- ps >= alpha
   cdfs[too_small] <- 0
   cdfs[too_large] <- 1
   return(cdfs)

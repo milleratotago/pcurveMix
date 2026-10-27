@@ -24,7 +24,9 @@ set_globals(
 interval bounds to correct for estimated bias.}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
+intervals. The default value is taken from the Shiny app interface if that
+app is being used; otherwise, it is taken from pcm_env$confidence_level,
+which has the default value of 95.}
 
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-20)}

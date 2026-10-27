@@ -7,7 +7,7 @@ Repeatedly fit model with multiple starting points,
 saving at the end the best fit.}
 \usage{
 fit_p_curve(
-  p,
+  ps,
   alpha = 1,
   tails = 2,
   alpha_sig = 0.05,
@@ -16,7 +16,7 @@ fit_p_curve(
 )
 }
 \arguments{
-\item{p}{Vector of to-be-fitted p values in 0--1}
+\item{ps}{Real single p value or vector of p's in the range (0--alpha].}
 
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 

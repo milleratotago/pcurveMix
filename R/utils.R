@@ -107,7 +107,6 @@ case_id <- function(alpha = 1, tails = 2, pi = 1) {
 #' Check a vector of p values to see whether they are
 #'   all >0 and <=alpha as expected.
 #' @inheritParams pcurveMix-package
-#' @param ps Vector of p values
 #' @param show_error Show error message if any p value is out of
 #'  bounds (default TRUE)
 #' @returns A list all_in_bounds, n_too_small, etc

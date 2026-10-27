@@ -2,22 +2,21 @@
 
 #' Compute PDF(s) of p values for random-effects model.
 #' @inheritParams pcurveMix-package
-#' @param p Real 0-1 single p value or vector of p's for which function values are to be computed
 #' @returns Real PDF value or vector of PDF values
 #' @export
-pdf <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2) {
+pdf <- function(ps, mu, sigma, pi = 1, alpha = 1, tails = 2) {
   pdfs <- switch(
     case_id(alpha, tails, pi),
-    "uncond_2t_h1"  = f_uncond_2t_h1  (p, mu, sigma),
-    "uncond_2t_mix" = f_uncond_2t_mix (p, mu, sigma, pi),
-    "uncond_1t_h1"  = f_uncond_1t_h1  (p, mu, sigma),
-    "uncond_1t_mix" = f_uncond_1t_mix (p, mu, sigma, pi),
-    "cond_2t_h1"    =   f_cond_2t_h1  (p, mu, sigma, alpha),
-    "cond_2t_mix"   =   f_cond_2t_mix (p, mu, sigma, pi, alpha),
-    "cond_1t_h1"    =   f_cond_1t_h1  (p, mu, sigma, alpha),
-    "cond_1t_mix"   =   f_cond_1t_mix (p, mu, sigma, pi, alpha)
+    "uncond_2t_h1"  = f_uncond_2t_h1  (ps, mu, sigma),
+    "uncond_2t_mix" = f_uncond_2t_mix (ps, mu, sigma, pi),
+    "uncond_1t_h1"  = f_uncond_1t_h1  (ps, mu, sigma),
+    "uncond_1t_mix" = f_uncond_1t_mix (ps, mu, sigma, pi),
+    "cond_2t_h1"    =   f_cond_2t_h1  (ps, mu, sigma, alpha),
+    "cond_2t_mix"   =   f_cond_2t_mix (ps, mu, sigma, pi, alpha),
+    "cond_1t_h1"    =   f_cond_1t_h1  (ps, mu, sigma, alpha),
+    "cond_1t_mix"   =   f_cond_1t_mix (ps, mu, sigma, pi, alpha)
   )
-  out_of_range <- (p < 0) | (p > alpha) | is.nan(pdfs)
+  out_of_range <- (ps < 0) | (ps > alpha) | is.nan(pdfs)
   pdfs[out_of_range] <- 0
   return(pdfs)
 }

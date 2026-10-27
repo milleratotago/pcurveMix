@@ -5,13 +5,9 @@
 #'  method with pdf() or use a censoring method that bins all p's
 #'  less than censor_at
 #' @inheritParams pcurveMix-package
-#' @param p Real 0-1 p value or vector for which nll is to be computed. p values
-#'  should be checked to make sure they are in range (0--1] before calling
-#'  this function.
-#' @inheritParams pdf
 #' @returns Real negative log-likelihood of the p values
 #' @export
-nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
+nll <- function(ps, mu, sigma, pi = 1, alpha = 1, tails = 2,
                 censor_at = get_ao("censor_at") ) {
   # print( paste("nll thinks: mu =",mu, "sigma =",sigma, "pi =",pi) )
   # JEFF: profileCI gets confused if the flat region extends
@@ -19,19 +15,19 @@ nll <- function(p, mu, sigma, pi = 1, alpha = 1, tails = 2,
   # range if we return low likelihood in the flat region,
   # so I removed the check on mu
   # if (pi < 0 || pi > 1 || sigma < 0 || mu < 0) return(1e12)
-  # NEWJEFF: parameter checking should be a separate function
+  # NWJEFF: parameter checking should be a separate function
   # used uniformly (eg make sure profiling uses this).
   if (pi < 0 || pi > 1 || sigma < 0) return(1e12)
-  # if (any(!is.finite(p)) || any(p <= 0 | p >= 1)) return(1e12)
+  # if (any(!is.finite(ps)) || any(ps <= 0 | ps >= 1)) return(1e12)
   if (is.na(censor_at)) {
     # Direct method without censoring
-    pdfs <- pcurveMix::pdf(p, mu, sigma, pi, alpha, tails)
+    pdfs <- pcurveMix::pdf(ps, mu, sigma, pi, alpha, tails)
     this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin)))
   } else {
     # Censoring method
-    above_cutoff <- p > censor_at
-    pdfs <- pcurveMix::pdf(p[above_cutoff], mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails)
-    n_in_small_bin <- sum(p <= censor_at)
+    above_cutoff <- ps > censor_at
+    pdfs <- pcurveMix::pdf(ps[above_cutoff], mu = mu, sigma = sigma, pi = pi, alpha = alpha, tails = tails)
+    n_in_small_bin <- sum(ps <= censor_at)
     cdf_at_cutoff <- pcurveMix::cdf(censor_at, mu, sigma, pi, alpha, tails)
     # this_nll <- -sum(log(pmax(pdfs, .Machine$double.xmin))) -
     #   n_in_small_bin * log(cdf_at_cutoff)
@@ -61,8 +57,6 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #' Repeatedly fit model with multiple starting points,
 #'  saving at the end the best fit.
 #' @inheritParams pcurveMix-package
-#' @param p Vector of to-be-fitted p values in 0--1
-#' @inheritParams pdf
 #' @param want_optim_hessian Boolean indicating whether optim() should compute
 #'  the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 #'  hessian is not used)
@@ -73,38 +67,38 @@ nll_optim <- function(par, p, alpha = 1, tails = 2) {
 #'  and 95% confidence limits, an estimate of the average power to reject
 #'  H0 when it is false, and more
 #' @export
-fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
+fit_p_curve <- function(ps, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_hessian = TRUE,
                         start_parms = pcm_env$optim_starting_parms) {
-# NWJEFF: Maybe it would be better to check p's separately, but it is convenient to do it here
+# NWJEFF: Maybe it would be better to check ps's separately, but it is convenient to do it here
 #  to make sure that the fitted p's are always in range.
-# NEWJEFF: Include option to show final estimates from all starting points?
+# NWJEFF: Include option to show final estimates from all starting points?
 # @param lower List of lower bounds for the optim search
 #  (defaults: mu = 0, sigma = 1e-6, pi = 1e-6)
 # @param upper List of upper bounds for the optim search
 #  (defaults: mu = 20, sigma = 10, pi = 1 - 1e-6)
 #                        lower = list(mu =  0, sigma = 1e-6, pi = 1e-6),
 #                        upper = list(mu = 20, sigma = 10,   pi = 1 - 1e-6)) {
-  p <- as.numeric(p)
-  check_ps_list <- check_ps(p, alpha = alpha)
-  p <- check_ps_list$ps_in_bounds
-  if (!length(p)) stop("No valid p-values in (0,1).")
+  ps <- as.numeric(ps)
+  check_ps_list <- check_ps(ps, alpha = alpha)
+  ps <- check_ps_list$ps_in_bounds
+  if (!length(ps)) stop("No valid p-values in (0,1).")
   single_start <- !is.data.frame(start_parms)
   if (single_start) {
-    best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+    best_fit <- fit_p_curve1(ps, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
-                             start = start_parms) #, lower = lower, upper = upper)
+                             start_parms = start_parms) #, lower = lower, upper = upper)
     best_fit$start_parm_set <- NA
   } else {
     n_starting_points <- nrow(start_parms)
     start_parms1 <- as.list(start_parms[1,])
-    best_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+    best_fit <- fit_p_curve1(ps, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                              want_optim_hessian = want_optim_hessian,
-                             start = start_parms1)
+                             start_parms = start_parms1)
     for (i_row in 2:n_starting_points) {
       start_parms1 <- as.list(start_parms[i_row,])
-      one_fit <- fit_p_curve1(p, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
+      one_fit <- fit_p_curve1(ps, alpha = alpha, tails = tails, alpha_sig = alpha_sig,
                               want_optim_hessian = want_optim_hessian,
-                              start = start_parms1)
+                              start_parms = start_parms1)
       if (one_fit$logLik > best_fit$logLik) best_fit <- one_fit
     }
     best_fit$start_parm_set <- start_parms
@@ -123,13 +117,13 @@ fit_p_curve <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05, want_optim_he
 
 #' Fit estimates of model pi, mu, sigma to a vector of p values starting from
 #'  a single combination of parameter values.
-#' @inheritParams fit_p_curve
-#' @param start A single list of starting parameter values for mu, sigma, and pi.
+#' @inheritParams fit_p_curve ps alpha tails alpha_sig want_optim_hessian
+#' @param start_parms A single list of starting parameter values for mu, sigma, and pi.
 #' @export
-fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
+fit_p_curve1 <- function(ps, alpha = 1, tails = 2, alpha_sig = 0.05,
                          want_optim_hessian = TRUE,
-                         start = pcm_env$optim_starting_parms) {
-  fit <- optim_fit_unconstrained(p, alpha, tails, alpha_sig, start, want_optim_hessian = want_optim_hessian)
+                         start_parms = pcm_env$optim_starting_parms) {
+  fit <- optim_fit_unconstrained(ps, alpha, tails, alpha_sig, start_parms, want_optim_hessian = want_optim_hessian)
   # computing power when effect is always present (pi = 1), unconditional on alpha cutoff
   fit$power <- cdf(alpha_sig, mu = fit$mu, sigma = fit$sigma, pi = 1, alpha = 1, tails = tails)
   fit[[PR_TP]] <- fit$pi * fit$power
@@ -139,11 +133,10 @@ fit_p_curve1 <- function(p, alpha = 1, tails = 2, alpha_sig = 0.05,
   fit[[R_FP]] <- fit[[PR_FP]] / (fit[[PR_FP]] + fit[[PR_TP]])
   fit[[R_FN]] <- fit[[PR_FN]] / (fit[[PR_FN]] + fit[[PR_TN]])
   cdf_fit <- function(x) cdf(x, mu = fit$mu, sigma = fit$sigma, pi = fit$pi, alpha = alpha, tails = tails)
-  fit$ks <- ks_with_cdf(p, cdf_fit)
-  fit$n <- length(p)
-  fit$min_p <- min(p)
-  fit$max_p <- max(p)
-  # print( paste(start$mu, start$sigma, start$pi, fit$mu, fit$sigma, fit$pi, fit$logLik) ) # NWJEFF
+  fit$ks <- ks_with_cdf(ps, cdf_fit)
+  fit$n <- length(ps)
+  fit$min_p <- min(ps)
+  fit$max_p <- max(ps)
   return(fit)
 } # fit_p_curve1
 
@@ -319,7 +312,7 @@ fit_to_parms_vec <- function(fit_results_list, want_names = TRUE, want_converged
 
 #' Fit p curve separately for each row of a matrix of p values (for simulation),
 #'  with sample being the p's in all columns of that row.
-#' @inheritParams fit_p_curve
+#' @inheritParams fit_p_curve alpha tails alpha_sig want_optim_hessian start_parms
 #' @param mat_of_ps Matrix of p values with n_samples rows and n_per_sample columns
 #' @param n_progress_bar_steps Number of times to update progress bar within
 #'  the total set (default = 20)

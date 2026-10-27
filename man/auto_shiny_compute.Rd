@@ -2,7 +2,8 @@
 % Please edit documentation in R/auto_shiny.R
 \name{auto_shiny_compute}
 \alias{auto_shiny_compute}
-\title{Function to perform shiny-like analyses on a vector of p's.}
+\title{Function to perform shiny-like analyses on a vector of p's. Call this function
+and then pass its returned output list to auto_shiny_report.}
 \usage{
 auto_shiny_compute(
   ps,
@@ -17,7 +18,7 @@ auto_shiny_compute(
 )
 }
 \arguments{
-\item{ps}{Vector of ps to be fit}
+\item{ps}{Real single p value or vector of p's in the range (0--alpha].}
 
 \item{tails}{1 or 2 to indicate 1- or 2-tailed p values (default = 2)}
 
@@ -45,5 +46,6 @@ should be computed (default = TRUE)}
 List with params for pcurveMix_shiny_report.Rmd
 }
 \description{
-Function to perform shiny-like analyses on a vector of p's.
+Function to perform shiny-like analyses on a vector of p's. Call this function
+and then pass its returned output list to auto_shiny_report.
 }

@@ -13,7 +13,7 @@ pcm_quantile(target_cdfs, mu, sigma, pi = 1, alpha = 1, tails = 2, tol = 1e-08)
 
 \item{sigma}{Standard deviation of noncentrality parameters when H1 is true}
 
-\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)}
+\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1).}
 
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 

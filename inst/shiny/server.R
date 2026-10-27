@@ -401,7 +401,7 @@ server <- function(input, output, session) {
       profile_manager(v$fit_list)
 
       p_seq <- pcurveMix:::get_p_seq(v$fit_list$alpha)
-      p_hist_bin_width <- v$fit_list$alpha / 50  # NEWJEFF: HARD-CODED
+      p_hist_bin_width <- v$fit_list$alpha / 50  # NWJEFF: HARD-CODED
       v$p_seq_pdf <- p_seq # pcurveMix:::pcm_env$p_seq_pdf
       v$p_seq_cdf <- p_seq # pcurveMix:::pcm_env$p_seq_cdf
       v$pred_pdfs <- pdf(v$p_seq_pdf, mu = v$fit_list$mu, sigma = v$fit_list$sigma, pi = v$fit_list$pi,
@@ -497,7 +497,7 @@ server <- function(input, output, session) {
                       pdf = ".pdf",
                       docx = ".docx",
                       ".html")
-        output_format <- get_render_output_format(input$rmd_format)
+        output_format <- pcurveMix:::get_render_output_format(input$rmd_format)
         rmd_outfile_name <- paste0(output_directory_name, "/",
                                    "pcurveMix_report_", time_stamp,ext)
         rmarkdown::render(rmd,

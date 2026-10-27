@@ -18,7 +18,9 @@ censoring (default = NA, in which case likelihoods are computed without
 censoring).}
 
 \item{confidence_level}{A numeric value 0-100 used in computing confidence
-intervals (default = 95). (default = pcm_env$confidence_level) # NEWJEFF: Or Shiny}
+intervals. The default value is taken from the Shiny app interface if that
+app is being used; otherwise, it is taken from pcm_env$confidence_level,
+which has the default value of 95.}
 
 \item{edge_p}{To avoid numerical errors, change p==0 to edge_p and
 change p==1 to 1-edge_p (default = 1e-20)}
@@ -47,7 +49,9 @@ values for plots (default same as pdf with added 10^(4:10)).}
 \item{p_seq_pdf}{Sequence of p values at which to compute predicted pdf
 values for plots (default = seq(0.001, 0.999, 0.002)).}
 
-\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)}
+\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1).}
+
+\item{ps}{Real single p value or vector of p's in the range (0--alpha].}
 
 \item{profileCI_args}{A list of optional arguments to be passed to profileCI.}
 

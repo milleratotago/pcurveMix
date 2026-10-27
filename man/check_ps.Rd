@@ -8,7 +8,7 @@ all >0 and <=alpha as expected.}
 check_ps(ps, alpha, show_error = TRUE)
 }
 \arguments{
-\item{ps}{Vector of p values}
+\item{ps}{Real single p value or vector of p's in the range (0--alpha].}
 
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 

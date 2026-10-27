@@ -1,10 +1,8 @@
 # auto_shiny.R
 
-# NEWJEFF: Defaults of parameter definitions are taken from pcm_env. These can
-# be modified using man-roxygen templates (do this later: gemini will explain)
-# User calls this function and then renders shiny with returned params
-#' Function to perform shiny-like analyses on a vector of p's.
-#' @param ps Vector of ps to be fit
+#' Function to perform shiny-like analyses on a vector of p's. Call this function
+#'  and then pass its returned output list to auto_shiny_report.
+#' @inheritParams pcurveMix-package
 #' @param want_jackknifing Boolean to indicate that jackknifing should be done
 #'  (default = TRUE)
 #' @param want_profile_cis Boolean to indicate that profile confidence intervals
@@ -15,8 +13,6 @@
 #'  Use 0 to skip this bootstrapping (default = 100)
 #' @param ps_label A string label to identify this set of p's in the
 #'  analysis descriptor table
-#' @inheritParams pcurveMix-package
-#' @inheritParams fit_p_curve
 #' @returns List with params for pcurveMix_shiny_report.Rmd
 #' @export
 auto_shiny_compute <- function(ps, tails, alpha,

@@ -95,7 +95,7 @@ The next set of four `Compute...` options controls whether the app will compute 
 -   Number of bootstrap samples if bootstrapping is requested. This is reasonably fast and we recommend using at least 2000 samples for any "real" analysis.
 -   Whether to apply bias corrections to jackknifing and/or bootstrapping confidence interval bounds (not applicable for likelihood profiling).
 
-Finally, numerous other rather technical variables can be adjusted *before starting the shiny app* using the `set_globals` function (see NEWJEFF that function's documentation). Use a command sequence like  the following to change the values of any of these variables:
+Finally, numerous other rather technical variables can be adjusted *before starting the shiny app* using the `set_globals` function (see that function's documentation for the list of adjustable parameters). Use a command sequence like  the following to change the values of any of these variables:
 
 ```{r echo = FALSE, eval = TRUE}
 library(pcurveMix)
@@ -370,8 +370,7 @@ print(l$folded_normal_sigma)
 ## Saving results
 
 Finally, at the end of all of the displayed results, there is a `Download results` button that can be used to produce a `zip` file with the fitting results.
-NEWJEFF: Description isn't right.
-The `zip` includes a `docx` file with the fitting results shown by the shiny app, and it also includes `CSV` files showing the model's predicted PDF and CDF values with the estimated parameters (in case you would like to make your own plots).
+The `zip` includes a document file of the chosen format (docx, html, or pdf) with the fitting results shown by the shiny app, and it also includes many `CSV` files showing the model's estimated parameters, predicted PDF and CDF values, confidence intervals, etc.
 
 # Option 2: Fitting with an R script
 
@@ -527,5 +526,4 @@ print(table_notes)
 ```
 
 ```{r ref.label = "profile_plots", eval = eval_demo_code, echo = TRUE}
-# NEWJEFF
 ```

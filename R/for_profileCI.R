@@ -362,7 +362,7 @@ compute_profileCI_power <- function(fit_results_list, confidence_level = get_ao(
   # Power is constrained to [alpha_sig, 1]. The relative position in this
   # interval is mapped to the real line using a logit transformation.
   relative_power_hat <- (power_hat - alpha_sig) / (1 - alpha_sig)
-  relative_power_hat <- min(max(relative_power_hat, 1e-10), 1 - 1e-10) # NEWJEFF: Magic constant
+  relative_power_hat <- min(max(relative_power_hat, 1e-10), 1 - 1e-10) # NWJEFF: Magic constant
 
   coefficients <- c(
     logit_relative_power = stats::qlogis(relative_power_hat),
@@ -397,7 +397,7 @@ compute_profileCI_power <- function(fit_results_list, confidence_level = get_ao(
     class = "profCI_model"
   )
 
-  lower_search <- stats::qlogis(1e-6)  # NEWJEFF: Magic constants
+  lower_search <- stats::qlogis(1e-6)  # NWJEFF: Magic constant
   upper_search <- stats::qlogis(1 - 1e-6)
 
   profile_result <- profileCI::profileCI(

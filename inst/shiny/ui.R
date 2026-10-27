@@ -312,7 +312,7 @@ ui <- tagList(
         ), # outer conditionalPanel
         ## end Profile confidence interval results ====
 
-        h3(verbatimTextOutput("optim_failed_output")) # NEWJEFF: Replace with showmessage
+        h3(verbatimTextOutput("optim_failed_output")) # NWJEFF: Replace with showmessage
 
         ##                                                              ====
       ) # wellPanel

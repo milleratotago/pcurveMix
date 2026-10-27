@@ -6,16 +6,16 @@
 a single combination of parameter values.}
 \usage{
 fit_p_curve1(
-  p,
+  ps,
   alpha = 1,
   tails = 2,
   alpha_sig = 0.05,
   want_optim_hessian = TRUE,
-  start = pcm_env$optim_starting_parms
+  start_parms = pcm_env$optim_starting_parms
 )
 }
 \arguments{
-\item{p}{Vector of to-be-fitted p values in 0--1}
+\item{ps}{Real single p value or vector of p's in the range (0--alpha].}
 
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
@@ -28,7 +28,7 @@ average power when H0 is false (default = 0.05).}
 the hessian (default = TRUE, but set to FALSE for faster bootstrapping where
 hessian is not used)}
 
-\item{start}{A single list of starting parameter values for mu, sigma, and pi.}
+\item{start_parms}{A single list of starting parameter values for mu, sigma, and pi.}
 }
 \description{
 Fit estimates of model pi, mu, sigma to a vector of p values starting from

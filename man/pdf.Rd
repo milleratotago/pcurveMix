@@ -4,16 +4,16 @@
 \alias{pdf}
 \title{Compute PDF(s) of p values for random-effects model.}
 \usage{
-pdf(p, mu, sigma, pi = 1, alpha = 1, tails = 2)
+pdf(ps, mu, sigma, pi = 1, alpha = 1, tails = 2)
 }
 \arguments{
-\item{p}{Real 0-1 single p value or vector of p's for which function values are to be computed}
+\item{ps}{Real single p value or vector of p's in the range (0--alpha].}
 
 \item{mu}{Mean of noncentrality parameters when H1 is true}
 
 \item{sigma}{Standard deviation of noncentrality parameters when H1 is true}
 
-\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1)}
+\item{pi}{Proportion of studies with H1 true in mixture of studies with H0 vs H1 true (default = 1).}
 
 \item{alpha}{Maximum p value in distribution conditional on p<=alpha (default = 1)}
 
